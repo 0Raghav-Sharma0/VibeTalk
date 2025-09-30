@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body {
+    font-family: 'Inter', sans-serif;
+  }
+
+.scrollbar-fade::-webkit-scrollbar {
+  width: 8px;
+  transition: opacity 0.3s;
+  opacity: 0;
+}
+
+.scrollbar-fade:hover::-webkit-scrollbar {
+  opacity: 1;
+}
+
+.scrollbar-fade::-webkit-scrollbar-thumb {
+  background: #c4a47a;
+  border-radius: 8px;
+}
+
+.scrollbar-fade::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+
+
