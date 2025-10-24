@@ -5,13 +5,22 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Updated CORS for your frontend (Vercel) and dev
+// ✅ Dynamically determine allowed origins
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [
+        "https://blah-blah-jvc4-7m41x6617-raghavsharma099900-7404s-projects.vercel.app",
+      ]
+    : [
+        "http://localhost:5173",
+        "http://localhost:5174",
+      ];
+
+console.log("🧩 Socket.io CORS allowed origins:", allowedOrigins);
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      "http://localhost:5173",
-      "https://blah-blah-jvc4-7m41x6617-raghavsharma099900-7404s-projects.vercel.app",
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
