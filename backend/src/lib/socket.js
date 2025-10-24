@@ -8,15 +8,13 @@ const server = http.createServer(app);
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
-        // 🧠 Your current deployed frontend on Vercel
         "https://blah-blah-jvc4-rjzxmg0qn-raghavsharma099900-7404s-projects.vercel.app",
-
-        // 🧠 Allow your backend’s Render domain too
         "https://blah-blah-3.onrender.com",
       ]
     : [
         "http://localhost:5173",
         "http://localhost:5174",
+        "http://localhost:4173", // ✅ add this line
       ];
 
 console.log("🧩 Socket.io CORS allowed origins:", allowedOrigins);
