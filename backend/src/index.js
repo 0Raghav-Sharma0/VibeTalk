@@ -21,7 +21,8 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:4173",
-      "https://blah-blah-jvc4-d1v0sl4g1-raghavsharma099900-7404s-projects.vercel.app",
+      "https://blah-blah-jvc4.vercel.app",
+      "https://blah-blah-jvc4-eoigy5j7w-raghavsharma099900-7404s-projects.vercel.app",
       "https://blah-blah-3.onrender.com",
     ],
     credentials: true,
@@ -32,11 +33,11 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 
-// ✅ Routes
+// ✅ API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// ✅ Static song serving
+// ✅ Serve songs
 app.use(
   "/songs",
   express.static(path.join(__dirname, "songs"), {
@@ -48,7 +49,7 @@ app.use(
   })
 );
 
-// ✅ Upload route for songs
+// ✅ File upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, "songs")),
   filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
@@ -63,13 +64,13 @@ app.post("/upload", upload.single("song"), (req, res) => {
   });
 });
 
-// ✅ Serve frontend in production (Render)
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(path.join(__dirname, "../frontend/dist")));
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-//   });
-// }
+// ✅ Serve frontend in production (optional)
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+  });
+}
 
 // ✅ Start server
 server.listen(PORT, () => {
