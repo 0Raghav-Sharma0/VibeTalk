@@ -5,11 +5,14 @@ import express from "express";
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Dynamically determine allowed origins
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
-        "https://blah-blah-jvc4-7m41x6617-raghavsharma099900-7404s-projects.vercel.app",
+        // 🧠 Your current deployed frontend on Vercel
+        "https://blah-blah-jvc4-rjzxmg0qn-raghavsharma099900-7404s-projects.vercel.app",
+
+        // 🧠 Allow your backend’s Render domain too
+        "https://blah-blah-3.onrender.com",
       ]
     : [
         "http://localhost:5173",
@@ -25,6 +28,7 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+
 
 const userSocketMap = {};
 const activeCalls = {};
