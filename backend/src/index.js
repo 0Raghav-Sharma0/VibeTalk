@@ -15,13 +15,14 @@ dotenv.config();
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
-// ✅ FIXED: Allow Vercel frontend + local dev
+// ✅ Allow frontend (Vercel) + local dev
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "https://blah-blah-jvc4-7m41x6617-raghavsharma099900-7404s-projects.vercel.app",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
@@ -38,8 +39,8 @@ app.use("/api/messages", messageRoutes);
 app.use(
   "/songs",
   express.static(path.join(__dirname, "songs"), {
-    setHeaders: (res, path) => {
-      if (path.endsWith(".mp3")) {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith(".mp3")) {
         res.setHeader("Content-Type", "audio/mpeg");
       }
     },
@@ -54,16 +55,14 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 app.post("/upload", upload.single("song"), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
-  }
+  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
   res.json({
     message: "File uploaded successfully",
     url: `/songs/${req.file.filename}`,
   });
 });
 
-// ✅ Serve frontend in production
+// ✅ Serve frontend in production (Render)
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
   app.get("*", (req, res) => {
@@ -73,11 +72,11 @@ if (process.env.NODE_ENV === "production") {
 
 // ✅ Start server
 server.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
   connectDB();
 });
 
-// ✅ Verify Cloudinary connection
+// ✅ Cloudinary check
 (async () => {
   try {
     const result = await cloudinary.api.ping();

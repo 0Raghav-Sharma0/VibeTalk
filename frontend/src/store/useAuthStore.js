@@ -1,9 +1,17 @@
-import {create} from "zustand";
+import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
-import {io} from "socket.io-client";
+import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+// ✅ Make socket connect to your Render backend in production
+const BASE_URL =
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5001"
+    : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com";
+
+console.log("🔌 Socket connecting to:", BASE_URL);
+
+
 
 export const useAuthStore = create ((set, get) => ({
     authUser : null,
