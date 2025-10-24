@@ -11,7 +11,8 @@ defineElement(lottie.loadAnimation);
 const socket = io(
   import.meta.env.MODE === "development"
     ? "http://localhost:5001"
-    : import.meta.env.REACT_APP_BACKEND_URL || "https://chitchat-vvxt.onrender.com"
+    : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com"
+
 );
 
 const formatTime = (seconds) => {
