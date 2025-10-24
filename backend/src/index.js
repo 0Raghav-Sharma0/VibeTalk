@@ -64,3 +64,13 @@ server.listen(5001, () =>{
     console.log(`Server listening on port ${PORT}`);
     connectDB();
 }) 
+import cloudinary from "./lib/cloudinary.js";
+
+(async () => {
+  try {
+    const result = await cloudinary.api.ping();
+    console.log("✅ Cloudinary connected successfully:", result);
+  } catch (error) {
+    console.error("❌ Cloudinary connection failed:", error.message);
+  }
+})();

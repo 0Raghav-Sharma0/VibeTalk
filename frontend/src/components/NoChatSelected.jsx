@@ -8,14 +8,21 @@ const NoChatSelected = () => {
       <div className="max-w-md text-center space-y-6">
         <div className="flex justify-center gap-4 mb-4">
           <div className="relative">
-            <div className = "w-24 h-24">
-                <lord-icon trigger="loop" src="/wired-lineal-2803-engagement-alt-hover-pinch.json" style={{ width: "100px", height: "100px" }}></lord-icon>
+            <div className="w-24 h-24">
+              <lord-icon 
+                trigger="loop" 
+                src="/wired-lineal-2803-engagement-alt-hover-pinch.json" 
+                style={{ width: "100px", height: "100px" }}
+              ></lord-icon>
             </div>
           </div>
         </div>
-        <h2 className="text-2xl font-bold">Welcome to ChitChat!</h2>
+
+        <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500">
+          Welcome to VibeTalk!
+        </h2>
         <p className="text-base-content/60">
-          Select a conversation to start ChitChatting!
+          Select a conversation to start VibeTalking 🎧
         </p>
       </div>
     </div>

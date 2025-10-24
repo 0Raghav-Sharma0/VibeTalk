@@ -1,20 +1,17 @@
 import daisyui from "daisyui";
 
 /** @type {import('tailwindcss').Config} */
-export default  {
-  content: ["./src/**/*.{html,js,jsx,ts,tsx}"],
+export default {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "sans-serif"],
+      },
       colors: {
-        darkBg: "#121212",
-        darkCard: "#1E1E1E",
-        textPrimary: "#FFFFFF",
-        textSecondary: "#B0B3B8",
-        accentGreen: "#22C55E",
-        accentBlue: "#3B82F6",
-        hoverGreen: "#16A34A",
-        hoverBlue: "#2563EB",
-        borderGray: "#262626",
+        accentPink: "#ec4899",
+        accentViolet: "#8b5cf6",
+        accentIndigo: "#6366f1",
       },
     },
   },
@@ -24,35 +21,30 @@ export default  {
       "light",
       "dark",
       "cupcake",
-      "bumblebee",
-      "emerald",
-      "corporate",
       "synthwave",
-      "retro",
-      "cyberpunk",
-      "valentine",
-      "halloween",
-      "garden",
       "forest",
       "aqua",
-      "lofi",
-      "pastel",
-      "fantasy",
-      "wireframe",
-      "black",
-      "luxury",
-      "dracula",
-      "cmyk",
-      "autumn",
-      "business",
-      "acid",
-      "lemonade",
-      "night",
-      "coffee",
-      "winter",
       "dim",
-      "nord",
+      "night",
+      "dracula",
+      "business",
       "sunset",
+      // 👇 Your custom VibeTalk theme
+      {
+        vibetalk: {
+          primary: "#a855f7", // violet
+          secondary: "#ec4899", // pink
+          accent: "#6366f1", // indigo
+          neutral: "#1b1b24",
+          "base-100": "#0f0f17", // main background
+          "base-200": "#141421", // panels
+          "base-300": "#1a1a26", // slightly darker border areas
+          info: "#3b82f6",
+          success: "#22c55e",
+          warning: "#facc15",
+          error: "#ef4444",
+        },
+      },
     ],
   },
 };

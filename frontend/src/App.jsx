@@ -1,46 +1,104 @@
-import React, { useEffect } from 'react';
-import Navbar from './components/Navbar';
-import HomePage from './pages/HomePage';
-import SignUpPage from './pages/SignUpPage';
-import LoginPage from './pages/LoginPage';
-import SettingsPage from './pages/SettingsPage';
-import ProfilePage from './pages/ProfilePage';
-
+import React, { useEffect } from "react";
+import Navbar from "./components/Navbar";
+import HomePage from "./pages/HomePage";
+import SignUpPage from "./pages/SignUpPage";
+import LoginPage from "./pages/LoginPage";
+import SettingsPage from "./pages/SettingsPage";
+import ProfilePage from "./pages/ProfilePage";
+import VideoCall from "./components/VideoCall";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from './store/useAuthStore.js';
-import 'ldrs/grid';
-import { Toaster } from 'react-hot-toast';
-import { useThemeStore } from './store/useThemeStore.js';
+import { useAuthStore } from "./store/useAuthStore.js";
+import { useVideoCallStore } from "./store/useVideoCallStore";
+import { useThemeStore } from "./store/useThemeStore.js";
+import { Toaster } from "react-hot-toast";
+import "ldrs/grid";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth, onlineUsers} = useAuthStore();
-  const {theme} = useThemeStore();
+  const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
 
-  console.log(onlineUsers);
-
+  // ✅ Check auth on app mount
   useEffect(() => {
     checkAuth();
   }, []);
 
-  console.log({ authUser });
+  // ✅ Apply theme dynamically (whenever it changes)
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
-  if (isCheckingAuth) return (
-    <div className="flex items-center justify-center h-screen w-screen">
-      <l-grid size="100" speed="1.5" color="white"></l-grid>
-    </div>
-  );
+  // ✅ Restore theme from localStorage on first load (if missing)
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("chat-theme") || "vibetalk";
+    setTheme(savedTheme);
+  }, [setTheme]);
+
+  // ✅ Handle incoming calls via WebSocket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleIncomingCall = (data) => {
+      const { from, offer, callType } = data;
+      useVideoCallStore.getState().setIncomingCall(from, offer, callType);
+    };
+
+    socket.on("incoming-call", handleIncomingCall);
+    return () => socket.off("incoming-call", handleIncomingCall);
+  }, [socket]);
+
+  // ✅ Themed loader while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center h-screen w-screen bg-base-100 text-base-content transition-colors duration-300">
+        <l-grid size="100" speed="1.5" color="currentColor"></l-grid>
+      </div>
+    );
+  }
 
   return (
-    <div data-theme={theme}>
+    <div
+      data-theme={theme || "vibetalk"}
+      className="min-h-screen bg-base-100 text-base-content transition-colors duration-500 ease-in-out"
+    >
       <Navbar />
+
+      {/* ✅ Page Routes */}
       <Routes>
-        <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" replace />} />
-        <Route path="/signup" element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />} />
-        <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" replace />} />
-        <Route path="/settings" element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />} />
-        <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />} />
+        <Route
+          path="/"
+          element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/signup"
+          element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/login"
+          element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
+        />
+        <Route
+          path="/settings"
+          element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/profile"
+          element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />}
+        />
       </Routes>
-      <Toaster/>
+
+      {/* ✅ Always render video call overlay */}
+      <VideoCall />
+
+      {/* ✅ Themed toaster (auto adjusts color) */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: "var(--b2)",
+            color: "var(--bc)",
+          },
+        }}
+      />
     </div>
   );
 };

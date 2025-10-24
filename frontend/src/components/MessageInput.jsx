@@ -1,154 +1,181 @@
-import React, { useRef, useState } from 'react';
-import { useChatStore } from '../store/useChatStore';
-import { Image, Send, XIcon, FileVideo, Smile, FileText} from 'lucide-react';
-import EmojiPicker from 'emoji-picker-react';
-import axios from 'axios';
+import React, { useRef, useState } from "react";
+import { useChatStore } from "../store/useChatStore";
+import { Image, Send, XIcon, FileVideo, Smile } from "lucide-react";
+import EmojiPicker from "emoji-picker-react";
+import axios from "axios";
 import messageSentSound from "/sent_message.mp3";
 
 const messageSentAudio = new Audio(messageSentSound);
 const playSound = (audio) => {
   audio.currentTime = 0;
   audio.play();
-}
+};
 
 const MessageInput = () => {
-    const [text, setText] = useState("");
-    const [imagePreview, setImagePreview] = useState(null);
-    const [videoPreview, setVideoPreview] = useState(null);
-    const [filePreview, setFilePreview] = useState(null);
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const fileInputRef = useRef(null);
-    const videoInputRef = useRef(null);
-    const docInputRef = useRef(null);
-    const { sendMessage } = useChatStore();
+  const [text, setText] = useState("");
+  const [imagePreview, setImagePreview] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+  const { sendMessage } = useChatStore();
 
-    const handleEmojiClick = (emoji) => {
-        setText((prev) => prev + emoji.emoji);
-    };
+  const handleEmojiClick = (emoji) => setText((t) => t + emoji.emoji);
 
-    const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if (!text.trim() && !imagePreview && !videoPreview && !filePreview) return;
-    
-        let uploadedImageUrl = null;
-        let uploadedVideoUrl = null;
-        let uploadedFileUrl = null;
-    
-        try {
-            if (imagePreview && fileInputRef.current.files[0]) {
-                const formData = new FormData();
-                formData.append('file', fileInputRef.current.files[0]);
-                formData.append('upload_preset', 'my_preset');
-    
-                const response = await axios.post(
-                    'https://api.cloudinary.com/v1_1/dbi3tuuli/image/upload',
-                    formData
-                );
-                uploadedImageUrl = response.data.secure_url;
-                console.log("Uploaded Image URL:", uploadedImageUrl);
-            }
-            if (videoPreview && videoInputRef.current.files[0]) {
-                const formData = new FormData();
-                formData.append('file', videoInputRef.current.files[0]);
-                formData.append('upload_preset', 'my_preset');
-    
-                const response = await axios.post(
-                    'https://api.cloudinary.com/v1_1/dbi3tuuli/video/upload',
-                    formData
-                );
-                uploadedVideoUrl = response.data.secure_url;
-                console.log("Uploaded Video URL:", uploadedVideoUrl);
-            }
-            await sendMessage({
-                text: text.trim(),
-                image: uploadedImageUrl,
-                video: uploadedVideoUrl,
-            });
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!text.trim() && !imagePreview && !videoPreview) return;
 
-            playSound(messageSentAudio);
-    
-            setText("");
-            setImagePreview(null);
-            setVideoPreview(null);
-        } catch (error) {
-            console.error("Failed to send message:", error);
-        }
-    };
-    
+    try {
+      let imageUrl = null;
+      let videoUrl = null;
 
-    return (
-        <div className="p-4 w-full relative">
-            {(imagePreview || videoPreview) && (
-                <div className="mb-3 flex items-center gap-2">
-                    {imagePreview && (
-                        <img src={imagePreview} alt="Preview" className="w-20 h-20 object-cover rounded-lg border border-zinc-700" />
-                    )}
-                    {videoPreview && (
-                        <video src={videoPreview} controls className="w-20 h-20 rounded-lg border border-zinc-700" />
-                    )}
-                    <button onClick={() => { setImagePreview(null); setVideoPreview(null);}} className="btn btn-sm btn-circle bg-base-300">
-                        <XIcon className="size-4" />
-                    </button>
-                </div>
-            )}
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <button
-                    type="button"
-                    className="btn btn-circle text-zinc-400"
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                >
-                    <Smile size={20} />
-                </button>
-                {showEmojiPicker && (
-                    <div className="absolute bottom-14 left-4 bg-white p-2 rounded-lg shadow-lg z-10">
-                        <EmojiPicker onEmojiClick={handleEmojiClick} />
-                    </div>
-                )}
-                <input
-                    type="text"
-                    className="w-full input-bordered rounded-lg input-sm sm:input-md"
-                    placeholder="Type a message..."
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onFocus={() => setShowEmojiPicker(false)}
-                />
-                <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file && file.type.startsWith("image/")) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => setImagePreview(reader.result);
-                        reader.readAsDataURL(file);
-                    }
-                }} />
-                <button type="button" className="btn btn-circle text-zinc-400" onClick={() => fileInputRef.current?.click()}>
-                    <Image size={20} />
-                </button>
-                <input type="file" accept="video/*" className="hidden" ref={videoInputRef} onChange={async (e) => {
-                    const file = e.target.files[0];
-                    if (!file || !file.type.startsWith("video/")) {
-                        alert("Please select a video file");
-                        return;
-                    }
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('upload_preset', 'my_preset');
-                    try {
-                        const response = await axios.post('https://api.cloudinary.com/v1_1/dbi3tuuli/video/upload', formData);
-                        setVideoPreview(response.data.secure_url);
-                        videoInputRef.current.file = file;
-                    } catch (error) {
-                        console.error("Video upload failed:", error.response?.data || error.message);
-                    }
-                }} />
-                <button type="button" className="btn btn-circle text-zinc-400" onClick={() => videoInputRef.current?.click()}>
-                    <FileVideo size={20} />
-                </button>
-                <button type="submit" className="btn btn-sm btn-circle" disabled={!text.trim() && !imagePreview && !videoPreview}>
-                    <Send size={22} />
-                </button>
-            </form>
+      if (imagePreview && fileInputRef.current.files[0]) {
+        const form = new FormData();
+        form.append("file", fileInputRef.current.files[0]);
+        form.append("upload_preset", "my_preset");
+        const res = await axios.post(
+          "https://api.cloudinary.com/v1_1/dbi3tuuli/image/upload",
+          form
+        );
+        imageUrl = res.data.secure_url;
+      }
+
+      if (videoPreview && videoInputRef.current.files[0]) {
+        const form = new FormData();
+        form.append("file", videoInputRef.current.files[0]);
+        form.append("upload_preset", "my_preset");
+        const res = await axios.post(
+          "https://api.cloudinary.com/v1_1/dbi3tuuli/video/upload",
+          form
+        );
+        videoUrl = res.data.secure_url;
+      }
+
+      await sendMessage({
+        text: text.trim(),
+        image: imageUrl,
+        video: videoUrl,
+      });
+
+      playSound(messageSentAudio);
+      setText("");
+      setImagePreview(null);
+      setVideoPreview(null);
+    } catch (err) {
+      console.error("Message failed:", err);
+    }
+  };
+
+  return (
+    <div className="p-3 border-t border-base-300 bg-base-200/70 backdrop-blur-lg">
+      {(imagePreview || videoPreview) && (
+        <div className="mb-3 flex gap-2 items-center">
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              className="w-16 h-16 object-cover rounded-lg border border-base-300"
+            />
+          )}
+          {videoPreview && (
+            <video
+              src={videoPreview}
+              controls
+              className="w-16 h-16 rounded-lg border border-base-300"
+            />
+          )}
+          <button
+            onClick={() => {
+              setImagePreview(null);
+              setVideoPreview(null);
+            }}
+            className="btn btn-circle btn-xs bg-base-300"
+          >
+            <XIcon size={14} />
+          </button>
         </div>
-    );
+      )}
+
+      <form
+        onSubmit={handleSendMessage}
+        className="flex items-center gap-2 bg-base-100/60 border border-base-300 rounded-full px-4 py-2 shadow-inner"
+      >
+        <button
+          type="button"
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          className="text-base-content/70 hover:text-primary"
+        >
+          <Smile size={20} />
+        </button>
+
+        {showEmojiPicker && (
+          <div className="absolute bottom-16 left-4 bg-base-200 border border-base-300 rounded-lg shadow-lg p-2 z-20">
+            <EmojiPicker onEmojiClick={handleEmojiClick} />
+          </div>
+        )}
+
+        <input
+          type="text"
+          placeholder="Type a message..."
+          className="input w-full bg-transparent focus:outline-none"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          ref={fileInputRef}
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onloadend = () => setImagePreview(reader.result);
+              reader.readAsDataURL(file);
+            }
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="text-base-content/70 hover:text-secondary"
+        >
+          <Image size={20} />
+        </button>
+
+        <input
+          type="file"
+          accept="video/*"
+          className="hidden"
+          ref={videoInputRef}
+          onChange={(e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onloadend = () => setVideoPreview(reader.result);
+              reader.readAsDataURL(file);
+            }
+          }}
+        />
+        <button
+          type="button"
+          onClick={() => videoInputRef.current?.click()}
+          className="text-base-content/70 hover:text-accent"
+        >
+          <FileVideo size={20} />
+        </button>
+
+        <button
+          type="submit"
+          disabled={!text.trim() && !imagePreview && !videoPreview}
+          className="btn btn-primary btn-circle text-primary-content"
+        >
+          <Send size={20} />
+        </button>
+      </form>
+    </div>
+  );
 };
 
 export default MessageInput;
