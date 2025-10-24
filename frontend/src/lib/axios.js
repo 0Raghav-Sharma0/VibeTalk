@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// ✅ Use correct Render backend in production
+// ✅ Automatically pick the correct backend
 const BACKEND_URL =
   import.meta.env.MODE === "development"
     ? "http://localhost:5001/api"
@@ -8,16 +8,15 @@ const BACKEND_URL =
 
 export const axiosInstance = axios.create({
   baseURL: BACKEND_URL,
-  withCredentials: true,
+  withCredentials: true, // send cookies and auth headers
 });
 
-// ✅ Automatically attach token to every request
+// ✅ Attach Bearer token automatically to all requests
 axiosInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token && token !== "null" && token.trim() !== "") {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  config.withCredentials = true;
   return config;
 });
 
