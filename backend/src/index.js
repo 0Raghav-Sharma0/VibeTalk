@@ -20,9 +20,10 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://blah-blah-jvc4-7m41x6617-raghavsharma099900-7404s-projects.vercel.app",
+      "http://localhost:4173",
+      "https://blah-blah-jvc4-d1v0sl4g1-raghavsharma099900-7404s-projects.vercel.app",
+      "https://blah-blah-3.onrender.com",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   })
 );
