@@ -1,174 +1,193 @@
 // backend/src/lib/socket.js
 import { Server } from "socket.io";
-import http from "http";
-import express from "express";
 
-const app = express();
-const server = http.createServer(app);
+/* ============================================================
+   ALLOWED FRONTEND ORIGINS (CORS)
+   Supports:
+   - Vercel main domain
+   - Vercel preview domains (*.vercel.app)
+   - Localhost
+   - Any additional Render static domain if needed
+============================================================ */
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:4173",
+  "http://localhost:5174",
 
-// ================================================
-// 🔐 ALLOWED FRONTEND ORIGINS
-// ================================================
-const allowedOrigins =
-  process.env.NODE_ENV === "production"
-    ? [
-        "https://blah-blah-jvc4.vercel.app",                       // your Vercel
-        "https://blah-blah-hky1.vercel.app",                       // your new vercel
-        "https://blah-blah-3.onrender.com",                        // your render frontend
-      ]
-    : [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:4173",
-      ];
+  // Your deployed Vercel domains
+  "https://blah-blah-jvc4.vercel.app",
+  "https://blah-blah-hky1.vercel.app",
 
-console.log("🧩 Allowed Socket Origins:", allowedOrigins);
+  // Allow *any* vercel preview (important!)
+  /^https:\/\/.*\.vercel\.app$/,
 
-// ================================================
-// 🎧 SOCKET.IO SETUP
-// ================================================
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+  // Render static site (if using)
+  "https://blah-blah-3.onrender.com",
+];
 
-// ================================================
-// 👤 ONLINE USERS (No Redis)
-// ================================================
-const userSocketMap = {}; // userId → socketId
+function isOriginAllowed(origin) {
+  if (!origin) return false;
 
-export function getReceiverSocketId(userId) {
-  return userSocketMap[userId];
+  // Exact match
+  if (allowedOrigins.includes(origin)) return true;
+
+  // RegExp match
+  return allowedOrigins.some((o) => o instanceof RegExp && o.test(origin));
 }
 
-// ================================================
-// 🔥 SOCKET EVENTS
-// ================================================
-io.on("connection", (socket) => {
-  console.log("🟢 Socket Connected:", socket.id);
+/* ============================================================
+   SOCKET.IO INSTANCE
+============================================================ */
+let io = null;
 
-  const userId = socket.handshake.query.userId;
+export function createSocketServer(server) {
+  io = new Server(server, {
+    cors: {
+      origin: (origin, callback) => {
+        if (isOriginAllowed(origin)) {
+          callback(null, true);
+        } else {
+          console.log("❌ BLOCKED ORIGIN:", origin);
+          callback(new Error("CORS Not Allowed: " + origin));
+        }
+      },
+      credentials: true,
+      methods: ["GET", "POST"],
+    },
+  });
 
-  // Save user online
-  if (userId) {
-    userSocketMap[userId] = socket.id;
-    console.log(`👤 User ${userId} online`);
+  console.log("🔥 Socket.IO initialized with CORS");
+
+  /* ============================================================
+     ONLINE USERS (NO REDIS)
+  ============================================================ */
+  const userSocketMap = {}; // userId → socketId
+
+  function getReceiverSocketId(userId) {
+    return userSocketMap[userId];
   }
 
-  // Broadcast active users
-  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  /* ============================================================
+     SOCKET EVENTS
+  ============================================================ */
+  io.on("connection", (socket) => {
+    console.log("🟢 Connected:", socket.id);
 
-  // ==================================================
-  // 📞 REAL-TIME CALL SYSTEM (No Redis, Fully Working)
-  // ==================================================
+    const userId = socket.handshake.query.userId;
 
-  // User A calls User B
-  socket.on("call-user", ({ targetUserId, offer, callType = "video" }) => {
-    const targetSocket = getReceiverSocketId(targetUserId);
-
-    if (!targetSocket) {
-      socket.emit("call-failed", { reason: "User is offline" });
-      return;
+    if (userId) {
+      userSocketMap[userId] = socket.id;
+      console.log(`👤 User logged in: ${userId}`);
     }
 
-    io.to(targetSocket).emit("incoming-call", {
-      from: userId,
-      offer,
-      callType,
-    });
-  });
-
-  // User B accepts
-  socket.on("call-accepted", ({ callerId, answer }) => {
-    const callerSocket = getReceiverSocketId(callerId);
-    if (callerSocket) io.to(callerSocket).emit("call-accepted", { answer });
-  });
-
-  // User B rejects
-  socket.on("call-rejected", ({ callerId }) => {
-    const callerSocket = getReceiverSocketId(callerId);
-    if (callerSocket) io.to(callerSocket).emit("call-rejected");
-  });
-
-  // End Call
-  socket.on("end-call", ({ targetUserId }) => {
-    const targetSocket = getReceiverSocketId(targetUserId);
-    if (targetSocket) io.to(targetSocket).emit("call-ended");
-  });
-
-  // WebRTC Answer
-  socket.on("webrtc-answer", ({ targetUserId, answer }) => {
-    const targetSocket = getReceiverSocketId(targetUserId);
-    if (targetSocket)
-      io.to(targetSocket).emit("webrtc-answer", { answer, from: userId });
-  });
-
-  // WebRTC ICE Candidate
-  socket.on("webrtc-ice-candidate", ({ targetUserId, candidate }) => {
-    const targetSocket = getReceiverSocketId(targetUserId);
-    if (targetSocket)
-      io.to(targetSocket).emit("webrtc-ice-candidate", {
-        candidate,
-        from: userId,
-      });
-  });
-
-  // ==================================================
-  // ❤️ MESSAGE REACTIONS
-  // ==================================================
-  socket.on("sendReaction", ({ messageId, userId, emoji }) => {
-    io.emit("messageReaction", { messageId, userId, emoji });
-  });
-
-  // ==================================================
-  // 🎧 MUSIC SYNC (Play/Pause/Seek)
-  // ==================================================
-  socket.on("join-room", (roomId) => {
-    socket.join(roomId);
-    console.log(`🎵 Joined Room ${roomId}`);
-  });
-
-  socket.on("music-sync", ({ roomId, action, songUrl, songName, currentTime }) => {
-    socket.to(roomId).emit("music-sync", {
-      action,
-      songUrl,
-      songName,
-      currentTime: currentTime || 0,
-    });
-  });
-
-  // ==================================================
-  // ✏️ REAL-TIME WHITEBOARD
-  // ==================================================
-  socket.on("whiteboard-draw", ({ roomId, data }) => {
-    socket.to(roomId).emit("whiteboard-draw", data);
-  });
-
-  socket.on("whiteboard-clear", ({ roomId }) => {
-    io.to(roomId).emit("whiteboard-clear");
-  });
-
-  // ==================================================
-  // ❌ DISCONNECT
-  // ==================================================
-  socket.on("disconnect", () => {
-    console.log("🔴 Socket disconnected:", socket.id);
-
-    // Remove user from map
-    for (const uid in userSocketMap) {
-      if (userSocketMap[uid] === socket.id) {
-        delete userSocketMap[uid];
-        console.log(`❌ User ${uid} offline`);
-        break;
-      }
-    }
-
-    // Update online users
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
-  });
-});
 
-export { io, app, server };
+    /* =======================
+       CALLING SYSTEM
+    ======================== */
+    socket.on("call-user", ({ targetUserId, offer, callType }) => {
+      const receiver = getReceiverSocketId(targetUserId);
+
+      if (!receiver) {
+        socket.emit("call-failed", { reason: "User offline" });
+        return;
+      }
+
+      io.to(receiver).emit("incoming-call", {
+        from: userId,
+        offer,
+        callType,
+      });
+    });
+
+    socket.on("call-accepted", ({ callerId, answer }) => {
+      const callerSocket = getReceiverSocketId(callerId);
+      if (callerSocket) io.to(callerSocket).emit("call-accepted", { answer });
+    });
+
+    socket.on("call-rejected", ({ callerId }) => {
+      const callerSocket = getReceiverSocketId(callerId);
+      if (callerSocket) io.to(callerSocket).emit("call-rejected");
+    });
+
+    socket.on("end-call", ({ targetUserId }) => {
+      const receiver = getReceiverSocketId(targetUserId);
+      if (receiver) io.to(receiver).emit("call-ended");
+    });
+
+    /* =======================
+       WEBRTC SIGNALING
+    ======================== */
+    socket.on("webrtc-answer", ({ targetUserId, answer }) => {
+      const receiver = getReceiverSocketId(targetUserId);
+      if (receiver)
+        io.to(receiver).emit("webrtc-answer", { answer, from: userId });
+    });
+
+    socket.on("webrtc-ice-candidate", ({ targetUserId, candidate }) => {
+      const receiver = getReceiverSocketId(targetUserId);
+      if (receiver)
+        io.to(receiver).emit("webrtc-ice-candidate", {
+          candidate,
+          from: userId,
+        });
+    });
+
+    /* =======================
+       MESSAGE REACTIONS
+    ======================== */
+    socket.on("sendReaction", ({ messageId, userId, emoji }) => {
+      io.emit("messageReaction", { messageId, userId, emoji });
+    });
+
+    /* =======================
+       WHITEBOARD
+    ======================== */
+    socket.on("join-room", (roomId) => {
+      socket.join(roomId);
+    });
+
+    socket.on("whiteboard-draw", ({ roomId, data }) => {
+      socket.to(roomId).emit("whiteboard-draw", data);
+    });
+
+    socket.on("whiteboard-clear", ({ roomId }) => {
+      io.to(roomId).emit("whiteboard-clear");
+    });
+
+    /* =======================
+       MUSIC SYNC
+    ======================== */
+    socket.on("music-sync", ({ roomId, action, songUrl, songName, currentTime }) => {
+      socket.to(roomId).emit("music-sync", {
+        action,
+        songUrl,
+        songName,
+        currentTime,
+      });
+    });
+
+    /* =======================
+       DISCONNECT
+    ======================== */
+    socket.on("disconnect", () => {
+      console.log("🔴 Disconnected:", socket.id);
+
+      for (const uid in userSocketMap) {
+        if (userSocketMap[uid] === socket.id) {
+          delete userSocketMap[uid];
+          console.log("❌ User offline:", uid);
+        }
+      }
+
+      io.emit("getOnlineUsers", Object.keys(userSocketMap));
+    });
+  });
+
+  return io;
+}
+
+export function getIO() {
+  if (!io) throw new Error("Socket.IO not initialized!");
+  return io;
+}

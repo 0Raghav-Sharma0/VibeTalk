@@ -1,36 +1,34 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import path from "path";
+import http from "http";
+
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
-import cookieParser from "cookie-parser";
 import messageRoutes from "./routes/message.route.js";
-import cors from "cors";
-import { app, server } from "./lib/socket.js";
-import path from "path";
-import multer from "multer";
 import cloudinary from "./lib/cloudinary.js";
 
+import { createSocketServer } from "./lib/socket.js";
+
 dotenv.config();
+
+const app = express();
+const server = http.createServer(app);
 
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
-// ✅ Allow frontend (Vercel) + local dev
+/* =====================================================
+   CORS for Express (NOT socket.io)
+===================================================== */
 app.use(
   cors({
-    origin: [
-  "http://localhost:5173",
-  "http://localhost:4173",
-
-  // OLD production (still ok to keep)
-  "https://blah-blah-jvc4.vercel.app",
-
-  // OLD preview (optional)
-  "https://blah-blah-jvc4-eoigy5j7w-raghavsharma099900-7404s-projects.vercel.app",
-
-  // YOUR NEW VERCEL DEPLOYMENT (THIS IS REQUIRED)
-  "https://blah-blah-hky1.vercel.app",
-],
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      callback(null, true);
+    },
     credentials: true,
   })
 );
@@ -39,57 +37,41 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 
-// ✅ API routes
+/* =====================================================
+   API ROUTES
+===================================================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// ✅ Serve songs
+/* =====================================================
+   SONGS
+===================================================== */
 app.use(
   "/songs",
-  express.static(path.join(__dirname, "songs"), {
-    setHeaders: (res, filePath) => {
-      if (filePath.endsWith(".mp3")) {
-        res.setHeader("Content-Type", "audio/mpeg");
-      }
-    },
-  })
+  express.static(path.join(__dirname, "songs"))
 );
 
-// ✅ File upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, "songs")),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-});
-const upload = multer({ storage });
+/* =====================================================
+   SOCKET.IO INIT
+===================================================== */
+createSocketServer(server);
 
-app.post("/upload", upload.single("song"), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No file uploaded" });
-  res.json({
-    message: "File uploaded successfully",
-    url: `/songs/${req.file.filename}`,
-  });
-});
-
-// ✅ Serve frontend in production (optional)
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(path.join(__dirname, "../frontend/dist")));
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
-//   });
-// }
-
-// ✅ Start server
+/* =====================================================
+   START SERVER
+===================================================== */
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   connectDB();
 });
 
-// ✅ Cloudinary check
+/* =====================================================
+   CLOUDINARY CHECK
+===================================================== */
 (async () => {
   try {
     const result = await cloudinary.api.ping();
-    console.log("✅ Cloudinary connected successfully:", result);
-  } catch (error) {
-    console.error("❌ Cloudinary connection failed:", error.message);
+    console.log("☁️ Cloudinary Connected", result);
+  } catch (err) {
+    console.error("❌ Cloudinary Error:", err);
   }
 })();
