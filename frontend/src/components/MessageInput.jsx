@@ -1,3 +1,4 @@
+// src/components/MessageInput.jsx
 import React, { useRef, useState } from "react";
 import { Image, Send, X, FileVideo, Smile } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
@@ -5,7 +6,8 @@ import axios from "axios";
 import messageSentSound from "/sent_message.mp3";
 import { useChatStore } from "../store/useChatStore";
 
-const messageSentAudio = new Audio(messageSentSound);
+const messageSentAudio =
+  typeof Audio !== "undefined" ? new Audio(messageSentSound) : null;
 
 const MessageInput = () => {
   const [text, setText] = useState("");
@@ -28,7 +30,8 @@ const MessageInput = () => {
       let imageUrl = null;
       let videoUrl = null;
 
-      if (imagePreview && fileInputRef.current.files[0]) {
+      // Upload image
+      if (imagePreview && fileInputRef.current?.files?.[0]) {
         const form = new FormData();
         form.append("file", fileInputRef.current.files[0]);
         form.append("upload_preset", "my_preset");
@@ -37,10 +40,12 @@ const MessageInput = () => {
           "https://api.cloudinary.com/v1_1/dbi3tuuli/image/upload",
           form
         );
+
         imageUrl = res.data.secure_url;
       }
 
-      if (videoPreview && videoInputRef.current.files[0]) {
+      // Upload video
+      if (videoPreview && videoInputRef.current?.files?.[0]) {
         const form = new FormData();
         form.append("file", videoInputRef.current.files[0]);
         form.append("upload_preset", "my_preset");
@@ -49,35 +54,40 @@ const MessageInput = () => {
           "https://api.cloudinary.com/v1_1/dbi3tuuli/video/upload",
           form
         );
+
         videoUrl = res.data.secure_url;
       }
 
+      // Send final message
       await sendMessage({
         text: text.trim(),
         image: imageUrl,
         video: videoUrl,
       });
 
-      messageSentAudio.currentTime = 0;
-      messageSentAudio.play();
+      if (messageSentAudio) {
+        messageSentAudio.currentTime = 0;
+        messageSentAudio.play();
+      }
 
       setText("");
       setImagePreview(null);
       setVideoPreview(null);
+      setShowEmojiPicker(false);
     } catch (err) {
       console.error("Message send error:", err);
     }
   };
 
   return (
-    <div className="px-4 py-3 border-t border-base-300 bg-base-100 relative">
-
+    <div className="relative w-full">
       {/* FILE PREVIEW */}
       {(imagePreview || videoPreview) && (
         <div className="mb-3 flex items-center gap-3 bg-base-200 p-3 rounded-xl border border-base-300">
           {imagePreview && (
             <img
               src={imagePreview}
+              alt="preview"
               className="w-16 h-16 object-cover rounded-lg border border-base-300"
             />
           )}
@@ -91,6 +101,7 @@ const MessageInput = () => {
           )}
 
           <button
+            type="button"
             onClick={() => {
               setImagePreview(null);
               setVideoPreview(null);
@@ -104,30 +115,30 @@ const MessageInput = () => {
 
       {/* EMOJI PICKER */}
       {showEmojiPicker && (
-        <div className="absolute bottom-16 left-4 z-30 border border-base-300 rounded-xl bg-base-200 shadow-lg p-2">
+        <div className="absolute bottom-14 left-0 z-30 border border-base-300 rounded-xl bg-base-200 shadow-lg p-2">
           <EmojiPicker onEmojiClick={handleEmojiClick} theme="auto" />
         </div>
       )}
 
-      {/* MESSAGE INPUT */}
+      {/* INPUT BAR */}
       <form
         onSubmit={handleSendMessage}
-        className="flex items-center gap-3 bg-base-200 border border-base-300 rounded-full px-4 py-2"
+        className="flex items-center w-full gap-2 bg-base-200 border border-base-300 rounded-xl px-3 py-2"
       >
         {/* EMOJI */}
         <button
           type="button"
           onClick={() => setShowEmojiPicker((s) => !s)}
-          className="text-base-content/60 hover:text-base-content"
+          className="text-base-content/60 shrink-0"
         >
           <Smile size={20} />
         </button>
 
-        {/* TEXT FIELD */}
+        {/* TEXT INPUT */}
         <input
           type="text"
           placeholder="Type a message..."
-          className="flex-1 bg-transparent outline-none text-sm text-base-content placeholder:text-base-content/50"
+          className="flex-1 min-w-0 bg-transparent outline-none text-sm text-base-content placeholder:text-base-content/50"
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
@@ -139,7 +150,7 @@ const MessageInput = () => {
           ref={fileInputRef}
           className="hidden"
           onChange={(e) => {
-            const file = e.target.files[0];
+            const file = e.target.files?.[0];
             if (file) {
               const reader = new FileReader();
               reader.onloadend = () => setImagePreview(reader.result);
@@ -150,7 +161,7 @@ const MessageInput = () => {
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="text-base-content/60 hover:text-base-content"
+          className="text-base-content/60 shrink-0"
         >
           <Image size={18} />
         </button>
@@ -162,7 +173,7 @@ const MessageInput = () => {
           ref={videoInputRef}
           className="hidden"
           onChange={(e) => {
-            const file = e.target.files[0];
+            const file = e.target.files?.[0];
             if (file) {
               const reader = new FileReader();
               reader.onloadend = () => setVideoPreview(reader.result);
@@ -173,22 +184,18 @@ const MessageInput = () => {
         <button
           type="button"
           onClick={() => videoInputRef.current?.click()}
-          className="text-base-content/60 hover:text-base-content"
+          className="text-base-content/60 shrink-0"
         >
           <FileVideo size={18} />
         </button>
 
-        {/* SEND BUTTON */}
+        {/* SEND */}
         <button
           type="submit"
           disabled={!text.trim() && !imagePreview && !videoPreview}
-          className="
-            w-9 h-9 rounded-full btn btn-primary min-h-0 p-0
-            flex items-center justify-center
-            active:scale-95 disabled:opacity-50
-          "
+          className="w-9 h-9 shrink-0 rounded-full bg-primary text-primary-content flex items-center justify-center active:scale-95 disabled:opacity-50"
         >
-          <Send size={16} className="text-primary-content" />
+          <Send size={16} />
         </button>
       </form>
     </div>

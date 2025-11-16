@@ -1,4 +1,5 @@
 // backend/src/lib/socket.js
+
 import { Server } from "socket.io";
 
 /* ============================================================
@@ -141,17 +142,29 @@ export function createSocketServer(server) {
     });
 
     /* =======================
-       WHITEBOARD
+       WHITEBOARD REAL-TIME SYNC
     ======================== */
+
+    // Join a room
     socket.on("join-room", (roomId) => {
       socket.join(roomId);
+      console.log(`📝 Joined whiteboard room: ${roomId}`);
     });
 
-    socket.on("whiteboard-draw", ({ roomId, data }) => {
-      socket.to(roomId).emit("whiteboard-draw", data);
+    // Draw data broadcast (REAL FIX)
+    socket.on("whiteboard-draw", (payload) => {
+      if (!payload) return;
+
+      const { roomId } = payload;
+      if (!roomId) return;
+
+      // Broadcast the SAME payload your frontend expects
+      socket.to(roomId).emit("whiteboard-draw", payload);
     });
 
+    // Clear canvas
     socket.on("whiteboard-clear", ({ roomId }) => {
+      if (!roomId) return;
       io.to(roomId).emit("whiteboard-clear");
     });
 
@@ -194,4 +207,3 @@ export function getIO() {
   if (!io) throw new Error("Socket.IO not initialized!");
   return io;
 }
-

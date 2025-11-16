@@ -36,29 +36,40 @@ export default function Whiteboard({ roomId }) {
   }, []);
 
   // Listen for incoming drawing events
-  useEffect(() => {
-    socket.on("whiteboard-draw", (data) => {
-      const ctx = ctxRef.current;
-      ctx.strokeStyle = data.color;
-      ctx.lineWidth = data.size;
+  // Listen for incoming drawing events
+// Listen for incoming drawing events
+useEffect(() => {
+  socket.on("whiteboard-draw", (data) => {
+    // SAFETY GUARDS (fix crash)
+    if (!data) return;
+    if (!ctxRef.current) return;
+    if (!("color" in data)) return;
 
-      ctx.beginPath();
-      ctx.moveTo(data.lastX, data.lastY);
-      ctx.lineTo(data.x, data.y);
-      ctx.stroke();
-    });
+    const ctx = ctxRef.current;
 
-    socket.on("whiteboard-clear", () => {
-      const canvas = canvasRef.current;
-      const ctx = ctxRef.current;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
+    ctx.strokeStyle = data.color || "#000";
+    ctx.lineWidth = data.size || 4;
 
-    return () => {
-      socket.off("whiteboard-draw");
-      socket.off("whiteboard-clear");
-    };
-  }, []);
+    ctx.beginPath();
+    ctx.moveTo(data.lastX, data.lastY);
+    ctx.lineTo(data.x, data.y);
+    ctx.stroke();
+  });
+
+  socket.on("whiteboard-clear", () => {
+    if (!ctxRef.current || !canvasRef.current) return;
+
+    const canvas = canvasRef.current;
+    const ctx = ctxRef.current;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  });
+
+  return () => {
+    socket.off("whiteboard-draw");
+    socket.off("whiteboard-clear");
+  };
+}, []);
+
 
   let lastX = 0,
     lastY = 0;

@@ -1,4 +1,4 @@
-// ChatContainer.jsx
+// src/components/ChatContainer.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
@@ -25,7 +25,6 @@ export default function ChatContainer() {
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const endRef = useRef(null);
 
-  // ⭐ SHARED ROOM ID (VERY IMPORTANT)
   const sharedRoomId =
     selectedUser?._id && authUser?._id
       ? [authUser._id, selectedUser._id].sort().join("_")
@@ -45,8 +44,8 @@ export default function ChatContainer() {
   }, [messages]);
 
   return (
-    <div className="relative flex h-[calc(100vh-3.5rem)] overflow-hidden bg-base-200 text-base-content">
-      {/* CHAT SECTION */}
+    <div className="relative flex h-[100dvh] bg-base-200 text-base-content overflow-hidden">
+      {/* LEFT CHAT SECTION */}
       <div
         className={`flex flex-col flex-grow h-full border-r border-base-300 ${
           isMusicPlayerOpen || showWhiteboard ? "w-[68%]" : "w-full"
@@ -64,7 +63,7 @@ export default function ChatContainer() {
               Loading messages…
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="flex flex-col items-center justify-center h-full text-center select-none">
               <h2 className="text-lg font-semibold text-base-content/80">
                 Start the conversation
               </h2>
@@ -97,6 +96,7 @@ export default function ChatContainer() {
                     />
                   </div>
 
+                  {/* Text / Media */}
                   <div
                     className={`flex flex-col max-w-[70%] ${
                       isMine ? "items-end order-1" : "items-start order-2"
@@ -140,22 +140,20 @@ export default function ChatContainer() {
           <div ref={endRef} />
         </div>
 
-        {/* INPUT */}
-        <div className="border-t border-base-300 bg-base-100 px-4 py-3">
-          <div className="bg-base-200 rounded-full border border-base-300 px-4 py-2">
-            <MessageInput />
-          </div>
+        {/* ⭐ FIXED RESPONSIVE INPUT BAR */}
+        <div className="border-t border-base-300 bg-base-100 px-3 py-2">
+          <MessageInput />
         </div>
       </div>
 
-      {/* MUSIC SIDEBAR */}
+      {/* RIGHT MUSIC SIDEBAR */}
       {isMusicPlayerOpen && !showWhiteboard && (
         <div className="w-[32%] border-l border-base-300 bg-base-100">
           <MusicPlayer roomId={sharedRoomId} />
         </div>
       )}
 
-      {/* WHITEBOARD SIDEBAR */}
+      {/* RIGHT WHITEBOARD SIDEBAR */}
       {showWhiteboard && (
         <div className="w-[32%] border-l border-base-300 bg-base-100">
           <Whiteboard roomId={sharedRoomId} />
