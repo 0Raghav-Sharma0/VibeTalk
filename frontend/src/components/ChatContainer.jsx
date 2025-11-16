@@ -7,6 +7,7 @@ import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MusicPlayer from "./MusicPlayer";
 import Whiteboard from "./Whiteboard";
+import { X } from "lucide-react";
 import { formatMessageTime } from "../lib/utils";
 
 export default function ChatContainer() {
@@ -20,26 +21,25 @@ export default function ChatContainer() {
   } = useChatStore();
 
   const { authUser } = useAuthStore();
-  const { isMusicPlayerOpen } = useMusicStore();
+  const { isMusicPlayerOpen, toggleMusicPlayer } = useMusicStore();
 
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const endRef = useRef(null);
 
-  // Shared room ID for whiteboard/music sync
   const sharedRoomId =
     selectedUser?._id && authUser?._id
       ? [authUser._id, selectedUser._id].sort().join("_")
       : null;
 
+  // Load messages
   useEffect(() => {
     if (!selectedUser?._id) return;
-
     getMessages(selectedUser._id);
     subscribeToMessages();
-
     return () => unsubscribeFromMessages();
   }, [selectedUser?._id]);
 
+  // Autoscroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -47,15 +47,16 @@ export default function ChatContainer() {
   return (
     <div className="relative flex h-full bg-base-200 text-base-content overflow-hidden">
 
-      {/* LEFT CHAT AREA */}
+      {/* LEFT CHAT SECTION */}
       <div
-        className={`flex flex-col flex-grow h-full border-r border-base-300 ${
-          isMusicPlayerOpen || showWhiteboard ? "w-[68%]" : "w-full"
-        }`}
+        className={`flex flex-col flex-grow h-full border-r border-base-300
+          ${(showWhiteboard || isMusicPlayerOpen) ? "md:w-[68%]" : "w-full"}
+        `}
       >
         <ChatHeader
           showWhiteboard={showWhiteboard}
           setShowWhiteboard={setShowWhiteboard}
+          openMusic={() => toggleMusicPlayer(true)}
         />
 
         {/* MESSAGE LIST */}
@@ -78,15 +79,11 @@ export default function ChatContainer() {
               return (
                 <div
                   key={msg._id}
-                  className={`flex items-start gap-3 ${
-                    isMine ? "justify-end" : "justify-start"
-                  }`}
+                  className={`flex items-start gap-3 ${isMine ? "justify-end" : "justify-start"}`}
                 >
-                  {/* Avatar */}
                   <div
-                    className={`w-9 h-9 rounded-full overflow-hidden border border-base-300 ${
-                      isMine ? "order-2" : "order-1"
-                    }`}
+                    className={`w-9 h-9 rounded-full overflow-hidden border border-base-300
+                      ${isMine ? "order-2" : "order-1"}`}
                   >
                     <img
                       src={
@@ -98,32 +95,27 @@ export default function ChatContainer() {
                     />
                   </div>
 
-                  {/* Text & Media */}
+                  {/* Bubble */}
                   <div
-                    className={`flex flex-col max-w-[70%] ${
-                      isMine ? "items-end order-1" : "items-start order-2"
-                    }`}
+                    className={`flex flex-col max-w-[70%]
+                      ${isMine ? "items-end order-1" : "items-start order-2"}`}
                   >
                     <span className="text-xs text-base-content/60 mb-1">
                       {formatMessageTime(msg.createdAt)}
                     </span>
 
                     <div
-                      className={`px-4 py-2 rounded-xl border border-base-300 shadow-sm ${
-                        isMine ? "bg-primary text-primary-content" : "bg-base-100"
-                      }`}
+                      className={`px-4 py-2 rounded-xl border border-base-300 shadow-sm
+                        ${isMine ? "bg-primary text-primary-content" : "bg-base-100"}`}
                     >
                       {msg.text && <p>{msg.text}</p>}
-
                       {msg.image && (
                         <img
                           src={msg.image}
-                          alt="sent"
+                          className="mt-3 rounded-lg max-w-[240px] border border-base-300 cursor-pointer"
                           onClick={() => window.open(msg.image, "_blank")}
-                          className="mt-3 rounded-lg max-w-[240px] cursor-pointer border border-base-300"
                         />
                       )}
-
                       {msg.video && (
                         <video
                           controls
@@ -147,20 +139,63 @@ export default function ChatContainer() {
         </div>
       </div>
 
-      {/* MUSIC SIDEBAR */}
-      {isMusicPlayerOpen && !showWhiteboard && (
-        <div className="w-[32%] border-l border-base-300 bg-base-100">
-          <MusicPlayer roomId={sharedRoomId} />
-        </div>
+      {/* ===================================== */}
+      {/* WHITEBOARD SLIDER PANEL              */}
+      {/* ===================================== */}
+      <div
+        className={`
+          fixed inset-y-0 right-0 w-[85%] max-w-sm bg-base-100 border-l border-base-300 z-40
+          transform transition-transform duration-300 ease-in-out
+          ${showWhiteboard ? "translate-x-0" : "translate-x-full"}
+          md:static md:translate-x-0 md:w-[32%]
+        `}
+      >
+        <button
+          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full border border-base-400"
+          onClick={() => setShowWhiteboard(false)}
+        >
+          <X size={18} />
+        </button>
+
+        <Whiteboard roomId={sharedRoomId} />
+      </div>
+
+      {/* MOBILE OVERLAY FOR WHITEBOARD */}
+      {showWhiteboard && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => setShowWhiteboard(false)}
+        />
       )}
 
-      {/* WHITEBOARD SIDEBAR */}
-      {showWhiteboard && (
-        <div className="w-[32%] border-l border-base-300 bg-base-100">
-          <Whiteboard roomId={sharedRoomId} />
-        </div>
+      {/* ===================================== */}
+      {/* MUSICPLAYER SLIDER PANEL             */}
+      {/* ===================================== */}
+      <div
+        className={`
+          fixed inset-y-0 right-0 w-[85%] max-w-sm bg-base-100 border-l border-base-300 z-40
+          transform transition-transform duration-300 ease-in-out
+          ${isMusicPlayerOpen ? "translate-x-0" : "translate-x-full"}
+          md:static md:translate-x-0 md:w-[32%]
+        `}
+      >
+        <button
+          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full border border-base-400"
+          onClick={() => toggleMusicPlayer(false)}
+        >
+          <X size={18} />
+        </button>
+
+        <MusicPlayer roomId={sharedRoomId} />
+      </div>
+
+      {/* MOBILE OVERLAY FOR MUSIC */}
+      {isMusicPlayerOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={() => toggleMusicPlayer(false)}
+        />
       )}
     </div>
   );
 }
-

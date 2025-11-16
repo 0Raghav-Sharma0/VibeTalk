@@ -1,4 +1,4 @@
-// Whiteboard.jsx
+// src/components/Whiteboard.jsx
 import React, { useRef, useEffect, useState } from "react";
 import { io } from "socket.io-client";
 
@@ -10,83 +10,116 @@ const socket = io(
 
 export default function Whiteboard({ roomId }) {
   const canvasRef = useRef(null);
-  const ctxRef = useRef(null);   // ✅ FIXED
+  const ctxRef = useRef(null);
   const isDrawing = useRef(false);
 
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(4);
 
-  // Join room
+  let lastX = 0;
+  let lastY = 0;
+
+  // JOIN ROOM
   useEffect(() => {
     if (!roomId) return;
-    console.log("Joined whiteboard room:", roomId);
     socket.emit("join-room", roomId);
   }, [roomId]);
 
-  // Setup canvas + context
+  // INITIALIZE CANVAS
   useEffect(() => {
     const canvas = canvasRef.current;
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
 
-    const ctx = canvas.getContext("2d");
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctxRef.current = ctx;
+    const resize = () => {
+      const temp = document.createElement("canvas");
+      temp.width = canvas.width;
+      temp.height = canvas.height;
+      temp.getContext("2d").drawImage(canvas, 0, 0);
+
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.drawImage(temp, 0, 0);
+
+      ctxRef.current = ctx;
+    };
+
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // Listen for incoming drawing events
-  // Listen for incoming drawing events
-// Listen for incoming drawing events
-useEffect(() => {
-  socket.on("whiteboard-draw", (data) => {
-    // SAFETY GUARDS (fix crash)
-    if (!data) return;
-    if (!ctxRef.current) return;
-    if (!("color" in data)) return;
+  // RECEIVE DRAW FROM OTHERS
+  useEffect(() => {
+    socket.on("whiteboard-draw", (data) => {
+      const ctx = ctxRef.current;
+      if (!ctx) return;
 
-    const ctx = ctxRef.current;
+      ctx.strokeStyle = data.color;
+      ctx.lineWidth = data.size;
+      ctx.beginPath();
+      ctx.moveTo(data.lastX, data.lastY);
+      ctx.lineTo(data.x, data.y);
+      ctx.stroke();
+    });
 
-    ctx.strokeStyle = data.color || "#000";
-    ctx.lineWidth = data.size || 4;
+    socket.on("whiteboard-clear", () => {
+      const canvas = canvasRef.current;
+      const ctx = ctxRef.current;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
 
-    ctx.beginPath();
-    ctx.moveTo(data.lastX, data.lastY);
-    ctx.lineTo(data.x, data.y);
-    ctx.stroke();
-  });
+    return () => {
+      socket.off("whiteboard-draw");
+      socket.off("whiteboard-clear");
+    };
+  }, []);
 
-  socket.on("whiteboard-clear", () => {
-    if (!ctxRef.current || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  });
-
-  return () => {
-    socket.off("whiteboard-draw");
-    socket.off("whiteboard-clear");
-  };
-}, []);
-
-
-  let lastX = 0,
-    lastY = 0;
-
-  const startDrawing = (e) => {
+  /** ------------------------
+   * 🖱 LAPTOP MOUSE EVENTS
+   -------------------------**/
+  const handleMouseDown = (e) => {
     isDrawing.current = true;
     const rect = canvasRef.current.getBoundingClientRect();
     lastX = e.clientX - rect.left;
     lastY = e.clientY - rect.top;
   };
 
-  const draw = (e) => {
+  const handleMouseMove = (e) => {
     if (!isDrawing.current) return;
+    drawStroke(e.clientX, e.clientY);
+  };
 
+  const handleMouseUp = () => (isDrawing.current = false);
+
+  /** ------------------------
+   * 📱 MOBILE TOUCH EVENTS
+   -------------------------**/
+  const handleTouchStart = (e) => {
+    isDrawing.current = true;
+    const touch = e.touches[0];
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    lastX = touch.clientX - rect.left;
+    lastY = touch.clientY - rect.top;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDrawing.current) return;
+    const touch = e.touches[0];
+    drawStroke(touch.clientX, touch.clientY);
+  };
+
+  const handleTouchEnd = () => (isDrawing.current = false);
+
+  /** ------------------------
+   * ✏️ DRAW FUNCTION
+   -------------------------**/
+  const drawStroke = (xPos, yPos) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = xPos - rect.left;
+    const y = yPos - rect.top;
 
     const ctx = ctxRef.current;
     ctx.strokeStyle = color;
@@ -111,21 +144,18 @@ useEffect(() => {
     lastY = y;
   };
 
-  const stopDrawing = () => {
-    isDrawing.current = false;
-  };
-
+  /** CLEAR BOARD */
   const clearBoard = () => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
     socket.emit("whiteboard-clear", { roomId });
   };
 
   return (
     <div className="flex flex-col h-full bg-base-100 border-l border-base-300">
       <div className="p-3 flex gap-4 items-center border-b bg-base-200">
+
         <input
           type="color"
           value={color}
@@ -152,11 +182,14 @@ useEffect(() => {
 
       <canvas
         ref={canvasRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        className="flex-1 bg-white cursor-crosshair"
+        className="flex-1 bg-white touch-none"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       />
     </div>
   );
