@@ -10,7 +10,7 @@ const socket = io(
 
 export default function Whiteboard({ roomId }) {
   const canvasRef = useRef(null);
-  const ctxRef = useRezzf(null);
+  const ctxRef = useRef(null);   // ✅ FIXED
   const isDrawing = useRef(false);
 
   const [color, setColor] = useState("#000000");
@@ -23,7 +23,7 @@ export default function Whiteboard({ roomId }) {
     socket.emit("join-room", roomId);
   }, [roomId]);
 
-  // Setup canvas
+  // Setup canvas + context
   useEffect(() => {
     const canvas = canvasRef.current;
     canvas.width = canvas.offsetWidth;
@@ -35,11 +35,10 @@ export default function Whiteboard({ roomId }) {
     ctxRef.current = ctx;
   }, []);
 
-  // Receive strokes
+  // Listen for incoming drawing events
   useEffect(() => {
     socket.on("whiteboard-draw", (data) => {
       const ctx = ctxRef.current;
-
       ctx.strokeStyle = data.color;
       ctx.lineWidth = data.size;
 
@@ -89,14 +88,12 @@ export default function Whiteboard({ roomId }) {
 
     socket.emit("whiteboard-draw", {
       roomId,
-      data: {
-        lastX,
-        lastY,
-        x,
-        y,
-        color,
-        size,
-      },
+      lastX,
+      lastY,
+      x,
+      y,
+      color,
+      size,
     });
 
     lastX = x;
