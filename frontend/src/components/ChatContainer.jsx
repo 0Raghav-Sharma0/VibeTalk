@@ -25,6 +25,7 @@ export default function ChatContainer() {
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const endRef = useRef(null);
 
+  // Shared room ID for whiteboard/music sync
   const sharedRoomId =
     selectedUser?._id && authUser?._id
       ? [authUser._id, selectedUser._id].sort().join("_")
@@ -44,8 +45,9 @@ export default function ChatContainer() {
   }, [messages]);
 
   return (
-    <div className="relative flex h-[100dvh] bg-base-200 text-base-content overflow-hidden">
-      {/* LEFT CHAT SECTION */}
+    <div className="relative flex h-full bg-base-200 text-base-content overflow-hidden">
+
+      {/* LEFT CHAT AREA */}
       <div
         className={`flex flex-col flex-grow h-full border-r border-base-300 ${
           isMusicPlayerOpen || showWhiteboard ? "w-[68%]" : "w-full"
@@ -56,7 +58,7 @@ export default function ChatContainer() {
           setShowWhiteboard={setShowWhiteboard}
         />
 
-        {/* MESSAGES */}
+        {/* MESSAGE LIST */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 scrollbar-thin scrollbar-thumb-base-300">
           {isMessagesLoading ? (
             <div className="flex items-center justify-center h-full text-base-content/50 text-lg">
@@ -96,7 +98,7 @@ export default function ChatContainer() {
                     />
                   </div>
 
-                  {/* Text / Media */}
+                  {/* Text & Media */}
                   <div
                     className={`flex flex-col max-w-[70%] ${
                       isMine ? "items-end order-1" : "items-start order-2"
@@ -136,24 +138,23 @@ export default function ChatContainer() {
               );
             })
           )}
-
           <div ref={endRef} />
         </div>
 
-        {/* ⭐ FIXED RESPONSIVE INPUT BAR */}
+        {/* INPUT BAR */}
         <div className="border-t border-base-300 bg-base-100 px-3 py-2">
           <MessageInput />
         </div>
       </div>
 
-      {/* RIGHT MUSIC SIDEBAR */}
+      {/* MUSIC SIDEBAR */}
       {isMusicPlayerOpen && !showWhiteboard && (
         <div className="w-[32%] border-l border-base-300 bg-base-100">
           <MusicPlayer roomId={sharedRoomId} />
         </div>
       )}
 
-      {/* RIGHT WHITEBOARD SIDEBAR */}
+      {/* WHITEBOARD SIDEBAR */}
       {showWhiteboard && (
         <div className="w-[32%] border-l border-base-300 bg-base-100">
           <Whiteboard roomId={sharedRoomId} />
@@ -162,3 +163,4 @@ export default function ChatContainer() {
     </div>
   );
 }
+
