@@ -1,35 +1,34 @@
 import React from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, User, MessageSquare } from "lucide-react";
-import { motion } from "framer-motion";
+import { LogOut, Settings, User, MessageSquare, Users } from "lucide-react";
 
-const Navbar = () => {
+const Navbar = ({ onOpenSidebar }) => {
   const { logout, authUser } = useAuthStore();
 
   return (
     <header className="fixed top-0 w-full z-40 bg-base-100 border-b border-base-300/80">
-      <div className="flex items-center justify-between h-14 px-6">
+      <div className="flex items-center justify-between h-14 px-4 sm:px-6">
 
-        {/* LEFT: Logo + Title */}
-        <Link to="/" className="flex items-center gap-3 select-none">
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
+        {/* LEFT SECTION: Mobile Button + Logo */}
+        <div className="flex items-center gap-3">
+
+          {/* MOBILE SIDEBAR BUTTON */}
+          <button
+            className="md:hidden btn btn-ghost btn-square"
+            onClick={onOpenSidebar}
           >
+            <Users className="w-5 h-5" />
+          </button>
+
+          {/* LOGO + TITLE */}
+          <Link to="/" className="flex items-center gap-2 select-none">
             <MessageSquare className="w-7 h-7 text-primary" />
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
-            className="text-xl font-semibold tracking-tight text-base-content"
-          >
-            VibeTalk
-          </motion.h1>
-        </Link>
+            <h1 className="text-xl font-semibold tracking-tight text-base-content">
+              VibeTalk
+            </h1>
+          </Link>
+        </div>
 
         {/* RIGHT BUTTONS */}
         <div className="flex items-center gap-3">
@@ -50,7 +49,7 @@ const Navbar = () => {
             </div>
           </Link>
 
-          {/* PROFILE + LOGOUT */}
+          {/* PROFILE & LOGOUT */}
           {authUser && (
             <>
               {/* PROFILE */}
@@ -87,7 +86,6 @@ const Navbar = () => {
             </>
           )}
         </div>
-
       </div>
     </header>
   );

@@ -1,55 +1,78 @@
-import React from "react";
-import { useChatStore } from "../store/useChatStore";
+// src/pages/HomePage.jsx
+import React, { useState } from "react";
+import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ChatContainer from "../components/ChatContainer";
 import NoChatSelected from "../components/NoChatSelected";
-import { Search } from "lucide-react";
+import { useChatStore } from "../store/useChatStore";
+import { Users, X } from "lucide-react";
 
 export default function HomePage() {
   const { selectedUser } = useChatStore();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="h-screen w-full bg-base-200 text-base-content flex flex-col overflow-hidden">
 
-      {/* Top Bar */}
-      <div className="h-14 border-b border-base-300 flex items-center justify-between px-6 bg-base-100">
-        <h1 className="text-lg font-semibold tracking-tight select-none text-base-content">
-          VibeTalk
-        </h1>
+      {/* ==================== NAVBAR (WITH MOBILE SIDEBAR BUTTON) ==================== */}
+      <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
 
-        {/* SEARCH BAR (Desktop) */}
-        <div className="relative hidden md:block">
-          <input
-            placeholder="Search"
-            className="
-              w-56 pl-9 pr-3 py-2 text-sm rounded-lg outline-none
-              bg-base-200 border border-base-300
-              placeholder:text-base-content/40
-              focus:border-primary
-              transition
-            "
-          />
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-base-content/40" />
+      {/* ==================== MAIN AREA ==================== */}
+      <div className="flex flex-1 overflow-hidden pt-14">
+
+        {/* DESKTOP SIDEBAR */}
+        <div className="hidden md:block md:w-72">
+          <Sidebar />
         </div>
-      </div>
 
-      {/* Main Layout */}
-      <div className="flex flex-1 overflow-hidden">
-
-        {/* Sidebar */}
-        <Sidebar />
-
-        {/* Main Chat Area */}
+        {/* MAIN CHAT PANEL */}
         <div className="flex-1 bg-base-200 overflow-hidden">
           {selectedUser ? (
             <ChatContainer />
           ) : (
-            <div className="h-full w-full flex flex-col items-center justify-center text-center select-none">
+            <div className="h-full flex flex-col items-center justify-center text-center select-none">
               <NoChatSelected />
             </div>
           )}
         </div>
       </div>
+
+      {/* ==================== MOBILE DRAWER SIDEBAR ==================== */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 flex items-stretch" role="dialog" aria-modal="true">
+
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setSidebarOpen(false)}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative w-72 max-w-full h-full bg-base-200 shadow-xl z-50 flex flex-col">
+
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 bg-base-100">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <span className="font-medium">Contacts</span>
+              </div>
+
+              <button
+                className="btn btn-ghost btn-square btn-sm"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Drawer Sidebar Content */}
+            <div className="flex-1 overflow-y-auto">
+              <Sidebar onClose={() => setSidebarOpen(false)} />
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }
