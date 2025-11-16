@@ -31,13 +31,24 @@
 // export { pubClient, subClient };
 // Redis temporarily disabled for deployment.
 // Keep this file for future use.
+// 🚫 Redis temporarily disabled for deployment.
+// Keep this file so app doesn't break and can be re-enabled later.
 
-const redisClient = {
-  connect: async () => {},
-  on: () => {},
-  duplicate: () => ({
-    connect: async () => {},
-  }),
+const redis = {
+  sMembers: async () => [],
+  sAdd: async () => {},
+  sRem: async () => {},
+  sCard: async () => 0,
 };
 
-export default redisClient;
+export const pubClient = {
+  connect: async () => {},
+  publish: async () => {},
+};
+
+export const subClient = {
+  connect: async () => {},
+  subscribe: async () => {},
+};
+
+export default redis;
