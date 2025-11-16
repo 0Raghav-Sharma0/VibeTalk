@@ -3,32 +3,28 @@ import { Server } from "socket.io";
 
 /* ============================================================
    ALLOWED FRONTEND ORIGINS (CORS)
-   Supports:
-   - Vercel main domain
-   - Vercel preview domains (*.vercel.app)
-   - Localhost
-   - Any additional Render static domain if needed
 ============================================================ */
 const allowedOrigins = [
+  // Local dev
   "http://localhost:5173",
-  "http://localhost:4173",
   "http://localhost:5174",
+  "http://localhost:4173",
 
-  // Your deployed Vercel domains
+  // Vercel main deployments
   "https://blah-blah-jvc4.vercel.app",
   "https://blah-blah-hky1.vercel.app",
 
-  // Allow *any* vercel preview (important!)
+  // Allow all vercel preview URLs
   /^https:\/\/.*\.vercel\.app$/,
 
-  // Render static site (if using)
+  // Render static site
   "https://blah-blah-3.onrender.com",
 ];
 
 function isOriginAllowed(origin) {
   if (!origin) return false;
 
-  // Exact match
+  // Direct match
   if (allowedOrigins.includes(origin)) return true;
 
   // RegExp match
@@ -40,6 +36,18 @@ function isOriginAllowed(origin) {
 ============================================================ */
 let io = null;
 
+/* ============================================================
+   ONLINE USERS (NO REDIS)
+============================================================ */
+const userSocketMap = {}; // userId → socketId
+
+export function getReceiverSocketId(userId) {
+  return userSocketMap[userId];
+}
+
+/* ============================================================
+   CREATE SOCKET SERVER
+============================================================ */
 export function createSocketServer(server) {
   io = new Server(server, {
     cors: {
@@ -59,15 +67,6 @@ export function createSocketServer(server) {
   console.log("🔥 Socket.IO initialized with CORS");
 
   /* ============================================================
-     ONLINE USERS (NO REDIS)
-  ============================================================ */
-  const userSocketMap = {}; // userId → socketId
-
-  function getReceiverSocketId(userId) {
-    return userSocketMap[userId];
-  }
-
-  /* ============================================================
      SOCKET EVENTS
   ============================================================ */
   io.on("connection", (socket) => {
@@ -75,9 +74,10 @@ export function createSocketServer(server) {
 
     const userId = socket.handshake.query.userId;
 
+    // Track online users
     if (userId) {
       userSocketMap[userId] = socket.id;
-      console.log(`👤 User logged in: ${userId}`);
+      console.log(`👤 User online: ${userId}`);
     }
 
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
@@ -176,7 +176,7 @@ export function createSocketServer(server) {
       for (const uid in userSocketMap) {
         if (userSocketMap[uid] === socket.id) {
           delete userSocketMap[uid];
-          console.log("❌ User offline:", uid);
+          console.log(`❌ User offline: ${uid}`);
         }
       }
 
@@ -187,6 +187,9 @@ export function createSocketServer(server) {
   return io;
 }
 
+/* ============================================================
+   GET SOCKET INSTANCE
+============================================================ */
 export function getIO() {
   if (!io) throw new Error("Socket.IO not initialized!");
   return io;
