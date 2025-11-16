@@ -1,30 +1,45 @@
-import lottie from "lottie-web";
-import { defineElement } from "@lordicon/element";
-defineElement(lottie.loadAnimation);
+import { motion } from "framer-motion";
 
 const NoChatSelected = () => {
   return (
-    <div className="w-full flex flex-1 flex-col items-center justify-center p-16 bg-base-100/50">
-      <div className="max-w-md text-center space-y-6">
-        <div className="flex justify-center gap-4 mb-4">
-          <div className="relative">
-            <div className="w-24 h-24">
-              <lord-icon 
-                trigger="loop" 
-                src="/wired-lineal-2803-engagement-alt-hover-pinch.json" 
-                style={{ width: "100px", height: "100px" }}
-              ></lord-icon>
-            </div>
-          </div>
+    <div className="h-full w-full flex items-center justify-center px-6 select-none">
+
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: "easeOut" }}
+        className="
+          flex flex-col items-center text-center
+          border border-base-300 rounded-xl
+          p-10 max-w-sm w-full bg-base-200
+        "
+      >
+        {/* Minimal geometric icon */}
+        <div className="mb-5">
+          <svg
+            width="60"
+            height="60"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-primary"
+          >
+            <path d="M21 15v-8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14l4-4h10" />
+          </svg>
         </div>
 
-        <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-pink-500">
-          Welcome to VibeTalk!
+        <h2 className="text-lg font-semibold text-base-content mb-1">
+          Select a Chat
         </h2>
-        <p className="text-base-content/60">
-          Select a conversation to start VibeTalking 🎧
+
+        <p className="text-base-content/60 text-sm leading-relaxed">
+          Choose someone from the sidebar to start messaging.
         </p>
-      </div>
+      </motion.div>
+
     </div>
   );
 };

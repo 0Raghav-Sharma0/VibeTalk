@@ -1,31 +1,173 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-
+/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root{
+  /* default (vibetalk) theme variables */
+  --bg: #0f1720;
+  --surface: #111217;
+  --muted: #9aa0a6;
+  --text: #e6eef6;
+  --primary: #a855f7;
+  --primary-600: #7c3aed;
+  --secondary: #ec4899;
+  --accent: #00e5ff;
+  --grad-1: rgba(168,85,247,0.95);
+  --grad-2: rgba(236,72,153,0.95);
+  --theme-glow: rgba(168,85,247,0.12);
+}
+
+/* Utility to apply theme */
+html.theme-light {
+  --bg: #ffffff;
+  --surface: #f7f9fb;
+  --muted: #6b7280;
+  --text: #0f1720;
+  --primary: #5b21b6;
+  --primary-600: #4c1d95;
+  --secondary: #f97316;
+  --accent: #06b6d4;
+  --grad-1: rgba(91,33,182,0.9);
+  --grad-2: rgba(249,115,22,0.9);
+  --theme-glow: rgba(91,33,182,0.08);
+}
+
+/* Valentine (pink/teal pastel) */
+html.theme-valentine{
+  --bg:#0b0f14;
+  --surface:#0f1419;
+  --muted:#b9a6b3;
+  --text:#fff1f6;
+  --primary:#ff77aa;
+  --primary-600:#ff5f98;
+  --secondary:#7ef5d4;
+  --accent:#ffc6e0;
+  --grad-1:rgba(255,119,170,0.95);
+  --grad-2:rgba(126,245,212,0.95);
+  --theme-glow: rgba(255,119,170,0.08);
+}
+
+/* Pastel (soft peach + teal) */
+html.theme-pastel{
+  --bg:#0c1114;
+  --surface:#0f1619;
+  --muted:#bfc7c3;
+  --text:#f8faf9;
+  --primary:#ffd5a6; /* peach */
+  --primary-600:#ffb678;
+  --secondary:#9be7d3; /* mint */
+  --accent:#f7d4f0;
+  --grad-1:rgba(255,213,166,0.95);
+  --grad-2:rgba(155,231,211,0.95);
+  --theme-glow: rgba(255,213,166,0.06);
+}
+
+/* Fantasy (neon teal + purple) */
+html.theme-fantasy{
+  --bg:#06060a;
+  --surface:#0b0b10;
+  --muted:#9fb1d4;
+  --text:#e8f7ff;
+  --primary:#7c5cff;
+  --primary-600:#5a3ef2;
+  --secondary:#00ffd5;
+  --accent:#ff71b8;
+  --grad-1:rgba(124,92,255,0.95);
+  --grad-2:rgba(0,255,213,0.95);
+  --theme-glow: rgba(0,255,213,0.06);
+}
+
+/* Halloween (orange + dark purple) */
+html.theme-halloween{
+  --bg:#070407;
+  --surface:#0b070a;
+  --muted:#b8a89a;
+  --text:#fff6e6;
+  --primary:#ff8a00;
+  --primary-600:#ff6b00;
+  --secondary:#7b2b5a;
+  --accent:#ffd166;
+  --grad-1:rgba(255,138,0,0.95);
+  --grad-2:rgba(123,43,90,0.95);
+  --theme-glow: rgba(255,138,0,0.06);
+}
+
+/* Wireframe (monochrome + cyan accent) */
+html.theme-wireframe{
+  --bg:#0b0b0c;
+  --surface:#0f1112;
+  --muted:#93a0a7;
+  --text:#e6eef6;
+  --primary:#2dd4bf;
+  --primary-600:#14b8a6;
+  --secondary:#94a3b8;
+  --accent:#cbd5e1;
+  --grad-1:rgba(45,212,191,0.85);
+  --grad-2:rgba(148,163,184,0.85);
+  --theme-glow: rgba(45,212,191,0.06);
+}
+
+/* Cmyk (orange/teal/purple) */
+html.theme-cmyk {
+  --bg:#05070a;
+  --surface:#0b0d11;
+  --muted:#9fa8b3;
+  --text:#f3fbff;
+  --primary:#ff6a3d;
+  --primary-600:#ff4a1a;
+  --secondary:#00c2c2;
+  --accent:#b175ff;
+  --grad-1:rgba(255,106,61,0.95);
+  --grad-2:rgba(0,194,194,0.95);
+  --theme-glow: rgba(255,106,61,0.06);
+}
+
+/* Add/inventory more themes here (valentine, pastel, fantasy, halloween, wireframe, cmyk, etc.) */
+
+/* Basic layout utilities that use variables */
 body {
-    font-family: 'Inter', sans-serif;
-  }
-
-.scrollbar-fade::-webkit-scrollbar {
-  width: 8px;
-  transition: opacity 0.3s;
-  opacity: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-.scrollbar-fade:hover::-webkit-scrollbar {
-  opacity: 1;
+.surface {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.02);
+  box-shadow: 0 6px 18px rgba(2,6,23,0.5);
 }
 
-.scrollbar-fade::-webkit-scrollbar-thumb {
-  background: #c4a47a;
-  border-radius: 8px;
+/* Card that uses gradient / primary */
+.theme-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius: 14px;
 }
 
-.scrollbar-fade::-webkit-scrollbar-track {
-  background: transparent;
+/* Primary button uses css variable colors */
+.btn-theme {
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  color: var(--text);
+  box-shadow: 0 6px 20px var(--theme-glow);
 }
 
+/* small helpers for swatches in settings */
+.theme-swatch {
+  width: 36px;
+  height: 18px;
+  border-radius:8px;
+  display:inline-block;
+  margin-right:6px;
+  box-shadow: inset 0 -4px 6px rgba(0,0,0,0.18);
+}
 
-
-
+/* responsive containers, etc. */
+.container-max {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 18px;
+}

@@ -17,23 +17,23 @@ const App = () => {
   const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
 
-  // ✅ Check auth on app mount
+  // Check authentication on first load
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // ✅ Apply theme dynamically (whenever it changes)
+  // Load saved theme on first load
+  useEffect(() => {
+    const saved = localStorage.getItem("theme") || "vibetalk";
+    setTheme(saved);
+  }, [setTheme]);
+
+  // Apply theme automatically when changed
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  // ✅ Restore theme from localStorage on first load (if missing)
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("chat-theme") || "vibetalk";
-    setTheme(savedTheme);
-  }, [setTheme]);
-
-  // ✅ Handle incoming calls via WebSocket
+  // Handle incoming call
   useEffect(() => {
     if (!socket) return;
 
@@ -46,28 +46,31 @@ const App = () => {
     return () => socket.off("incoming-call", handleIncomingCall);
   }, [socket]);
 
-  // ✅ Themed loader while checking authentication
+  // Loading screen
   if (isCheckingAuth) {
     return (
-      <div className="flex items-center justify-center h-screen w-screen bg-base-100 text-base-content transition-colors duration-300">
+      <div className="flex items-center justify-center h-screen w-screen bg-base-100 text-base-content">
         <l-grid size="100" speed="1.5" color="currentColor"></l-grid>
       </div>
     );
   }
 
   return (
-    <div
-      data-theme={theme || "vibetalk"}
-      className="min-h-screen bg-base-100 text-base-content transition-colors duration-500 ease-in-out"
-    >
+    <div className="min-h-screen bg-base-100 text-base-content transition-colors duration-500">
       <Navbar />
 
-      {/* ✅ Page Routes */}
       <Routes>
+        {/* MAIN */}
         <Route
           path="/"
           element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
         />
+        <Route
+          path="/home"
+          element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
+        />
+
+        {/* AUTH */}
         <Route
           path="/signup"
           element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
@@ -76,20 +79,24 @@ const App = () => {
           path="/login"
           element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
         />
+
+        {/* SETTINGS */}
         <Route
           path="/settings"
           element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />}
         />
+
+        {/* PROFILE */}
         <Route
           path="/profile"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />}
         />
       </Routes>
 
-      {/* ✅ Always render video call overlay */}
+      {/* VIDEO CALL UI */}
       <VideoCall />
 
-      {/* ✅ Themed toaster (auto adjusts color) */}
+      {/* TOASTS */}
       <Toaster
         position="top-right"
         toastOptions={{

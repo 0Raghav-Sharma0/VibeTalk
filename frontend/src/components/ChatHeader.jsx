@@ -1,73 +1,122 @@
 import React from "react";
+import { Phone, Video, Music2, Pencil, X } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useMusicStore } from "../store/musicStore";
-import { Phone, Video, Music2, X } from "lucide-react";
 
-const ChatHeader = () => {
+/* Shared Icon Button */
+const IconBtn = ({ onClick, children, title }) => (
+  <button
+    onClick={onClick}
+    title={title}
+    className="
+      w-9 h-9 flex items-center justify-center 
+      rounded-md bg-base-200 border border-base-300 
+      text-base-content/70 hover:bg-base-300 hover:text-base-content
+      active:scale-95 transition
+    "
+  >
+    {children}
+  </button>
+);
+
+const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { startCall } = useVideoCallStore();
-  const { toggleMusicPlayer } = useMusicStore();
+  const { toggleMusicPlayer, isMusicPlayerOpen } = useMusicStore();
 
   if (!selectedUser) return null;
 
   return (
-    <div className="flex items-center justify-between px-5 py-3 bg-base-200/70 border-b border-base-300 backdrop-blur-xl shadow-sm">
+    <header
+      className="
+        h-14 px-5 flex items-center justify-between 
+        border-b border-base-300 bg-base-100
+      "
+    >
+      {/* LEFT: Avatar + Name */}
       <div className="flex items-center gap-3">
         <div className="relative">
           <img
-            src={selectedUser.profilePic || "/boy.png"}
-            className="size-10 rounded-full border border-base-300"
+            src={selectedUser.profilePic || '/boy.png'}
+            className="w-10 h-10 rounded-full object-cover border border-base-300"
           />
+
+          {/* ONLINE DOT */}
           <span
-            className={`absolute bottom-0 right-0 w-3 h-3 rounded-full ring-2 ring-base-200 ${
-              selectedUser.isOnline ? "bg-green-500" : "bg-gray-500"
-            }`}
+            className={`
+              absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100
+              ${selectedUser.isOnline ? "bg-success" : "bg-neutral"}
+            `}
           />
         </div>
-        <div>
-          <h2 className="font-semibold">{selectedUser.fullName}</h2>
-          <p
-            className={`text-xs ${
-              selectedUser.isOnline ? "text-green-400" : "text-gray-400"
-            }`}
-          >
+
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-base-content truncate">
+            {selectedUser.fullName}
+          </p>
+          <p className="text-xs text-base-content/50">
             {selectedUser.isOnline ? "Online" : "Offline"}
           </p>
         </div>
       </div>
 
-      <div className="flex gap-2">
-        <button
-          onClick={() => startCall("audio", selectedUser._id)}
-          className="btn btn-circle btn-sm bg-base-300 hover:bg-green-500/20"
+      {/* ACTION BUTTONS */}
+      <div className="flex items-center gap-2">
+
+        {/* 🔊 Voice Call */}
+        <IconBtn
           title="Voice Call"
+          onClick={() => startCall("audio", selectedUser._id)}
         >
-          <Phone size={18} className="text-green-400" />
-        </button>
-        <button
-          onClick={() => startCall("video", selectedUser._id)}
-          className="btn btn-circle btn-sm bg-base-300 hover:bg-blue-500/20"
+          <Phone size={16} className="text-success" />
+        </IconBtn>
+
+        {/* 📹 Video Call */}
+        <IconBtn
           title="Video Call"
+          onClick={() => startCall("video", selectedUser._id)}
         >
-          <Video size={18} className="text-blue-400" />
-        </button>
-        <button
-          onClick={toggleMusicPlayer}
-          className="btn btn-circle btn-sm bg-base-300 hover:bg-pink-500/20"
-          title="Toggle Music"
+          <Video size={16} className="text-info" />
+        </IconBtn>
+
+        {/* 🎵 Music Player */}
+        <IconBtn
+          title="Music Player"
+          onClick={() => {
+            // auto close whiteboard if music opens
+            if (showWhiteboard) setShowWhiteboard(false);
+            toggleMusicPlayer();
+          }}
         >
-          <Music2 size={18} className="text-pink-400" />
-        </button>
-        <button
-          onClick={() => setSelectedUser(null)}
-          className="btn btn-circle btn-sm bg-base-300 hover:bg-base-100"
+          <Music2 size={16} className="text-secondary" />
+        </IconBtn>
+
+        {/* 🖊️ WHITEBOARD BUTTON (NEW) */}
+        <IconBtn
+          title="Whiteboard"
+          onClick={() => {
+            // auto close music if whiteboard opens
+            if (isMusicPlayerOpen) toggleMusicPlayer();
+            setShowWhiteboard(!showWhiteboard);
+          }}
+        >
+          <Pencil
+            size={16}
+            className={showWhiteboard ? "text-primary" : "text-base-content/70"}
+          />
+        </IconBtn>
+
+        {/* ❌ Close Chat */}
+        <IconBtn
           title="Close Chat"
+          onClick={() => setSelectedUser(null)}
         >
-          <X size={18} className="text-base-content/70" />
-        </button>
+          <X size={17} className="text-base-content/70" />
+        </IconBtn>
+
       </div>
-    </div>
+    </header>
   );
 };
 

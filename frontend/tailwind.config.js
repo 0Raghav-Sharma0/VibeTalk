@@ -1,50 +1,22 @@
-import daisyui from "daisyui";
+// tailwind.config.js
+import defaultTheme from "tailwindcss/defaultTheme";
 
-/** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["Inter", ...defaultTheme.fontFamily.sans],
+        display: ["Poppins", "Inter", ...defaultTheme.fontFamily.sans],
       },
-      colors: {
-        accentPink: "#ec4899",
-        accentViolet: "#8b5cf6",
-        accentIndigo: "#6366f1",
+      // small helpers for shadow/gradients that use CSS variables below
+      boxShadow: {
+        "theme-glow": "0 10px 30px rgba(0,0,0,0.55), 0 6px 12px var(--theme-glow, rgba(0,0,0,0))",
+      },
+      backgroundImage: {
+        "theme-gradient": "linear-gradient(135deg, var(--grad-1), var(--grad-2))",
       },
     },
   },
-  plugins: [daisyui],
-  daisyui: {
-    themes: [
-      "light",
-      "dark",
-      "cupcake",
-      "synthwave",
-      "forest",
-      "aqua",
-      "dim",
-      "night",
-      "dracula",
-      "business",
-      "sunset",
-      // 👇 Your custom VibeTalk theme
-      {
-        vibetalk: {
-          primary: "#a855f7", // violet
-          secondary: "#ec4899", // pink
-          accent: "#6366f1", // indigo
-          neutral: "#1b1b24",
-          "base-100": "#0f0f17", // main background
-          "base-200": "#141421", // panels
-          "base-300": "#1a1a26", // slightly darker border areas
-          info: "#3b82f6",
-          success: "#22c55e",
-          warning: "#facc15",
-          error: "#ef4444",
-        },
-      },
-    ],
-  },
+  plugins: [],
 };

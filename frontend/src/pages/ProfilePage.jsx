@@ -1,114 +1,211 @@
-import React, { useState } from 'react'
-import { useAuthStore } from '../store/useAuthStore';
-import { Camera, Mail, User } from 'lucide-react';
-import lottie from "lottie-web";
-import { defineElement } from "@lordicon/element";
-defineElement(lottie.loadAnimation);
+import React, { useState } from "react";
+import { useAuthStore } from "../store/useAuthStore";
+import { Mail, User, Camera, Edit2, Save, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 const ProfilePage = () => {
-  const {authUser, isUpdatingProfile, updateProfile} = useAuthStore();
-  const [selectedImg, setSelectedImg] = useState(authUser.profilePic || null);
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if(!file){
-      return;
-    }
+  const { authUser, updateProfile, isUpdatingProfile } = useAuthStore();
+
+  // Local state
+  const [preview, setPreview] = useState(authUser.profilePic || null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState(authUser.fullName);
+
+  // ------------------------------------------
+  // Upload Profile Picture
+  // ------------------------------------------
+  const uploadImage = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
     const reader = new FileReader();
-    reader.readAsDataURL(file);
 
     reader.onload = async () => {
-      const base_image = reader.result;
-      setSelectedImg(base_image);
-      await updateProfile({profilePic: base_image});
-    }
-  }
-  return (
-    <div className="h-screen pt-20">
-      <div className="max-w-2xl mx-auto p-4 py-8">
-        <div className="bg-base-300 rounded-xl p-6 space-y-8">
-          <div className="text-center">
-            <h1 className = "text-2xl font-semibold">Profile</h1>
-            <p className = "mt-2">Your Profile Information</p>
-          </div>
+      const img = reader.result;
+      setPreview(img);
 
-          <div className="flex flex-col items-center gap-4">
-            <div className="relative size-32 rounded-full border-4  bg-white flex items-center justify-center z-0">
-              {selectedImg ? (
-                <img
-                src={selectedImg}
-                alt="Profile"
-                className="size-32 rounded-full object-cover border-4 w-full h-full"
-              />
+      await updateProfile({ profilePic: img });
+      toast.success("Profile photo updated!");
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  // ------------------------------------------
+  // Save edited name
+  // ------------------------------------------
+  const saveName = async () => {
+    if (!nameValue.trim()) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+
+    if (nameValue === authUser.fullName) {
+      setIsEditingName(false);
+      return;
+    }
+
+    await updateProfile({ fullName: nameValue });
+    toast.success("Name updated successfully!");
+    setIsEditingName(false);
+  };
+
+  return (
+    <div className="h-full w-full bg-base-200 text-base-content overflow-y-auto py-16 px-6 flex justify-center">
+      <div className="w-full max-w-2xl space-y-10">
+
+        {/* TITLE */}
+        <div>
+          <h1 className="text-2xl font-semibold">Your Profile</h1>
+          <p className="text-base-content/60 text-sm mt-1">
+            Manage your account and appearance.
+          </p>
+        </div>
+
+        {/* PROFILE CARD */}
+        <div className="bg-base-100 border border-base-300 rounded-xl p-6">
+
+          {/* AVATAR */}
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="relative w-32 h-32 rounded-full overflow-hidden border border-base-300 bg-base-300">
+              {preview ? (
+                <img src={preview} className="w-full h-full object-cover" />
               ) : (
-                <lord-icon
-                  src="/wired-flat-1448-three-leaf-clover-hover-pinch.json"
-                  trigger="loop"
-                  style={{ width: '128px', height: '128px' }}
-                ></lord-icon>
+                <div className="w-full h-full bg-base-300" />
               )}
-              
+
               <label
-                htmlFor="avatar-upload"
-                className={`
-                  absolute -bottom-1 -right-2
-                  transform -translate-x-1/2
-                  bg-base-content hover:scale-105
-                  p-2 rounded-full cursor-pointer 
-                  transition-all duration-200
-                  ${isUpdatingProfile ? "animate-pulse pointer-events-none" : ""}
-                `}
+                htmlFor="avatar"
+                className="
+                  absolute bottom-2 right-2 
+                  w-9 h-9 rounded-full 
+                  bg-base-100/70 backdrop-blur-md 
+                  border border-base-300 
+                  flex items-center justify-center 
+                  text-base-content/70 hover:text-base-content
+                  hover:bg-base-100 cursor-pointer transition
+                "
               >
-                <Camera className="w-5 h-5 text-base-200" />
-                  <input
-                    type="file"
-                    id="avatar-upload"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    disabled={isUpdatingProfile}
-                  />
+                <Camera size={18} />
+                <input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={isUpdatingProfile}
+                  onChange={uploadImage}
+                />
               </label>
             </div>
-            <p className="text-sm text-zinc-400">
-              {isUpdatingProfile ? "Uploading..." : "Click the camera icon to update your photo"}
+
+            <p className="text-xs text-base-content/60">
+              {isUpdatingProfile ? "Updating..." : "Tap the camera to change photo"}
             </p>
           </div>
 
+          {/* DETAILS */}
           <div className="space-y-6">
-            <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Full Name
+
+            {/* FULL NAME */}
+            <div>
+              <label className="text-xs text-base-content/60 flex items-center gap-2">
+                <User size={16} /> Full Name
+              </label>
+
+              <div className="mt-2 flex items-center gap-3">
+                {isEditingName ? (
+                  <>
+                    <input
+                      value={nameValue}
+                      onChange={(e) => setNameValue(e.target.value)}
+                      className="
+                        py-2.5 px-3 rounded-lg 
+                        bg-base-200 border border-base-300 
+                        w-full outline-none focus:border-primary
+                      "
+                    />
+
+                    <button
+                      onClick={saveName}
+                      className="p-2 rounded-lg bg-primary text-primary-content hover:bg-primary/80 transition"
+                    >
+                      <Save size={18} />
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setNameValue(authUser.fullName);
+                      }}
+                      className="p-2 rounded-lg bg-base-200 border border-base-300 hover:bg-base-300 transition"
+                    >
+                      <X size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p
+                      className="
+                        py-2.5 px-3 rounded-lg 
+                        bg-base-200 border border-base-300 flex-1
+                      "
+                    >
+                      {authUser.fullName}
+                    </p>
+
+                    <button
+                      onClick={() => setIsEditingName(true)}
+                      className="
+                        p-2 rounded-lg bg-base-200 border border-base-300 
+                        hover:bg-base-300 transition
+                      "
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                  </>
+                )}
               </div>
-              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">{authUser?.fullName}</p>
             </div>
 
-            <div className="space-y-1.5">
-              <div className="text-sm text-zinc-400 flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Email Address
-              </div>
-              <p className="px-4 py-2.5 bg-base-200 rounded-lg border">{authUser?.email}</p>
-            </div>
-          </div>
+            {/* EMAIL */}
+            <div>
+              <label className="text-xs text-base-content/60 flex items-center gap-2">
+                <Mail size={16} /> Email
+              </label>
 
-          <div className="mt-6 bg-base-300 rounded-xl p-6">
-            <h2 className="text-lg font-medium  mb-4">Account Information</h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex items-center justify-between py-2 border-b border-zinc-700">
-                <span>Member Since</span>
-                <span>{authUser.createdAt?.split("T")[0]}</span>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <span>Account Status</span>
-                <span className="text-green-500">Active</span>
-              </div>
+              <p
+                className="
+                  mt-2 py-2.5 px-3 rounded-lg 
+                  bg-base-200 border border-base-300
+                "
+              >
+                {authUser.email}
+              </p>
             </div>
+
           </div>
         </div>
+
+        {/* ACCOUNT INFO */}
+        <div className="bg-base-100 border border-base-300 rounded-xl p-6 space-y-4">
+          <h2 className="text-lg font-medium">Account Details</h2>
+
+          <div className="flex justify-between py-2 border-b border-base-300 text-sm">
+            <span className="text-base-content/60">Member Since</span>
+            <span className="text-base-content">
+              {authUser.createdAt?.split("T")[0]}
+            </span>
+          </div>
+
+          <div className="flex justify-between py-2 text-sm">
+            <span className="text-base-content/60">Status</span>
+            <span className="text-success font-medium">Active</span>
+          </div>
+        </div>
+
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProfilePage
+export default ProfilePage;
