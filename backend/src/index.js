@@ -24,16 +24,14 @@ const app = express();
 const server = http.createServer(app);
 
 // ------------------------------------------
-// CORS
+// CORS — FIXED FOR VERCEL + SOCKET.IO
 // ------------------------------------------
 app.use(
   cors({
     origin: [
       "http://localhost:5173",
       "http://localhost:4173",
-      "https://blah-blah-jvc4.vercel.app",
-      "https://blah-blah-jvc4-eoigy5j7w-raghavsharma099900-7404s-projects.vercel.app",
-      "https://blah-blah-3.onrender.com",
+      "https://blah-blah-agnhzh6a8-0raghav-sharma0s-projects.vercel.app" // your real Vercel URL
     ],
     credentials: true,
   })
@@ -64,7 +62,7 @@ app.use(
 );
 
 // ------------------------------------------
-// FILE UPLOAD
+// FILE UPLOADS
 // ------------------------------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) =>
@@ -72,6 +70,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) =>
     cb(null, Date.now() + "-" + file.originalname),
 });
+
 const upload = multer({ storage });
 
 app.post("/upload", upload.single("song"), (req, res) => {
@@ -84,20 +83,19 @@ app.post("/upload", upload.single("song"), (req, res) => {
 });
 
 // ------------------------------------------
-// START SERVER + INIT SOCKET
+// START SERVER + INIT SOCKET.IO
 // ------------------------------------------
 (async () => {
   try {
-    // Start HTTP server
     server.listen(PORT, () => {
       console.log(`🔥 Server running on port ${PORT}`);
       connectDB();
     });
 
-    // Initialize Socket.IO with Redis adapter
+    // Initialize Socket.IO
     await initSocket(server);
 
-    console.log("🔗 Socket.IO + Redis initialized successfully");
+    console.log("🔗 Socket.IO initialized successfully");
   } catch (err) {
     console.error("❌ Failed to initialize Socket.IO:", err);
   }

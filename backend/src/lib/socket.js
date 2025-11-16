@@ -6,7 +6,6 @@ import redis, { pubClient, subClient } from "./redisClient.js";
 // 🚫 Redis disabled temporarily for Render deployment
 const USE_REDIS = false;
 
-// Redis keys
 const userSocketsKey = (userId) => `user:${userId}:sockets`;
 const onlineUsersKey = "online_users";
 
@@ -17,7 +16,7 @@ let io = null;
 // -----------------------------------------------------
 async function broadcastOnlineUsers() {
   if (!USE_REDIS) {
-    io.emit("getOnlineUsers", []); // no redis → empty list
+    io.emit("getOnlineUsers", []);
     return;
   }
 
@@ -26,7 +25,7 @@ async function broadcastOnlineUsers() {
 }
 
 // -----------------------------------------------------
-// FORCE LOGOUT USER FROM ALL DEVICES
+// FORCE LOGOUT
 // -----------------------------------------------------
 async function forceLogoutUser(userId) {
   if (!USE_REDIS) return;
@@ -43,16 +42,18 @@ async function forceLogoutUser(userId) {
 }
 
 // -----------------------------------------------------
-// INITIALIZE SOCKET
+// INITIALIZE SOCKET.IO
 // -----------------------------------------------------
 export async function initSocket(server) {
   io = new Server(server, {
     cors: {
       origin: [
         "http://localhost:5173",
-        "http://localhost:5174",
         "http://localhost:4173",
-        "https://blah-blah-jvc4.vercel.app",
+        "http://localhost:5174",
+
+        // 🚨 YOUR REAL DEPLOYED FRONTEND
+        "https://blah-blah-agnhzh6a8-0raghav-sharma0s-projects.vercel.app",
       ],
       methods: ["GET", "POST"],
       credentials: true,
@@ -60,7 +61,6 @@ export async function initSocket(server) {
     pingTimeout: 30000,
   });
 
-  // attach redis adapter (only if enabled)
   if (USE_REDIS) {
     io.adapter(createAdapter(pubClient, subClient));
     console.log("🔗 Redis Adapter Enabled");
@@ -68,15 +68,11 @@ export async function initSocket(server) {
     console.log("🚫 Redis Adapter Disabled");
   }
 
-  // -----------------------------------------------------
-  // CLIENT CONNECTED
-  // -----------------------------------------------------
   io.on("connection", async (socket) => {
     console.log("🟢 Connected:", socket.id);
 
     const userId = socket.handshake.query?.userId;
 
-    // Save online users only if Redis enabled
     if (USE_REDIS && userId) {
       await redis.sAdd(userSocketsKey(userId), socket.id);
       await redis.sAdd(onlineUsersKey, userId);
@@ -85,9 +81,6 @@ export async function initSocket(server) {
 
     await broadcastOnlineUsers();
 
-    // -----------------------------------------------------
-    // PRIVATE MESSAGE
-    // -----------------------------------------------------
     socket.on("private-message", ({ toUserId, message }) => {
       io.to(toUserId).emit("private-message", {
         from: userId,
@@ -95,46 +88,10 @@ export async function initSocket(server) {
       });
     });
 
-    // -----------------------------------------------------
-    // CALL SYSTEM
-    // -----------------------------------------------------
-    socket.on("call-user", async ({ targetUserId, offer, callType }) => {
-      if (!USE_REDIS) return; // disable for now
-
-      const sockets = await redis.sMembers(userSocketsKey(targetUserId));
-      sockets.forEach((sid) =>
-        io.to(sid).emit("incoming-call", { from: userId, offer, callType })
-      );
-    });
-
-    socket.on("webrtc-answer", async ({ targetUserId, answer }) => {
-      if (!USE_REDIS) return;
-
-      const sockets = await redis.sMembers(userSocketsKey(targetUserId));
-      sockets.forEach((sid) =>
-        io.to(sid).emit("webrtc-answer", { answer, from: userId })
-      );
-    });
-
-    socket.on("webrtc-ice-candidate", async ({ targetUserId, candidate }) => {
-      if (!USE_REDIS) return;
-
-      const sockets = await redis.sMembers(userSocketsKey(targetUserId));
-      sockets.forEach((sid) =>
-        io.to(sid).emit("webrtc-ice-candidate", { candidate, from: userId })
-      );
-    });
-
-    // -----------------------------------------------------
-    // MUSIC SYNC
-    // -----------------------------------------------------
     socket.on("music-sync", ({ roomId, ...data }) => {
       socket.to(roomId).emit("music-sync", data);
     });
 
-    // -----------------------------------------------------
-    // WHITEBOARD
-    // -----------------------------------------------------
     socket.on("whiteboard-draw", ({ roomId, data }) => {
       socket.to(roomId).emit("whiteboard-draw", data);
     });
@@ -143,9 +100,6 @@ export async function initSocket(server) {
       io.to(roomId).emit("whiteboard-clear");
     });
 
-    // -----------------------------------------------------
-    // DISCONNECT
-    // -----------------------------------------------------
     socket.on("disconnect", async () => {
       console.log("🔴 Disconnected:", socket.id);
 
@@ -160,9 +114,6 @@ export async function initSocket(server) {
     });
   });
 
-  // -----------------------------------------------------
-  // Redis pub/sub only if enabled
-  // -----------------------------------------------------
   if (USE_REDIS) {
     await subClient.subscribe("force-logout", async (msg) => {
       const { userId } = JSON.parse(msg);
