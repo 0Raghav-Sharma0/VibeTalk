@@ -1,18 +1,22 @@
+// backend/src/controllers/message.controller.js
+
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
-import { getIO } from "../lib/socket.js";
+import { getIO, getReceiverSocketId } from "../lib/socket.js";
 
 /* -------------------------------------------------------------------------- */
-/* 🧩  Get All Users (for sidebar list)                                        */
+/* 🧩  Get All Users (Sidebar List)                                           */
 /* -------------------------------------------------------------------------- */
+
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
 
-    // Exclude the logged-in user and password field
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    const users = await User.find({ _id: { $ne: loggedInUserId } }).select(
+      "-password"
+    );
 
-    res.status(200).json(filteredUsers);
+    res.status(200).json(users);
   } catch (error) {
     console.error("❌ Error in getUsersForSidebar:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -20,8 +24,9 @@ export const getUsersForSidebar = async (req, res) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* 💬  Get Chat Messages Between Two Users                                   */
+/* 💬  Get Chat Messages Between Two Users                                    */
 /* -------------------------------------------------------------------------- */
+
 export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
@@ -32,31 +37,29 @@ export const getMessages = async (req, res) => {
         { senderId: myId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: myId },
       ],
-    })
-      .sort({ createdAt: 1 })
-      .lean();
+    }).sort({ createdAt: 1 });
 
     res.status(200).json(messages);
   } catch (error) {
-    console.error("❌ Error in getMessages controller:", error.message);
+    console.error("❌ Error in getMessages:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 /* -------------------------------------------------------------------------- */
-/* ✉️  Send a New Message                                                    */
+/* ✉️  Send New Message (TEXT / IMAGE / VIDEO)                                */
 /* -------------------------------------------------------------------------- */
+
 export const sendMessage = async (req, res) => {
   try {
     const { text, image, video } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
-    // ✅ Since frontend already uploads to Cloudinary, just store the URLs
+    // Frontend already gives Cloudinary URLs
     const imageUrl = image || null;
     const videoUrl = video || null;
 
-    // Create message document
     const newMessage = new Message({
       senderId,
       receiverId,
@@ -67,22 +70,24 @@ export const sendMessage = async (req, res) => {
 
     await newMessage.save();
 
-    // ✅ Real-time socket update
+    // SOCKET.IO — send new message to receiver
     const receiverSocketId = getReceiverSocketId(receiverId);
+
     if (receiverSocketId) {
-      getIO().to(receiverSocketId).emit("newMessage", message);
+      getIO().to(receiverSocketId).emit("newMessage", newMessage);
     }
 
     res.status(201).json(newMessage);
   } catch (error) {
-    console.error("❌ Error in sendMessage controller:", error);
-    res.status(500).json({ message: error.message || "Internal Server Error" });
+    console.error("❌ Error in sendMessage:", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
 
 /* -------------------------------------------------------------------------- */
-/* 💖  Add or Update a Reaction on a Message                                 */
+/* 💖  Add or Update Reaction                                                 */
 /* -------------------------------------------------------------------------- */
+
 export const addReaction = async (req, res) => {
   try {
     const { messageId, userId, emoji } = req.body;
@@ -96,23 +101,28 @@ export const addReaction = async (req, res) => {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    // Remove any existing reaction from same user, then add new one
+    // Remove previous reaction from same user
     message.reactions = message.reactions.filter(
       (r) => r.userId.toString() !== userId
     );
+
+    // Add new one
     message.reactions.push({ userId, emoji });
 
     await message.save();
 
-    // Emit reaction update via socket
-    io.emit("messageReaction", { messageId, reactions: message.reactions });
+    // Broadcast reaction update
+    getIO().emit("messageReaction", {
+      messageId,
+      reactions: message.reactions,
+    });
 
     res.status(200).json({
       message: "Reaction added successfully",
       data: message,
     });
   } catch (error) {
-    console.error("❌ Error adding reaction:", error.message);
+    console.error("❌ Error in addReaction:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
