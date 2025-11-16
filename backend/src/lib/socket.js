@@ -3,6 +3,9 @@ import { Server } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import redis, { pubClient, subClient } from "./redisClient.js";
 
+// 🚫 Redis disabled temporarily for Render deployment
+const USE_REDIS = false;
+
 // Redis keys
 const userSocketsKey = (userId) => `user:${userId}:sockets`;
 const onlineUsersKey = "online_users";
@@ -13,7 +16,12 @@ let io = null;
 // BROADCAST ONLINE USERS
 // -----------------------------------------------------
 async function broadcastOnlineUsers() {
-  const users = await redis.sMembers(onlineUsersKey); // correct v4/v5 API
+  if (!USE_REDIS) {
+    io.emit("getOnlineUsers", []); // no redis → empty list
+    return;
+  }
+
+  const users = await redis.sMembers(onlineUsersKey);
   io.emit("getOnlineUsers", users || []);
 }
 
@@ -21,6 +29,8 @@ async function broadcastOnlineUsers() {
 // FORCE LOGOUT USER FROM ALL DEVICES
 // -----------------------------------------------------
 async function forceLogoutUser(userId) {
+  if (!USE_REDIS) return;
+
   const sockets = await redis.sMembers(userSocketsKey(userId));
   if (!sockets || sockets.length === 0) return;
 
@@ -50,8 +60,13 @@ export async function initSocket(server) {
     pingTimeout: 30000,
   });
 
-  // attach redis adapter (multi instance support)
-  io.adapter(createAdapter(pubClient, subClient));
+  // attach redis adapter (only if enabled)
+  if (USE_REDIS) {
+    io.adapter(createAdapter(pubClient, subClient));
+    console.log("🔗 Redis Adapter Enabled");
+  } else {
+    console.log("🚫 Redis Adapter Disabled");
+  }
 
   // -----------------------------------------------------
   // CLIENT CONNECTED
@@ -61,11 +76,11 @@ export async function initSocket(server) {
 
     const userId = socket.handshake.query?.userId;
 
-    if (userId) {
+    // Save online users only if Redis enabled
+    if (USE_REDIS && userId) {
       await redis.sAdd(userSocketsKey(userId), socket.id);
       await redis.sAdd(onlineUsersKey, userId);
-
-      socket.join(userId); // personal room
+      socket.join(userId);
     }
 
     await broadcastOnlineUsers();
@@ -84,6 +99,8 @@ export async function initSocket(server) {
     // CALL SYSTEM
     // -----------------------------------------------------
     socket.on("call-user", async ({ targetUserId, offer, callType }) => {
+      if (!USE_REDIS) return; // disable for now
+
       const sockets = await redis.sMembers(userSocketsKey(targetUserId));
       sockets.forEach((sid) =>
         io.to(sid).emit("incoming-call", { from: userId, offer, callType })
@@ -91,6 +108,8 @@ export async function initSocket(server) {
     });
 
     socket.on("webrtc-answer", async ({ targetUserId, answer }) => {
+      if (!USE_REDIS) return;
+
       const sockets = await redis.sMembers(userSocketsKey(targetUserId));
       sockets.forEach((sid) =>
         io.to(sid).emit("webrtc-answer", { answer, from: userId })
@@ -98,6 +117,8 @@ export async function initSocket(server) {
     });
 
     socket.on("webrtc-ice-candidate", async ({ targetUserId, candidate }) => {
+      if (!USE_REDIS) return;
+
       const sockets = await redis.sMembers(userSocketsKey(targetUserId));
       sockets.forEach((sid) =>
         io.to(sid).emit("webrtc-ice-candidate", { candidate, from: userId })
@@ -128,7 +149,7 @@ export async function initSocket(server) {
     socket.on("disconnect", async () => {
       console.log("🔴 Disconnected:", socket.id);
 
-      if (userId) {
+      if (USE_REDIS && userId) {
         await redis.sRem(userSocketsKey(userId), socket.id);
 
         const left = await redis.sCard(userSocketsKey(userId));
@@ -140,14 +161,18 @@ export async function initSocket(server) {
   });
 
   // -----------------------------------------------------
-  // REDIS PUB/SUB: FORCE LOGOUT
+  // Redis pub/sub only if enabled
   // -----------------------------------------------------
-  await subClient.subscribe("force-logout", async (msg) => {
-    const { userId } = JSON.parse(msg);
-    await forceLogoutUser(userId);
-  });
+  if (USE_REDIS) {
+    await subClient.subscribe("force-logout", async (msg) => {
+      const { userId } = JSON.parse(msg);
+      await forceLogoutUser(userId);
+    });
 
-  console.log("📢 Subscribed to Redis: force-logout");
+    console.log("📢 Subscribed: force-logout");
+  } else {
+    console.log("🚫 Redis Pub/Sub Disabled");
+  }
 }
 
 export { io };
