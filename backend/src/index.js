@@ -19,12 +19,18 @@ const __dirname = path.resolve();
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
-      "http://localhost:4173",
-      "https://blah-blah-jvc4.vercel.app",
-      "https://blah-blah-jvc4-eoigy5j7w-raghavsharma099900-7404s-projects.vercel.app",
-      "https://blah-blah-3.onrender.com",
-    ],
+  "http://localhost:5173",
+  "http://localhost:4173",
+
+  // OLD production (still ok to keep)
+  "https://blah-blah-jvc4.vercel.app",
+
+  // OLD preview (optional)
+  "https://blah-blah-jvc4-eoigy5j7w-raghavsharma099900-7404s-projects.vercel.app",
+
+  // YOUR NEW VERCEL DEPLOYMENT (THIS IS REQUIRED)
+  "https://blah-blah-hky1.vercel.app",
+],
     credentials: true,
   })
 );
