@@ -18,25 +18,19 @@ export default function AuthSlideshow({ images }) {
           key={i}
           className={`
             absolute inset-0 w-full h-full 
-            transition-opacity duration-[1200ms] ease-out
+            transition-opacity duration-[1500ms] ease-out
             ${i === index ? "opacity-100" : "opacity-0"}
           `}
         >
-          <img
-            src={img}
-            alt=""
+          <div
             className="
-              w-full h-full 
-              object-cover 
-              object-top     /* ⭐ FACE ON TOP — crop bottom */
+              w-full h-full bg-cover bg-center
+              animate-kenburns
             "
+            style={{ backgroundImage: `url(${img})` }}
           />
-
-          {/* Optional soft overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-base-300/40 to-transparent pointer-events-none" />
         </div>
       ))}
     </div>
   );
 }
-

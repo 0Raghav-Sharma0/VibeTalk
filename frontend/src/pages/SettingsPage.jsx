@@ -1,89 +1,78 @@
 import React from "react";
 import { useThemeStore } from "../store/useThemeStore";
-import { THEMES } from "../constants";
+
+const THEMES = [
+  {
+    name: "light",
+    title: "Light Theme",
+    description: "Clean and bright interface.",
+    gradient: "bg-gradient-to-br from-white to-gray-200",
+    preview: ["#ffffff", "#e5e7eb", "#d1d5db"],
+  },
+  {
+    name: "dark",
+    title: "Dark Theme",
+    description: "Smooth dark interface for low-light use.",
+    gradient: "bg-gradient-to-br from-gray-800 to-gray-900",
+    preview: ["#1e1e1e", "#2d2d2d", "#3a3a3a"],
+  },
+];
 
 const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();
 
+  const applyTheme = (name) => {
+    setTheme(name);
+    localStorage.setItem("theme", name);
+    document.documentElement.setAttribute("data-theme", name);
+  };
+
   return (
     <div className="h-screen w-full pt-24 px-6 bg-base-100 text-base-content flex justify-center overflow-y-auto">
-      <div className="w-full max-w-4xl space-y-10">
+      <div className="w-full max-w-3xl space-y-10">
 
-        {/* HEADER */}
-        <div>
-          <h1 className="text-3xl font-bold">Choose Theme</h1>
-          <p className="text-base-content/60 text-sm">
-            Preview themes and switch instantly.
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-4xl font-bold">Choose Theme</h1>
+          <p className="text-base-content/60 text-sm mt-1">
+            Select between Light & Dark modes.
           </p>
         </div>
 
-        {/* THEME GRID */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
+        {/* Themes Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
           {THEMES.map((t) => (
-            <button
-              key={t}
-              onClick={() => {
-                setTheme(t);
-                localStorage.setItem("theme", t);
-              }}
+            <div
+              key={t.name}
+              onClick={() => applyTheme(t.name)}
               className={`
-                rounded-xl border p-3 transition relative
-                bg-base-200 border-base-300 hover:bg-base-300
-                ${theme === t ? "ring-2 ring-primary border-primary" : ""}
+                cursor-pointer rounded-3xl border p-6 shadow-lg transition transform
+                hover:-translate-y-1 hover:shadow-xl
+                bg-base-200 backdrop-blur-md bg-opacity-50
+                ${theme === t.name ? "ring-4 ring-primary border-primary" : ""}
               `}
             >
-              {/* THEME PREVIEW CONTAINER */}
-              <div
-                data-theme={t}
-                className="w-full h-8 rounded-lg bg-base-100 flex gap-1 p-1 mb-2"
-              >
-                <div className="flex-1 h-full rounded bg-primary"></div>
-                <div className="flex-1 h-full rounded bg-secondary"></div>
-                <div className="flex-1 h-full rounded bg-accent"></div>
-                <div className="flex-1 h-full rounded bg-neutral"></div>
+              {/* Preview Background */}
+              <div className={`h-32 rounded-2xl mb-5 ${t.gradient} shadow-inner`} />
+
+              {/* Color Dots */}
+              <div className="flex gap-2 mb-4 justify-center">
+                {t.preview.map((color, i) => (
+                  <div
+                    key={i}
+                    className="w-6 h-6 rounded-full border shadow"
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
               </div>
 
-              {/* THEME NAME */}
-              <p className="text-center text-xs font-medium truncate capitalize">
-                {t}
-              </p>
-            </button>
-          ))}
-        </div>
-
-        {/* LIVE PREVIEW */}
-        <div className="space-y-4 pb-10">
-          <h2 className="text-lg font-semibold">Live Preview</h2>
-
-          <div className="rounded-xl border border-base-300 bg-base-200 p-6 shadow-sm">
-            <div className="max-w-md mx-auto rounded-xl border border-base-300 bg-base-100 p-5 space-y-5 shadow-sm">
-
-              {/* Chat bubbles */}
-              <div className="chat chat-start">
-                <div className="chat-bubble chat-bubble-neutral">
-                  Hey! How’s it going?
-                </div>
-              </div>
-
-              <div className="chat chat-end">
-                <div className="chat-bubble chat-bubble-primary text-primary-content">
-                  I'm doing great! Preview looks awesome.
-                </div>
-              </div>
-
-              {/* Input preview */}
-              <div className="flex gap-2 pt-2">
-                <input
-                  type="text"
-                  className="input input-bordered flex-1"
-                  readOnly
-                  value="This is a preview..."
-                />
-                <button className="btn btn-primary">Send</button>
-              </div>
-
+              {/* Title */}
+              <h2 className="text-xl font-semibold text-center capitalize">
+                {t.title}
+              </h2>
+              <p className="text-center text-sm opacity-60">{t.description}</p>
             </div>
-          </div>
+          ))}
         </div>
 
       </div>

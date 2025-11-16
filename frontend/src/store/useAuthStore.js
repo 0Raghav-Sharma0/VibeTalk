@@ -17,9 +17,7 @@ export const useAuthStore = create((set, get) => ({
   onlineUsers: [],
   socket: null,
 
-  // ---------------------------------------------------------
-  // CHECK AUTH ON APP LOAD
-  // ---------------------------------------------------------
+  // CHECK AUTH
   checkAuth: async () => {
     const token = localStorage.getItem("token");
 
@@ -39,9 +37,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // ---------------------------------------------------------
   // SIGNUP
-  // ---------------------------------------------------------
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
@@ -59,9 +55,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // ---------------------------------------------------------
   // LOGIN
-  // ---------------------------------------------------------
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
@@ -80,9 +74,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // ---------------------------------------------------------
   // LOGOUT
-  // ---------------------------------------------------------
   logout: async () => {
     await axiosInstance.post("/auth/logout");
     localStorage.removeItem("token");
@@ -91,9 +83,7 @@ export const useAuthStore = create((set, get) => ({
     toast.success("Logged out");
   },
 
-  // ---------------------------------------------------------
-  // UPDATE PROFILE
-  // ---------------------------------------------------------
+  // UPDATE PROFILE (PUT)
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
@@ -107,15 +97,10 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // ---------------------------------------------------------
-  // SOCKET CONNECT (REAL-TIME)
-  // ---------------------------------------------------------
+  // SOCKET
   connectSocket: () => {
-    const { authUser, socket: existingSocket } = get();
-    if (!authUser) return;
-
-    // Already connected? -> Do not create another socket
-    if (existingSocket && existingSocket.connected) return;
+    const { authUser } = get();
+    if (!authUser || get().socket?.connected) return;
 
     const socket = io(BASE_URL, {
       query: { userId: authUser._id },
@@ -123,28 +108,15 @@ export const useAuthStore = create((set, get) => ({
       reconnection: true,
     });
 
-    // Prevent duplicate listeners
-    socket.off("getOnlineUsers");
-
-    socket.on("getOnlineUsers", (ids) => {
-      console.log("🔥 Online users updated:", ids);
-      set({ onlineUsers: ids });
-    });
+    socket.on("getOnlineUsers", (ids) => set({ onlineUsers: ids }));
 
     set({ socket });
   },
 
-  // ---------------------------------------------------------
-  // SOCKET DISCONNECT
-  // ---------------------------------------------------------
   disconnectSocket: () => {
-    const socket = get().socket;
-
-    if (socket) {
-      socket.off("getOnlineUsers"); // cleanup listener
-      socket.disconnect();
+    if (get().socket) {
+      get().socket.disconnect();
+      set({ socket: null });
     }
-
-    set({ socket: null, onlineUsers: [] });
   },
 }));

@@ -10,7 +10,7 @@ const socket = io(
 
 export default function Whiteboard({ roomId }) {
   const canvasRef = useRef(null);
-  const ctxRef = useRef(null);
+  const ctxRef = useRezzf(null);
   const isDrawing = useRef(false);
 
   const [color, setColor] = useState("#000000");

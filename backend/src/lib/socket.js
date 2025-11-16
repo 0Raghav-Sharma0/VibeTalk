@@ -1,129 +1,145 @@
-// backend/src/lib/socket.js
 import { Server } from "socket.io";
-import { createAdapter } from "@socket.io/redis-adapter";
-import redis, { pubClient, subClient } from "./redisClient.js";
+import http from "http";
+import express from "express";
 
-// 🚫 Redis disabled temporarily for Render deployment
-const USE_REDIS = false;
+const app = express();
+const server = http.createServer(app);
 
-const userSocketsKey = (userId) => `user:${userId}:sockets`;
-const onlineUsersKey = "online_users";
-
-let io = null;
-
-// -----------------------------------------------------
-// BROADCAST ONLINE USERS
-// -----------------------------------------------------
-async function broadcastOnlineUsers() {
-  if (!USE_REDIS) {
-    io.emit("getOnlineUsers", []);
-    return;
-  }
-
-  const users = await redis.sMembers(onlineUsersKey);
-  io.emit("getOnlineUsers", users || []);
-}
-
-// -----------------------------------------------------
-// FORCE LOGOUT
-// -----------------------------------------------------
-async function forceLogoutUser(userId) {
-  if (!USE_REDIS) return;
-
-  const sockets = await redis.sMembers(userSocketsKey(userId));
-  if (!sockets || sockets.length === 0) return;
-
-  sockets.forEach((sid) => {
-    io.to(sid).emit("force-logout", { reason: "logged_out" });
-
-    const sock = io.sockets.sockets.get(sid);
-    if (sock) sock.disconnect(true);
-  });
-}
-
-// -----------------------------------------------------
-// INITIALIZE SOCKET.IO
-// -----------------------------------------------------
-export async function initSocket(server) {
-  io = new Server(server, {
-    cors: {
-      origin: [
+// Allowed origins
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [
+        "https://blah-blah-jvc4.vercel.app",
+        "https://blah-blah-jvc4-eoigy5j7w-raghavsharma099900-7404s-projects.vercel.app",
+        "https://blah-blah-3.onrender.com",
+      ]
+    : [
         "http://localhost:5173",
-        "http://localhost:4173",
         "http://localhost:5174",
+        "http://localhost:4173",
+      ];
 
-        // 🚨 YOUR REAL DEPLOYED FRONTEND
-        "https://blah-blah-agnhzh6a8-0raghav-sharma0s-projects.vercel.app",
-      ],
-      methods: ["GET", "POST"],
-      credentials: true,
-    },
-    pingTimeout: 30000,
-  });
+console.log("🧩 Socket.io CORS allowed origins:", allowedOrigins);
 
-  if (USE_REDIS) {
-    io.adapter(createAdapter(pubClient, subClient));
-    console.log("🔗 Redis Adapter Enabled");
-  } else {
-    console.log("🚫 Redis Adapter Disabled");
-  }
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
 
-  io.on("connection", async (socket) => {
-    console.log("🟢 Connected:", socket.id);
+// Online users
+const userSocketMap = {};
+const activeCalls = {};
 
-    const userId = socket.handshake.query?.userId;
-
-    if (USE_REDIS && userId) {
-      await redis.sAdd(userSocketsKey(userId), socket.id);
-      await redis.sAdd(onlineUsersKey, userId);
-      socket.join(userId);
-    }
-
-    await broadcastOnlineUsers();
-
-    socket.on("private-message", ({ toUserId, message }) => {
-      io.to(toUserId).emit("private-message", {
-        from: userId,
-        message,
-      });
-    });
-
-    socket.on("music-sync", ({ roomId, ...data }) => {
-      socket.to(roomId).emit("music-sync", data);
-    });
-
-    socket.on("whiteboard-draw", ({ roomId, data }) => {
-      socket.to(roomId).emit("whiteboard-draw", data);
-    });
-
-    socket.on("whiteboard-clear", ({ roomId }) => {
-      io.to(roomId).emit("whiteboard-clear");
-    });
-
-    socket.on("disconnect", async () => {
-      console.log("🔴 Disconnected:", socket.id);
-
-      if (USE_REDIS && userId) {
-        await redis.sRem(userSocketsKey(userId), socket.id);
-
-        const left = await redis.sCard(userSocketsKey(userId));
-        if (left === 0) await redis.sRem(onlineUsersKey, userId);
-      }
-
-      await broadcastOnlineUsers();
-    });
-  });
-
-  if (USE_REDIS) {
-    await subClient.subscribe("force-logout", async (msg) => {
-      const { userId } = JSON.parse(msg);
-      await forceLogoutUser(userId);
-    });
-
-    console.log("📢 Subscribed: force-logout");
-  } else {
-    console.log("🚫 Redis Pub/Sub Disabled");
-  }
+export function getReceiverSocketId(userId) {
+  return userSocketMap[userId];
 }
 
-export { io };
+io.on("connection", (socket) => {
+  console.log("✅ User connected:", socket.id);
+
+  // Save logged-in user
+  const userId = socket.handshake.query.userId;
+  if (userId) userSocketMap[userId] = socket.id;
+
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  // ==========================================================
+  //                        CALL SYSTEM
+  // ==========================================================
+
+  socket.on("call-user", ({ targetUserId, offer, callType = "video" }) => {
+    const targetSocketId = getReceiverSocketId(targetUserId);
+
+    if (targetSocketId) {
+      activeCalls[socket.id] = { caller: userId, callee: targetUserId, callType };
+      io.to(targetSocketId).emit("incoming-call", { from: userId, offer, callType });
+    } else {
+      socket.emit("call-failed", { reason: "User offline" });
+    }
+  });
+
+  socket.on("call-accepted", ({ callerId, answer }) => {
+    const callerSocketId = getReceiverSocketId(callerId);
+    if (callerSocketId) io.to(callerSocketId).emit("call-accepted", { answer });
+  });
+
+  socket.on("call-rejected", ({ callerId }) => {
+    const callerSocketId = getReceiverSocketId(callerId);
+    if (callerSocketId) io.to(callerSocketId).emit("call-rejected");
+  });
+
+  socket.on("end-call", ({ targetUserId }) => {
+    const targetSocketId = getReceiverSocketId(targetUserId);
+    if (targetSocketId) io.to(targetSocketId).emit("call-ended");
+  });
+
+  // WebRTC
+  socket.on("webrtc-answer", ({ targetUserId, answer }) => {
+    const targetSocketId = getReceiverSocketId(targetUserId);
+    if (targetSocketId)
+      io.to(targetSocketId).emit("webrtc-answer", { answer, from: userId });
+  });
+
+  socket.on("webrtc-ice-candidate", ({ targetUserId, candidate }) => {
+    const targetSocketId = getReceiverSocketId(targetUserId);
+    if (targetSocketId)
+      io.to(targetSocketId).emit("webrtc-ice-candidate", { candidate, from: userId });
+  });
+
+  // ==========================================================
+  //                    CHAT REACTIONS
+  // ==========================================================
+
+  socket.on("sendReaction", ({ messageId, userId, emoji }) => {
+    io.emit("messageReaction", { messageId, userId, emoji });
+  });
+
+  // ==========================================================
+  //                 MULTI-USE ROOM JOINER
+  // ==========================================================
+
+  socket.on("join-room", (roomId) => {
+    socket.join(roomId);
+    console.log(`🟪 User ${socket.id} joined room: ${roomId}`);
+  });
+
+  // ==========================================================
+  //                     MUSIC SYNC
+  // ==========================================================
+
+  socket.on("music-sync", ({ roomId, action, songUrl, songName, currentTime }) => {
+    socket.to(roomId).emit("music-sync", {
+      action,
+      songUrl,
+      songName,
+      currentTime: currentTime || 0,
+    });
+  });
+
+  // ==========================================================
+  //                WHITEBOARD REAL-TIME SYNC
+  // ==========================================================
+
+  socket.on("whiteboard-draw", ({ roomId, data }) => {
+    socket.to(roomId).emit("whiteboard-draw", data);
+  });
+
+  socket.on("whiteboard-clear", ({ roomId }) => {
+    io.to(roomId).emit("whiteboard-clear");
+  });
+
+  // ==========================================================
+  //                        DISCONNECT
+  // ==========================================================
+
+  socket.on("disconnect", () => {
+    console.log("❌ User disconnected:", socket.id);
+    delete userSocketMap[userId];
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+});
+
+export { io, app, server };

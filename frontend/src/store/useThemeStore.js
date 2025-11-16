@@ -1,15 +1,13 @@
+// ✅ src/store/useThemeStore.js
 import { create } from "zustand";
 
 export const useThemeStore = create((set) => ({
-  theme: localStorage.getItem("theme") || "dark",
+  theme: localStorage.getItem("chat-theme") || "coffee",
 
-  setTheme: (newTheme) => {
-    localStorage.setItem("theme", newTheme);
-
-    // Apply theme to HTML tag
-    const html = document.documentElement;
-    html.setAttribute("data-theme", newTheme);
-
-    set({ theme: newTheme });
+  setTheme: (theme) => {
+    // Apply to HTML root (used by DaisyUI)
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("chat-theme", theme);
+    set({ theme });
   },
 }));

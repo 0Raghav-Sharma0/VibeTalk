@@ -17,23 +17,23 @@ const App = () => {
   const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
 
-  // Check authentication on first load
+  // Check authentication on mount
   useEffect(() => {
     checkAuth();
   }, []);
 
-  // Load saved theme on first load
-  useEffect(() => {
-    const saved = localStorage.getItem("theme") || "vibetalk";
-    setTheme(saved);
-  }, [setTheme]);
-
-  // Apply theme automatically when changed
+  // Apply theme
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  // Handle incoming call
+  // Load theme from localStorage
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("chat-theme") || "vibetalk";
+    setTheme(savedTheme);
+  }, [setTheme]);
+
+  // Incoming call handler
   useEffect(() => {
     if (!socket) return;
 
@@ -46,7 +46,7 @@ const App = () => {
     return () => socket.off("incoming-call", handleIncomingCall);
   }, [socket]);
 
-  // Loading screen
+  // Loading screen while checking auth
   if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center h-screen w-screen bg-base-100 text-base-content">
@@ -56,47 +56,51 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 text-base-content transition-colors duration-500">
+    <div
+      data-theme={theme || "vibetalk"}
+      className="min-h-screen bg-base-100 text-base-content transition-colors duration-500"
+    >
       <Navbar />
 
+      {/* ROUTES */}
       <Routes>
-        {/* MAIN */}
+        {/* MAIN HOME ROUTE */}
         <Route
           path="/"
           element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
         />
+
+        {/* ADD /home ROUTE (FIX) */}
         <Route
           path="/home"
           element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
         />
 
-        {/* AUTH */}
         <Route
           path="/signup"
           element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
         />
+
         <Route
           path="/login"
           element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
         />
 
-        {/* SETTINGS */}
         <Route
           path="/settings"
           element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />}
         />
 
-        {/* PROFILE */}
         <Route
           path="/profile"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />}
         />
       </Routes>
 
-      {/* VIDEO CALL UI */}
+      {/* VIDEO CALL UI ALWAYS ACTIVE */}
       <VideoCall />
 
-      {/* TOASTS */}
+      {/* TOASTER */}
       <Toaster
         position="top-right"
         toastOptions={{
