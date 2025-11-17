@@ -7,7 +7,6 @@ import { getIO, getReceiverSocketId } from "../lib/socket.js";
 /* -------------------------------------------------------------------------- */
 /* 🧩  Get All Users (Sidebar List)                                           */
 /* -------------------------------------------------------------------------- */
-
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
@@ -26,16 +25,15 @@ export const getUsersForSidebar = async (req, res) => {
 /* -------------------------------------------------------------------------- */
 /* 💬  Get Chat Messages Between Two Users                                    */
 /* -------------------------------------------------------------------------- */
-
 export const getMessages = async (req, res) => {
   try {
-    const { id: userToChatId } = req.params;
     const myId = req.user._id;
+    const friendId = req.params.id;
 
     const messages = await Message.find({
       $or: [
-        { senderId: myId, receiverId: userToChatId },
-        { senderId: userToChatId, receiverId: myId },
+        { senderId: myId, receiverId: friendId },
+        { senderId: friendId, receiverId: myId }
       ],
     }).sort({ createdAt: 1 });
 
@@ -49,32 +47,25 @@ export const getMessages = async (req, res) => {
 /* -------------------------------------------------------------------------- */
 /* ✉️  Send New Message (TEXT / IMAGE / VIDEO)                                */
 /* -------------------------------------------------------------------------- */
-
 export const sendMessage = async (req, res) => {
   try {
     const { text, image, video } = req.body;
-    const { id: receiverId } = req.params;
     const senderId = req.user._id;
+    const receiverId = req.params.id;
 
-    // Frontend already gives Cloudinary URLs
-    const imageUrl = image || null;
-    const videoUrl = video || null;
-
-    const newMessage = new Message({
+    const newMessage = await Message.create({
       senderId,
       receiverId,
-      text,
-      image: imageUrl,
-      video: videoUrl,
+      text: text || "",
+      image: image || null,
+      video: video || null,
     });
 
-    await newMessage.save();
+    const receiverSocket = getReceiverSocketId(receiverId);
 
-    // SOCKET.IO — send new message to receiver
-    const receiverSocketId = getReceiverSocketId(receiverId);
-
-    if (receiverSocketId) {
-      getIO().to(receiverSocketId).emit("newMessage", newMessage);
+    if (receiverSocket) {
+      // 🔥 Send message to receiver
+      getIO().to(receiverSocket).emit("newMessage", newMessage);
     }
 
     res.status(201).json(newMessage);
@@ -85,9 +76,8 @@ export const sendMessage = async (req, res) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* 💖  Add or Update Reaction                                                 */
+/* 💖  Add or Update Reaction (WhatsApp style)                                */
 /* -------------------------------------------------------------------------- */
-
 export const addReaction = async (req, res) => {
   try {
     const { messageId, userId, emoji } = req.body;
@@ -97,29 +87,27 @@ export const addReaction = async (req, res) => {
     }
 
     const message = await Message.findById(messageId);
-    if (!message) {
-      return res.status(404).json({ error: "Message not found" });
-    }
+    if (!message) return res.status(404).json({ error: "Message not found" });
 
-    // Remove previous reaction from same user
+    // Remove old reaction by same user
     message.reactions = message.reactions.filter(
       (r) => r.userId.toString() !== userId
     );
 
-    // Add new one
+    // Push new reaction
     message.reactions.push({ userId, emoji });
 
     await message.save();
 
-    // Broadcast reaction update
-    getIO().emit("messageReaction", {
+    // 🔥 Correct event name
+    getIO().emit("reactionUpdated", {
       messageId,
       reactions: message.reactions,
     });
 
     res.status(200).json({
-      message: "Reaction added successfully",
-      data: message,
+      success: true,
+      reactions: message.reactions,
     });
   } catch (error) {
     console.error("❌ Error in addReaction:", error.message);

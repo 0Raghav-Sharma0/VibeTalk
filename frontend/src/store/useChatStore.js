@@ -4,122 +4,198 @@ import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get) => ({
+
     messages: [],
     users: [],
     selectedUser: null,
+
     isUsersLoading: false,
     isMessagesLoading: false,
-    newMessageFlag: false,
-    unreadMessages: {},
-    isMusicPlayerOpen: false,
 
+    unreadMessages: {},
+
+    isMusicPlayerOpen: false,
     toggleMusicPlayer: () => {
-        set((state) => ({ isMusicPlayerOpen: !state.isMusicPlayerOpen}))
+        set((s) => ({ isMusicPlayerOpen: !s.isMusicPlayerOpen }));
     },
 
+    /* ============================================================
+       GET USERS
+    ============================================================= */
     getUsers: async () => {
         set({ isUsersLoading: true });
+
         try {
             const res = await axiosInstance.get("/messages/users");
 
             set((state) => ({
-                users: res.data.map((user) => {
-                    const existingUser = state.users.find((u) => u._id === user._id);
+                users: res.data.map((u) => {
+                    const existing = state.users.find((x) => x._id === u._id);
                     return {
-                        ...user,
-                        hasNewMessage: existingUser ? existingUser.hasNewMessage : false,
+                        ...u,
+                        hasNewMessage: existing ? existing.hasNewMessage : false,
                     };
                 }),
             }));
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to load users");
-        } finally {
-            set({ isUsersLoading: false });
+
+        } catch {
+            toast.error("Failed to load users");
         }
+
+        set({ isUsersLoading: false });
     },
 
+    /* ============================================================
+       GET MESSAGES + EMIT SEEN (✓✓)
+    ============================================================= */
     getMessages: async (userId) => {
         set({ isMessagesLoading: true });
+
         try {
             const res = await axiosInstance.get(`/messages/${userId}`);
             set({ messages: res.data });
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to load messages");
-        } finally {
-            set({ isMessagesLoading: false });
+
+            const socket = useAuthStore.getState().socket;
+            const auth = useAuthStore.getState().authUser;
+
+            socket.emit("msg-seen", {
+                myId: auth._id,
+                friendId: userId,
+            });
+
+        } catch {
+            toast.error("Failed to load messages");
         }
+
+        set({ isMessagesLoading: false });
     },
 
-    sendMessage: async (messageData) => {
+    /* ============================================================
+       SEND MESSAGE + EMIT DELIVERED (✓)
+    ============================================================= */
+    sendMessage: async (msgData) => {
         const { selectedUser, messages } = get();
+        const socket = useAuthStore.getState().socket;
+        const auth = useAuthStore.getState().authUser;
+
         try {
-            const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-            set({ messages: [...messages, res.data] });
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to send message");
+            const res = await axiosInstance.post(
+                `/messages/send/${selectedUser._id}`,
+                msgData
+            );
+
+            const saved = res.data;
+
+            // Add message to UI instantly
+            set({ messages: [...messages, saved] });
+
+            // Emit delivered immediately
+            socket.emit("msg-delivered", {
+                messageId: saved._id,
+                receiverId: selectedUser._id,
+            });
+
+        } catch {
+            toast.error("Failed to send message");
         }
     },
 
+    /* ============================================================
+       ADD REACTION
+    ============================================================= */
     addReaction: async (messageId, emoji) => {
-        const { authUser } = get();
+        const auth = useAuthStore.getState().authUser;
+        const socket = useAuthStore.getState().socket;
+
         try {
             const res = await axiosInstance.post(`/messages/reaction/${messageId}`, {
-                userId: authUser._id,
+                userId: auth._id,
                 emoji,
             });
 
-            // ✅ Update reactions locally
+            // Update my UI
             set((state) => ({
-                messages: state.messages.map((msg) =>
-                    msg._id === messageId ? { ...msg, reactions: res.data.reactions } : msg
+                messages: state.messages.map((m) =>
+                    m._id === messageId ? { ...m, reactions: res.data.data.reactions } : m
                 ),
             }));
 
-            // ✅ Emit reaction update via WebSocket
-            const socket = useAuthStore.getState().socket;
-            socket.emit("sendReaction", { messageId, reactions: res.data.reactions });
+            // send to others
+            socket.emit("sendReaction", {
+                messageId,
+                reactions: res.data.data.reactions,
+            });
 
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to add reaction");
+        } catch {
+            toast.error("Failed to react");
         }
     },
 
+    /* ============================================================
+       SOCKET EVENTS
+    ============================================================= */
     subscribeToMessages: () => {
         const socket = useAuthStore.getState().socket;
+        const auth = useAuthStore.getState().authUser;
 
+        /* NEW MESSAGE */
         socket.off("newMessage");
-        socket.on("newMessage", (newMessage) => {
+        socket.on("newMessage", (msg) => {
             const { selectedUser, messages, users } = get();
 
-            set((state) => {
-                let updatedMessages = state.messages;
-                let updatedUsers = state.users;
+            // If chatting with sender
+            if (selectedUser && msg.senderId === selectedUser._id) {
 
-                if (selectedUser && newMessage.senderId === selectedUser._id) {
-                    updatedMessages = [...messages, newMessage];
-                } else {
-                    updatedUsers = users.map((user) =>
-                        user._id === newMessage.senderId
-                            ? { ...user, hasNewMessage: true, lastMessageTime: new Date() }
-                            : user
-                    );
+                set({ messages: [...messages, msg] });
 
-                    updatedUsers.sort((a, b) =>
-                        a.hasNewMessage === b.hasNewMessage ? 0 : a.hasNewMessage ? -1 : 1
-                    );
-                }
+                // mark as delivered instantly
+                socket.emit("msg-delivered", {
+                    messageId: msg._id,
+                    receiverId: auth._id,
+                });
 
-                return { messages: updatedMessages, users: updatedUsers };
+                return;
+            }
+
+            // Mark as unread
+            set({
+                users: users.map((u) =>
+                    u._id === msg.senderId
+                        ? { ...u, hasNewMessage: true }
+                        : u
+                ),
             });
         });
 
-        // ✅ Listen for real-time reaction updates
-        socket.off("reactionUpdated");
-        socket.on("reactionUpdated", ({ messageId, reactions }) => {
+        /* REACTION UPDATE */
+        socket.off("messageReaction");
+        socket.on("messageReaction", ({ messageId, reactions }) => {
             set((state) => ({
-                messages: state.messages.map((msg) =>
-                    msg._id === messageId ? { ...msg, reactions } : msg
+                messages: state.messages.map((m) =>
+                    m._id === messageId ? { ...m, reactions } : m
                 ),
+            }));
+        });
+
+        /* DELIVERED ✓ */
+        socket.off("msg-delivered-update");
+        socket.on("msg-delivered-update", ({ messageId }) => {
+            set((state) => ({
+                messages: state.messages.map((m) =>
+                    m._id === messageId ? { ...m, delivered: true } : m
+                ),
+            }));
+        });
+
+        /* SEEN ✓✓ */
+        socket.off("msg-seen-update");
+        socket.on("msg-seen-update", () => {
+            set((state) => ({
+                messages: state.messages.map((m) => ({
+                    ...m,
+                    delivered: true,
+                    seen: true,
+                })),
             }));
         });
     },
@@ -127,20 +203,21 @@ export const useChatStore = create((set, get) => ({
     unsubscribeFromMessages: () => {
         const socket = useAuthStore.getState().socket;
         socket.off("newMessage");
-        socket.off("reactionUpdated");
+        socket.off("messageReaction");
+        socket.off("msg-delivered-update");
+        socket.off("msg-seen-update");
     },
 
+    /* ============================================================
+       SELECT USER
+    ============================================================= */
     setSelectedUser: (selectedUser) => {
-        if (selectedUser) {
-            const { unreadMessages } = get();
-            const updatedUnread = { ...unreadMessages };
-            delete updatedUnread[selectedUser._id]; // ⛔ This will throw an error if selectedUser is null
-    
-            set({ selectedUser, unreadMessages: updatedUnread });
-        } else {
-            set({ selectedUser: null }); // ✅ Safe handling when clearing selected user
-        }
-    },
+        if (!selectedUser) return set({ selectedUser: null });
 
-    clearNewMessageFlag: () => set({ newMessageFlag: false }),
+        const { unreadMessages } = get();
+        const updated = { ...unreadMessages };
+        delete updated[selectedUser._id];
+
+        set({ selectedUser, unreadMessages: updated });
+    },
 }));

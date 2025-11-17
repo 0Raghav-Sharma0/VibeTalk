@@ -19,13 +19,12 @@ export default function Whiteboard({ roomId }) {
   let lastX = 0;
   let lastY = 0;
 
-  // JOIN ROOM
   useEffect(() => {
     if (!roomId) return;
     socket.emit("join-room", roomId);
   }, [roomId]);
 
-  // INITIALIZE CANVAS
+  /* INIT CANVAS */
   useEffect(() => {
     const canvas = canvasRef.current;
 
@@ -51,7 +50,7 @@ export default function Whiteboard({ roomId }) {
     return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // RECEIVE DRAW FROM OTHERS
+  /* RECEIVE DRAW */
   useEffect(() => {
     socket.on("whiteboard-draw", (data) => {
       const ctx = ctxRef.current;
@@ -77,47 +76,16 @@ export default function Whiteboard({ roomId }) {
     };
   }, []);
 
-  /** ------------------------
-   * 🖱 LAPTOP MOUSE EVENTS
-   -------------------------**/
-  const handleMouseDown = (e) => {
+  /* MOUSE + TOUCH HANDLERS */
+  const startDraw = (x, y) => {
     isDrawing.current = true;
-    const rect = canvasRef.current.getBoundingClientRect();
-    lastX = e.clientX - rect.left;
-    lastY = e.clientY - rect.top;
+    lastX = x;
+    lastY = y;
   };
 
-  const handleMouseMove = (e) => {
-    if (!isDrawing.current) return;
-    drawStroke(e.clientX, e.clientY);
-  };
-
-  const handleMouseUp = () => (isDrawing.current = false);
-
-  /** ------------------------
-   * 📱 MOBILE TOUCH EVENTS
-   -------------------------**/
-  const handleTouchStart = (e) => {
-    isDrawing.current = true;
-    const touch = e.touches[0];
-    const rect = canvasRef.current.getBoundingClientRect();
-    lastX = touch.clientX - rect.left;
-    lastY = touch.clientY - rect.top;
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDrawing.current) return;
-    const touch = e.touches[0];
-    drawStroke(touch.clientX, touch.clientY);
-  };
-
-  const handleTouchEnd = () => (isDrawing.current = false);
-
-  /** ------------------------
-   * ✏️ DRAW FUNCTION
-   -------------------------**/
   const drawStroke = (xPos, yPos) => {
-    const rect = canvasRef.current.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
     const x = xPos - rect.left;
     const y = yPos - rect.top;
 
@@ -144,7 +112,6 @@ export default function Whiteboard({ roomId }) {
     lastY = y;
   };
 
-  /** CLEAR BOARD */
   const clearBoard = () => {
     const canvas = canvasRef.current;
     const ctx = ctxRef.current;
@@ -153,9 +120,8 @@ export default function Whiteboard({ roomId }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-base-100 border-l border-base-300">
+    <div className="flex flex-col h-full w-full overflow-hidden bg-base-100">
       <div className="p-3 flex gap-4 items-center border-b bg-base-200">
-
         <input
           type="color"
           value={color}
@@ -182,14 +148,16 @@ export default function Whiteboard({ roomId }) {
 
       <canvas
         ref={canvasRef}
-        className="flex-1 bg-white touch-none"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
+        className="flex-1 bg-white touch-none w-full h-full"
+        onMouseDown={(e) => startDraw(e.clientX, e.clientY)}
+        onMouseMove={(e) => isDrawing.current && drawStroke(e.clientX, e.clientY)}
+        onMouseUp={() => (isDrawing.current = false)}
+        onMouseLeave={() => (isDrawing.current = false)}
+        onTouchStart={(e) => startDraw(e.touches[0].clientX, e.touches[0].clientY)}
+        onTouchMove={(e) =>
+          isDrawing.current && drawStroke(e.touches[0].clientX, e.touches[0].clientY)
+        }
+        onTouchEnd={() => (isDrawing.current = false)}
       />
     </div>
   );

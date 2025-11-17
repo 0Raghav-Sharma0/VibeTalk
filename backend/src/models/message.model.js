@@ -12,25 +12,22 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    text: {
-      type: String,
-    },
-    image: {
-      type: String,
-    },
-    video: {
-      type: String,
-    },
+
+    text: String,
+    image: String,
+    video: String,
+
+    delivered: { type: Boolean, default: false },
+    seen: { type: Boolean, default: false },
+
     reactions: [
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        emoji: { type: String },
+        emoji: String,
       },
     ],
   },
   { timestamps: true }
 );
 
-const Message = mongoose.model("Message", messageSchema);
-
-export default Message;
+export default mongoose.model("Message", messageSchema);
