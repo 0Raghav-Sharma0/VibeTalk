@@ -1,223 +1,132 @@
+// src/store/useChatStore.js
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get) => ({
+  messages: [],
+  users: [],
+  selectedUser: null,
+  isUsersLoading: false,
+  isMessagesLoading: false,
 
-    messages: [],
-    users: [],
-    selectedUser: null,
+  // Unread badge storage: { userId: count }
+  unreadMessages: {},
 
-    isUsersLoading: false,
-    isMessagesLoading: false,
+  // Typing indicator storage { userId: true/false }
+  typing: {},
 
-    unreadMessages: {},
+  /* ============================================================
+     LOAD USERS
+  ============================================================ */
+  getUsers: async () => {
+    set({ isUsersLoading: true });
+    try {
+      const res = await axiosInstance.get("/messages/users");
+      set({ users: res.data });
+    } catch (error) {
+      toast.error("Failed to load users");
+    } finally {
+      set({ isUsersLoading: false });
+    }
+  },
 
-    isMusicPlayerOpen: false,
-    toggleMusicPlayer: () => {
-        set((s) => ({ isMusicPlayerOpen: !s.isMusicPlayerOpen }));
-    },
+  /* ============================================================
+     LOAD MESSAGES FOR CURRENT CHAT
+  ============================================================ */
+  getMessages: async (userId) => {
+    set({ isMessagesLoading: true, messages: [] });
+    try {
+      const res = await axiosInstance.get(`/messages/${userId}`);
+      set({ messages: res.data, isMessagesLoading: false });
+    } catch (error) {
+      toast.error("Failed to load messages");
+      set({ isMessagesLoading: false });
+    }
+  },
 
-    /* ============================================================
-       GET USERS
-    ============================================================= */
-    getUsers: async () => {
-        set({ isUsersLoading: true });
+  /* ============================================================
+     SEND MESSAGE (SOCKET)
+  ============================================================ */
+  sendMessage: async (messageData) => {
+    const socket = useAuthStore.getState().socket;
+    const { selectedUser } = get();
+    const { authUser } = useAuthStore.getState();
 
-        try {
-            const res = await axiosInstance.get("/messages/users");
+    socket.emit("sendMessage", {
+      senderId: authUser._id,
+      receiverId: selectedUser._id,
+      text: messageData.text,
+      image: messageData.image || null,
+      video: messageData.video || null,
+    });
+  },
 
-            set((state) => ({
-                users: res.data.map((u) => {
-                    const existing = state.users.find((x) => x._id === u._id);
-                    return {
-                        ...u,
-                        hasNewMessage: existing ? existing.hasNewMessage : false,
-                    };
-                }),
-            }));
+  /* ============================================================
+     SOCKET: LISTEN (NEW MESSAGES + TYPING)
+  ============================================================ */
+  subscribeToMessages: () => {
+    const socket = useAuthStore.getState().socket;
 
-        } catch {
-            toast.error("Failed to load users");
-        }
+    /* NEW MESSAGES */
+    socket.off("newMessage");
+    socket.on("newMessage", (msg) => {
+      const { selectedUser, messages, unreadMessages } = get();
+      const { authUser } = useAuthStore.getState();
 
-        set({ isUsersLoading: false });
-    },
+      if (msg.senderId === authUser._id) {
+        set({ messages: [...messages, msg] });
+        return;
+      }
 
-    /* ============================================================
-       GET MESSAGES + EMIT SEEN (✓✓)
-    ============================================================= */
-    getMessages: async (userId) => {
-        set({ isMessagesLoading: true });
+      if (selectedUser && selectedUser._id === msg.senderId) {
+        set({ messages: [...messages, msg] });
+        return;
+      }
 
-        try {
-            const res = await axiosInstance.get(`/messages/${userId}`);
-            set({ messages: res.data });
+      const updatedUnread = {
+        ...unreadMessages,
+        [msg.senderId]: (unreadMessages[msg.senderId] || 0) + 1,
+      };
 
-            const socket = useAuthStore.getState().socket;
-            const auth = useAuthStore.getState().authUser;
+      set({ unreadMessages: updatedUnread });
+    });
 
-            socket.emit("msg-seen", {
-                myId: auth._id,
-                friendId: userId,
-            });
+    /* TYPING INDICATOR */
+    socket.off("typing");
+    socket.on("typing", ({ senderId, isTyping }) => {
+      const typingMap = { ...get().typing };
+      typingMap[senderId] = isTyping;
 
-        } catch {
-            toast.error("Failed to load messages");
-        }
+      set({ typing: typingMap });
+    });
+  },
 
-        set({ isMessagesLoading: false });
-    },
+  unsubscribeFromMessages: () => {
+    const socket = useAuthStore.getState().socket;
+    socket.off("newMessage");
+    socket.off("typing");
+  },
 
-    /* ============================================================
-       SEND MESSAGE + EMIT DELIVERED (✓)
-    ============================================================= */
-    sendMessage: async (msgData) => {
-        const { selectedUser, messages } = get();
-        const socket = useAuthStore.getState().socket;
-        const auth = useAuthStore.getState().authUser;
+  /* ============================================================
+     SELECT USER (RESET UNREAD)
+  ============================================================ */
+  setSelectedUser: (selectedUser) => {
+    if (!selectedUser) {
+      set({ selectedUser: null, messages: [] });
+      return;
+    }
 
-        try {
-            const res = await axiosInstance.post(
-                `/messages/send/${selectedUser._id}`,
-                msgData
-            );
+    const { unreadMessages } = get();
+    const updatedUnread = { ...unreadMessages };
+    delete updatedUnread[selectedUser._id];
 
-            const saved = res.data;
-
-            // Add message to UI instantly
-            set({ messages: [...messages, saved] });
-
-            // Emit delivered immediately
-            socket.emit("msg-delivered", {
-                messageId: saved._id,
-                receiverId: selectedUser._id,
-            });
-
-        } catch {
-            toast.error("Failed to send message");
-        }
-    },
-
-    /* ============================================================
-       ADD REACTION
-    ============================================================= */
-    addReaction: async (messageId, emoji) => {
-        const auth = useAuthStore.getState().authUser;
-        const socket = useAuthStore.getState().socket;
-
-        try {
-            const res = await axiosInstance.post(`/messages/reaction/${messageId}`, {
-                userId: auth._id,
-                emoji,
-            });
-
-            // Update my UI
-            set((state) => ({
-                messages: state.messages.map((m) =>
-                    m._id === messageId ? { ...m, reactions: res.data.data.reactions } : m
-                ),
-            }));
-
-            // send to others
-            socket.emit("sendReaction", {
-                messageId,
-                reactions: res.data.data.reactions,
-            });
-
-        } catch {
-            toast.error("Failed to react");
-        }
-    },
-
-    /* ============================================================
-       SOCKET EVENTS
-    ============================================================= */
-    subscribeToMessages: () => {
-        const socket = useAuthStore.getState().socket;
-        const auth = useAuthStore.getState().authUser;
-
-        /* NEW MESSAGE */
-        socket.off("newMessage");
-        socket.on("newMessage", (msg) => {
-            const { selectedUser, messages, users } = get();
-
-            // If chatting with sender
-            if (selectedUser && msg.senderId === selectedUser._id) {
-
-                set({ messages: [...messages, msg] });
-
-                // mark as delivered instantly
-                socket.emit("msg-delivered", {
-                    messageId: msg._id,
-                    receiverId: auth._id,
-                });
-
-                return;
-            }
-
-            // Mark as unread
-            set({
-                users: users.map((u) =>
-                    u._id === msg.senderId
-                        ? { ...u, hasNewMessage: true }
-                        : u
-                ),
-            });
-        });
-
-        /* REACTION UPDATE */
-        socket.off("messageReaction");
-        socket.on("messageReaction", ({ messageId, reactions }) => {
-            set((state) => ({
-                messages: state.messages.map((m) =>
-                    m._id === messageId ? { ...m, reactions } : m
-                ),
-            }));
-        });
-
-        /* DELIVERED ✓ */
-        socket.off("msg-delivered-update");
-        socket.on("msg-delivered-update", ({ messageId }) => {
-            set((state) => ({
-                messages: state.messages.map((m) =>
-                    m._id === messageId ? { ...m, delivered: true } : m
-                ),
-            }));
-        });
-
-        /* SEEN ✓✓ */
-        socket.off("msg-seen-update");
-        socket.on("msg-seen-update", () => {
-            set((state) => ({
-                messages: state.messages.map((m) => ({
-                    ...m,
-                    delivered: true,
-                    seen: true,
-                })),
-            }));
-        });
-    },
-
-    unsubscribeFromMessages: () => {
-        const socket = useAuthStore.getState().socket;
-        socket.off("newMessage");
-        socket.off("messageReaction");
-        socket.off("msg-delivered-update");
-        socket.off("msg-seen-update");
-    },
-
-    /* ============================================================
-       SELECT USER
-    ============================================================= */
-    setSelectedUser: (selectedUser) => {
-        if (!selectedUser) return set({ selectedUser: null });
-
-        const { unreadMessages } = get();
-        const updated = { ...unreadMessages };
-        delete updated[selectedUser._id];
-
-        set({ selectedUser, unreadMessages: updated });
-    },
+    set({
+      selectedUser,
+      unreadMessages: updatedUnread,
+      messages: [],
+      isMessagesLoading: false,
+    });
+  },
 }));

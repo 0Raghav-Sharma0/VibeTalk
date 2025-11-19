@@ -1,50 +1,22 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
 import { formatMessageTime } from "../lib/utils";
 
 export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
-
-  // WhatsApp tick colors
   const GREY = "#8696a0";
-  const BLUE = "#53bdeb";
 
   const getTick = () => {
-    // loading spinner
-    if (!msg.delivered && !msg.seen) {
-      return <Loader2 className="w-3 h-3 animate-spin" />;
-    }
-
-    // delivered ✓✓ (grey)
-    if (msg.delivered && !msg.seen) {
-      return (
-        <span
-          style={{
-            color: GREY,
-            fontWeight: 600,
-            fontSize: "13px",
-            letterSpacing: "-1px",
-          }}
-        >
-          ✓✓
-        </span>
-      );
-    }
-
-    // seen ✓✓ (blue)
-    if (msg.seen) {
-      return (
-        <span
-          style={{
-            color: BLUE,
-            fontWeight: 700,
-            fontSize: "13px",
-            letterSpacing: "-1px",
-          }}
-        >
-          ✓✓
-        </span>
-      );
-    }
+    return (
+      <span
+        style={{
+          color: GREY,
+          fontWeight: 600,
+          fontSize: "13px",
+          letterSpacing: "-1px",
+        }}
+      >
+        ✓✓
+      </span>
+    );
   };
 
   return (
@@ -86,10 +58,10 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
               : "bg-base-100 border-base-300"
           }`}
         >
-          {/* TEXT */}
+          {/* Text */}
           {msg.text && <p>{msg.text}</p>}
 
-          {/* IMAGE */}
+          {/* Image */}
           {msg.image && (
             <img
               src={msg.image}
@@ -98,7 +70,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
             />
           )}
 
-          {/* VIDEO */}
+          {/* Video */}
           {msg.video && (
             <video
               controls
@@ -108,7 +80,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
             </video>
           )}
 
-          {/* WhatsApp ticks */}
+          {/* Tick */}
           {isMine && (
             <div className="mt-1 text-xs flex justify-end items-center">
               {getTick()}

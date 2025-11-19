@@ -5,6 +5,7 @@ import EmojiPicker from "emoji-picker-react";
 import axios from "axios";
 import messageSentSound from "/sent_message.mp3";
 import { useChatStore } from "../store/useChatStore";
+import { useAuthStore } from "../store/useAuthStore";
 
 const messageSentAudio =
   typeof Audio !== "undefined" ? new Audio(messageSentSound) : null;
@@ -18,10 +19,25 @@ const MessageInput = () => {
   const fileInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
-  const { sendMessage } = useChatStore();
+  const { sendMessage, selectedUser } = useChatStore();
+  const { authUser, socket } = useAuthStore();
 
-  const handleEmojiClick = (emoji) => setText((t) => t + emoji.emoji);
+  /* 🔥 TYPING EMITTER */
+  const handleTyping = (value) => {
+    setText(value);
 
+    if (!selectedUser) return;
+
+    socket.emit("typing", {
+      senderId: authUser._id,
+      receiverId: selectedUser._id,
+      isTyping: value.length > 0,
+    });
+  };
+
+  const handleEmojiClick = (emoji) => handleTyping(text + emoji.emoji);
+
+  /* SEND MESSAGE */
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview && !videoPreview) return;
@@ -30,35 +46,28 @@ const MessageInput = () => {
       let imageUrl = null;
       let videoUrl = null;
 
-      // Upload image
       if (imagePreview && fileInputRef.current?.files?.[0]) {
         const form = new FormData();
         form.append("file", fileInputRef.current.files[0]);
         form.append("upload_preset", "my_preset");
-
         const res = await axios.post(
           "https://api.cloudinary.com/v1_1/dbi3tuuli/image/upload",
           form
         );
-
         imageUrl = res.data.secure_url;
       }
 
-      // Upload video
       if (videoPreview && videoInputRef.current?.files?.[0]) {
         const form = new FormData();
         form.append("file", videoInputRef.current.files[0]);
         form.append("upload_preset", "my_preset");
-
         const res = await axios.post(
           "https://api.cloudinary.com/v1_1/dbi3tuuli/video/upload",
           form
         );
-
         videoUrl = res.data.secure_url;
       }
 
-      // Send final message
       await sendMessage({
         text: text.trim(),
         image: imageUrl,
@@ -69,6 +78,13 @@ const MessageInput = () => {
         messageSentAudio.currentTime = 0;
         messageSentAudio.play();
       }
+
+      // STOP TYPING
+      socket.emit("typing", {
+        senderId: authUser._id,
+        receiverId: selectedUser._id,
+        isTyping: false,
+      });
 
       setText("");
       setImagePreview(null);
@@ -81,7 +97,6 @@ const MessageInput = () => {
 
   return (
     <div className="relative w-full">
-      {/* FILE PREVIEW */}
       {(imagePreview || videoPreview) && (
         <div className="mb-3 flex items-center gap-3 bg-base-200 p-3 rounded-xl border border-base-300">
           {imagePreview && (
@@ -120,12 +135,10 @@ const MessageInput = () => {
         </div>
       )}
 
-      {/* INPUT BAR */}
       <form
         onSubmit={handleSendMessage}
         className="flex items-center w-full gap-2 bg-base-200 border border-base-300 rounded-xl px-3 py-2"
       >
-        {/* EMOJI */}
         <button
           type="button"
           onClick={() => setShowEmojiPicker((s) => !s)}
@@ -134,16 +147,14 @@ const MessageInput = () => {
           <Smile size={20} />
         </button>
 
-        {/* TEXT INPUT */}
         <input
           type="text"
           placeholder="Type a message..."
-          className="flex-1 min-w-0 bg-transparent outline-none text-sm text-base-content placeholder:text-base-content/50"
+          className="flex-1 min-w-0 bg-transparent outline-none text-sm"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => handleTyping(e.target.value)}
         />
 
-        {/* IMAGE UPLOAD */}
         <input
           type="file"
           accept="image/*"
@@ -166,7 +177,6 @@ const MessageInput = () => {
           <Image size={18} />
         </button>
 
-        {/* VIDEO UPLOAD */}
         <input
           type="file"
           accept="video/*"
@@ -189,7 +199,6 @@ const MessageInput = () => {
           <FileVideo size={18} />
         </button>
 
-        {/* SEND */}
         <button
           type="submit"
           disabled={!text.trim() && !imagePreview && !videoPreview}

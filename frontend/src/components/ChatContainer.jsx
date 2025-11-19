@@ -24,6 +24,7 @@ export default function ChatContainer() {
   const { isMusicPlayerOpen, toggleMusicPlayer } = useMusicStore();
 
   const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const endRef = useRef(null);
 
   const sharedRoomId =
@@ -31,25 +32,48 @@ export default function ChatContainer() {
       ? [authUser._id, selectedUser._id].sort().join("_")
       : null;
 
-  // Load messages on user select
+  // Load messages on user select - SIMPLIFIED VERSION
   useEffect(() => {
-    if (!selectedUser?._id) return;
+    console.log("🎯 ChatContainer useEffect - selectedUser:", selectedUser?._id);
+    
+    if (!selectedUser?._id) {
+      console.log("⏸️ No user selected, skipping message load");
+      return;
+    }
+
+    console.log("🚀 Loading messages for:", selectedUser.name);
+    
+    // Load messages
     getMessages(selectedUser._id);
+    
+    // Subscribe to real-time messages
     subscribeToMessages();
-    return () => unsubscribeFromMessages();
+
+    // Cleanup
+    return () => {
+      console.log("🧹 Cleaning up chat container");
+      unsubscribeFromMessages();
+    };
+  }, [selectedUser?._id]); // Only depend on selectedUser._id
+
+  // Auto scroll to bottom when messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
+  // Reset error state when user changes
+  useEffect(() => {
+    setHasError(false);
   }, [selectedUser?._id]);
 
-  // Auto scroll
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  console.log("📊 RENDER - Loading:", isMessagesLoading, "Messages:", messages.length, "User:", selectedUser?._id);
 
   return (
     <div className="relative h-full bg-base-200 text-base-content overflow-hidden">
-
       {/* ===================== MAIN CHAT AREA ===================== */}
       <div className="flex flex-col h-full">
-
         <ChatHeader
           showWhiteboard={showWhiteboard}
           setShowWhiteboard={setShowWhiteboard}
@@ -59,28 +83,66 @@ export default function ChatContainer() {
           }}
         />
 
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          {isMessagesLoading ? (
+        {/* MESSAGES AREA */}
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          {!selectedUser ? (
             <div className="flex items-center justify-center h-full">
-              Loading messages…
+              <div className="text-center text-gray-500">
+                <div className="text-lg mb-2">Select a conversation</div>
+                <div className="text-sm">Choose a user to start chatting</div>
+              </div>
+            </div>
+          ) : isMessagesLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
+                <div className="text-gray-600">Loading messages...</div>
+                <div className="text-xs text-gray-400 mt-1">
+                  with {selectedUser.name}
+                </div>
+              </div>
+            </div>
+          ) : hasError ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-red-500">
+                <div className="text-lg mb-2">Failed to load messages</div>
+                <button 
+                  onClick={() => getMessages(selectedUser._id)}
+                  className="btn btn-sm btn-outline mt-2"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-gray-500">
+                <div className="text-lg mb-2">No messages yet</div>
+                <div className="text-sm">Say hello to start the conversation!</div>
+              </div>
             </div>
           ) : (
-            messages.map((msg) => (
-              <MessageBubble
-                key={msg._id}
-                msg={msg}
-                isMine={msg.senderId === authUser._id}
-                selectedUser={selectedUser}
-                authUser={authUser}
-              />
-            ))
+            <div className="space-y-6">
+              {messages.map((msg) => (
+                <MessageBubble
+                  key={msg._id}
+                  msg={msg}
+                  isMine={msg.senderId === authUser._id}
+                  selectedUser={selectedUser}
+                  authUser={authUser}
+                />
+              ))}
+              <div ref={endRef} />
+            </div>
           )}
-          <div ref={endRef} />
         </div>
 
-        <div className="border-t border-base-300 bg-base-100 px-3 py-2">
-          <MessageInput />
-        </div>
+        {/* MESSAGE INPUT - Only show when user is selected */}
+        {selectedUser && (
+          <div className="border-t border-base-300 bg-base-100 px-3 py-2">
+            <MessageInput />
+          </div>
+        )}
       </div>
 
       {/* ===================== WHITEBOARD SLIDE ===================== */}
@@ -93,7 +155,7 @@ export default function ChatContainer() {
         `}
       >
         <button
-          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full"
+          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full z-10"
           onClick={() => setShowWhiteboard(false)}
         >
           <X size={18} />
@@ -121,7 +183,7 @@ export default function ChatContainer() {
         `}
       >
         <button
-          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full"
+          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full z-10"
           onClick={() => toggleMusicPlayer(false)}
         >
           <X size={18} />

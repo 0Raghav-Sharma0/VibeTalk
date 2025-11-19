@@ -7,10 +7,19 @@ import { useMusicStore } from "../store/musicStore";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 
 const Sidebar = ({ onClose }) => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } =
-    useChatStore();
+  const {
+    getUsers,
+    users,
+    selectedUser,
+    setSelectedUser,
+    isUsersLoading,
+    unreadMessages,
+    typing,
+  } = useChatStore();
+
   const { onlineUsers } = useAuthStore();
   const { isMusicPlayerOpen, toggleMusicPlayer } = useMusicStore();
+
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
   useEffect(() => {
@@ -20,22 +29,31 @@ const Sidebar = ({ onClose }) => {
   const handleUserSelect = (user) => {
     setSelectedUser(user);
 
-    // Clear new message flag for the selected user
-    useChatStore.setState((state) => ({
-      users: state.users.map((u) =>
-        u._id === user._id ? { ...u, hasNewMessage: false } : u
-      ),
-    }));
-
     if (isMusicPlayerOpen) toggleMusicPlayer();
 
-    // If onClose (drawer), call it to close sidebar on mobile after selecting a user
     if (typeof onClose === "function") onClose();
   };
 
+  /* ============================================================
+      SORT USERS — UNREAD ON TOP (Telegram style)
+  ============================================================ */
+  const sortedUsers = [...users].sort((a, b) => {
+    const unreadA = unreadMessages[a._id] || 0;
+    const unreadB = unreadMessages[b._id] || 0;
+
+    if (unreadA > 0 && unreadB === 0) return -1;
+    if (unreadB > 0 && unreadA === 0) return 1;
+
+    return 0;
+  });
+
   const filteredUsers = showOnlineOnly
-    ? users.filter((user) => onlineUsers.includes(user._id) || user.hasNewMessage)
-    : users;
+    ? sortedUsers.filter(
+        (user) =>
+          onlineUsers.includes(user._id) ||
+          (unreadMessages[user._id] && unreadMessages[user._id] > 0)
+      )
+    : sortedUsers;
 
   if (isUsersLoading) return <SidebarSkeleton />;
 
@@ -44,7 +62,9 @@ const Sidebar = ({ onClose }) => {
       {/* Header */}
       <div className="border-b border-base-300 px-5 py-4 flex items-center gap-2">
         <Users className="w-5 h-5 text-primary" />
-        <span className="text-sm font-medium text-base-content">Contacts</span>
+        <span className="text-sm font-medium text-base-content">
+          Contacts
+        </span>
       </div>
 
       {/* Online Toggle */}
@@ -67,13 +87,21 @@ const Sidebar = ({ onClose }) => {
           const isOnline = onlineUsers.includes(user._id);
           const isSelected = selectedUser?._id === user._id;
 
+          const unread = unreadMessages[user._id] || 0;
+          const isTyping = typing[user._id];
+
           return (
             <button
               key={user._id}
               onClick={() => handleUserSelect(user)}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition
-                ${isSelected ? "bg-primary/20 border border-primary/50" : "hover:bg-base-300"}
-                ${user.hasNewMessage && !isSelected ? "border border-secondary/50" : ""}
+                ${
+                  isSelected
+                    ? "bg-primary/20 border border-primary/50"
+                    : unread > 0
+                    ? "bg-primary/10 border border-primary"
+                    : "hover:bg-base-300"
+                }
               `}
             >
               {/* Avatar */}
@@ -90,24 +118,46 @@ const Sidebar = ({ onClose }) => {
 
               {/* User Info */}
               <div className="flex-1 truncate">
-                <p className="text-sm font-medium text-base-content truncate">
+                <p
+                  className={`text-sm truncate ${
+                    unread > 0 && !isSelected
+                      ? "font-bold text-base-content"
+                      : "font-medium text-base-content"
+                  }`}
+                >
                   {user.fullName}
                 </p>
-                <p className={`text-xs ${isOnline ? "text-success" : "text-base-content/60"}`}>
-                  {isOnline ? "Online" : "Offline"}
-                </p>
+
+                {/* Typing Indicator */}
+                {isTyping ? (
+                  <p className="text-xs text-purple-500 font-medium animate-pulse">
+                    typing…
+                  </p>
+                ) : (
+                  <p
+                    className={`text-xs ${
+                      isOnline ? "text-success" : "text-base-content/60"
+                    }`}
+                  >
+                    {isOnline ? "Online" : "Offline"}
+                  </p>
+                )}
               </div>
 
-              {/* New Badge */}
-              {user.hasNewMessage && !isSelected && (
-                <span className="badge badge-secondary badge-sm">New</span>
+              {/* Unread Badge */}
+              {unread > 0 && !isSelected && (
+                <span className="bg-primary text-white text-xs px-2 py-1 rounded-full animate-ping">
+                  {unread}
+                </span>
               )}
             </button>
           );
         })}
 
         {filteredUsers.length === 0 && (
-          <p className="text-center text-base-content/60 py-5 text-sm">No users found</p>
+          <p className="text-center text-base-content/60 py-5 text-sm">
+            No users found
+          </p>
         )}
       </div>
     </aside>

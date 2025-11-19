@@ -7,27 +7,55 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    text: String,
-    image: String,
-    video: String,
+    text: {
+      type: String,
+      default: "",
+    },
 
-    delivered: { type: Boolean, default: false },
-    seen: { type: Boolean, default: false },
+    image: {
+      type: String,
+      default: null,
+    },
 
+    video: {
+      type: String,
+      default: null,
+    },
+
+    // WhatsApp-style delivery states
+    delivered: {
+      type: Boolean,
+      default: false,
+    },
+
+    seen: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Emoji reactions
     reactions: [
       {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        emoji: String,
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        emoji: {
+          type: String,
+        },
       },
     ],
   },
   { timestamps: true }
 );
 
-export default mongoose.model("Message", messageSchema);
+const Message = mongoose.model("Message", messageSchema);
+
+export default Message;

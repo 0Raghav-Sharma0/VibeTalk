@@ -4,7 +4,7 @@ import { Server } from "socket.io";
 import Message from "../models/message.model.js";
 
 /* ============================================================
-   ALLOWED ORIGINS (CORS)
+   ✔ ALLOWED ORIGINS
 ============================================================ */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -23,12 +23,12 @@ function isOriginAllowed(origin) {
 }
 
 /* ============================================================
-   GLOBAL SOCKET INSTANCE
+   ✔ GLOBAL SOCKET INSTANCE
 ============================================================ */
 let io = null;
 
 /* ============================================================
-   ONLINE USERS (userId → socketId)
+   ✔ MAP userId → socketId
 ============================================================ */
 const userSocketMap = {};
 
@@ -37,7 +37,7 @@ export function getReceiverSocketId(userId) {
 }
 
 /* ============================================================
-   CREATE SOCKET SERVER
+   ✔ CREATE SOCKET SERVER
 ============================================================ */
 export function createSocketServer(server) {
   io = new Server(server, {
@@ -58,6 +58,9 @@ export function createSocketServer(server) {
 
     const userId = socket.handshake.query.userId;
 
+    /* ============================================================
+       ✔ STORE USER ONLINE
+    ============================================================ */
     if (userId) {
       userSocketMap[userId] = socket.id;
       console.log(`👤 User online → ${userId}`);
@@ -66,30 +69,56 @@ export function createSocketServer(server) {
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
     /* ============================================================
-       🔥 MESSAGE DELIVERED (✓)
-============================================================ */
+       ✔ SEND MESSAGE — FIXED REAL-TIME
+    ============================================================ */
+    socket.on("sendMessage", async (data) => {
+      try {
+        const { senderId, receiverId, text, image, video } = data;
+
+        const message = await Message.create({
+          senderId,
+          receiverId,
+          text: text || "",
+          image: image || null,
+          video: video || null,
+        });
+
+        const receiverSocket = getReceiverSocketId(receiverId);
+
+        // Send to receiver
+        if (receiverSocket) io.to(receiverSocket).emit("newMessage", message);
+
+        // Send back to sender (remove loading)
+        io.to(socket.id).emit("newMessage", message);
+
+        console.log("📩 Message delivered:", message._id);
+      } catch (err) {
+        console.log("❌ sendMessage error:", err);
+      }
+    });
+
+    /* ============================================================
+       ✔ MESSAGE DELIVERED
+    ============================================================ */
     socket.on("msg-delivered", async ({ messageId, receiverId }) => {
       try {
         await Message.findByIdAndUpdate(messageId, { delivered: true });
 
         const receiverSocket = getReceiverSocketId(receiverId);
 
-        // Send to message RECEIVER (friend)
         if (receiverSocket) {
           io.to(receiverSocket).emit("msg-delivered-update", { messageId });
         }
 
-        // 🔥 VERY IMPORTANT: Send to SENDER also
         io.to(socket.id).emit("msg-delivered-update", { messageId });
-
       } catch (err) {
         console.log("❌ msg-delivered error:", err);
       }
     });
 
     /* ============================================================
-       🔥 MESSAGE SEEN (✓✓ blue)
-============================================================ */
+       ✔ MESSAGE SEEN
+    ============================================================ */
     socket.on("msg-seen", async ({ myId, friendId }) => {
       try {
         await Message.updateMany(
@@ -112,8 +141,22 @@ export function createSocketServer(server) {
     });
 
     /* ============================================================
-       WHITEBOARD SYNC
-============================================================ */
+       ✔ TYPING INDICATOR
+    ============================================================ */
+    socket.on("typing", ({ senderId, receiverId, isTyping }) => {
+      const receiverSocket = getReceiverSocketId(receiverId);
+
+      if (receiverSocket) {
+        io.to(receiverSocket).emit("typing", {
+          senderId,
+          isTyping,
+        });
+      }
+    });
+
+    /* ============================================================
+       ✔ WHITEBOARD SYNC
+    ============================================================ */
     socket.on("join-room", (roomId) => {
       socket.join(roomId);
     });
@@ -123,20 +166,35 @@ export function createSocketServer(server) {
       socket.to(payload.roomId).emit("whiteboard-draw", payload);
     });
 
+    socket.on("whiteboard-shape", (payload) => {
+      if (!payload?.roomId) return;
+      socket.to(payload.roomId).emit("whiteboard-shape", payload);
+    });
+
+    socket.on("whiteboard-undo", (payload) => {
+      if (!payload?.roomId) return;
+      socket.to(payload.roomId).emit("whiteboard-undo", payload);
+    });
+
+    socket.on("whiteboard-redo", (payload) => {
+      if (!payload?.roomId) return;
+      socket.to(payload.roomId).emit("whiteboard-redo", payload);
+    });
+
     socket.on("whiteboard-clear", ({ roomId }) => {
       if (roomId) io.to(roomId).emit("whiteboard-clear");
     });
 
     /* ============================================================
-       MUSIC SYNC
-============================================================ */
+       ✔ MUSIC SYNC
+    ============================================================ */
     socket.on("music-sync", (payload) => {
       socket.to(payload.roomId).emit("music-sync", payload);
     });
 
     /* ============================================================
-       🔴 USER DISCONNECT
-============================================================ */
+       ✔ USER DISCONNECT
+    ============================================================ */
     socket.on("disconnect", () => {
       console.log("🔴 Disconnected:", socket.id);
 
@@ -155,7 +213,7 @@ export function createSocketServer(server) {
 }
 
 /* ============================================================
-   GET SOCKET INSTANCE
+   ✔ GET SOCKET INSTANCE
 ============================================================ */
 export function getIO() {
   if (!io) throw new Error("Socket.IO not initialized!");
