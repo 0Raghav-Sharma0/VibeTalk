@@ -1,10 +1,10 @@
 // backend/src/lib/socket.js
-
 import { Server } from "socket.io";
 import Message from "../models/message.model.js";
 
 /* ============================================================
-   ✔ ALLOWED ORIGINS
+   ALLOWED ORIGINS
+   Add any frontend origins you use during development & prod
 ============================================================ */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -23,28 +23,27 @@ function isOriginAllowed(origin) {
 }
 
 /* ============================================================
-   ✔ GLOBAL SOCKET INSTANCE
+   Global socket instance and user map
 ============================================================ */
 let io = null;
-
-/* ============================================================
-   ✔ MAP userId → socketId
-============================================================ */
-const userSocketMap = {};
+const userSocketMap = {}; // userId -> socketId
 
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
 
 /* ============================================================
-   ✔ CREATE SOCKET SERVER
+   Create socket server
 ============================================================ */
 export function createSocketServer(server) {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
         if (isOriginAllowed(origin)) callback(null, true);
-        else callback(new Error("CORS Not Allowed: " + origin));
+        else {
+          console.warn("❌ BLOCKED ORIGIN:", origin);
+          callback(new Error("CORS Not Allowed: " + origin));
+        }
       },
       credentials: true,
       methods: ["GET", "POST"],
@@ -54,27 +53,23 @@ export function createSocketServer(server) {
   console.log("🔥 Socket.IO initialized");
 
   io.on("connection", (socket) => {
-    console.log("🟢 Connected:", socket.id);
+    console.log("🟢 Socket connected", socket.id);
 
-    const userId = socket.handshake.query.userId;
-
-    /* ============================================================
-       ✔ STORE USER ONLINE
-    ============================================================ */
+    const userId = socket.handshake.query?.userId;
     if (userId) {
       userSocketMap[userId] = socket.id;
-      console.log(`👤 User online → ${userId}`);
+      console.log(`👤 User online -> ${userId} : ${socket.id}`);
     }
 
+    // broadcast online users
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-    /* ============================================================
-       ✔ SEND MESSAGE — FIXED REAL-TIME
-    ============================================================ */
+    /* ---------------------------
+       Messaging
+    ---------------------------- */
     socket.on("sendMessage", async (data) => {
       try {
         const { senderId, receiverId, text, image, video } = data;
-
         const message = await Message.create({
           senderId,
           receiverId,
@@ -84,80 +79,52 @@ export function createSocketServer(server) {
         });
 
         const receiverSocket = getReceiverSocketId(receiverId);
-
-        // Send to receiver
         if (receiverSocket) io.to(receiverSocket).emit("newMessage", message);
 
-        // Send back to sender (remove loading)
+        // send back to sender
         io.to(socket.id).emit("newMessage", message);
-
-        console.log("📩 Message delivered:", message._id);
       } catch (err) {
-        console.log("❌ sendMessage error:", err);
+        console.error("sendMessage error:", err);
       }
     });
 
-    /* ============================================================
-       ✔ MESSAGE DELIVERED
-    ============================================================ */
+    /* ---------------------------
+       Typing, delivered, seen
+    ---------------------------- */
+    socket.on("typing", ({ senderId, receiverId, isTyping }) => {
+      const receiverSocket = getReceiverSocketId(receiverId);
+      if (receiverSocket) io.to(receiverSocket).emit("typing", { senderId, isTyping });
+    });
+
     socket.on("msg-delivered", async ({ messageId, receiverId }) => {
       try {
         await Message.findByIdAndUpdate(messageId, { delivered: true });
-
         const receiverSocket = getReceiverSocketId(receiverId);
-
-        if (receiverSocket) {
-          io.to(receiverSocket).emit("msg-delivered-update", { messageId });
-        }
-
+        if (receiverSocket) io.to(receiverSocket).emit("msg-delivered-update", { messageId });
         io.to(socket.id).emit("msg-delivered-update", { messageId });
       } catch (err) {
-        console.log("❌ msg-delivered error:", err);
+        console.error("msg-delivered error:", err);
       }
     });
 
-    /* ============================================================
-       ✔ MESSAGE SEEN
-    ============================================================ */
     socket.on("msg-seen", async ({ myId, friendId }) => {
       try {
         await Message.updateMany(
-          {
-            senderId: friendId,
-            receiverId: myId,
-            seen: false,
-          },
+          { senderId: friendId, receiverId: myId, seen: false },
           { seen: true, delivered: true }
         );
-
         const friendSocket = getReceiverSocketId(friendId);
-
-        if (friendSocket) {
-          io.to(friendSocket).emit("msg-seen-update", { by: myId });
-        }
+        if (friendSocket) io.to(friendSocket).emit("msg-seen-update", { by: myId });
       } catch (err) {
-        console.log("❌ msg-seen error:", err);
+        console.error("msg-seen error:", err);
       }
     });
 
-    /* ============================================================
-       ✔ TYPING INDICATOR
-    ============================================================ */
-    socket.on("typing", ({ senderId, receiverId, isTyping }) => {
-      const receiverSocket = getReceiverSocketId(receiverId);
-
-      if (receiverSocket) {
-        io.to(receiverSocket).emit("typing", {
-          senderId,
-          isTyping,
-        });
-      }
-    });
-
-    /* ============================================================
-       ✔ WHITEBOARD SYNC
-    ============================================================ */
+    /* ---------------------------
+       Whiteboard & music
+    ---------------------------- */
     socket.on("join-room", (roomId) => {
+      if (!roomId) return;
       socket.join(roomId);
     });
 
@@ -166,42 +133,97 @@ export function createSocketServer(server) {
       socket.to(payload.roomId).emit("whiteboard-draw", payload);
     });
 
-    socket.on("whiteboard-shape", (payload) => {
-      if (!payload?.roomId) return;
-      socket.to(payload.roomId).emit("whiteboard-shape", payload);
-    });
-
-    socket.on("whiteboard-undo", (payload) => {
-      if (!payload?.roomId) return;
-      socket.to(payload.roomId).emit("whiteboard-undo", payload);
-    });
-
-    socket.on("whiteboard-redo", (payload) => {
-      if (!payload?.roomId) return;
-      socket.to(payload.roomId).emit("whiteboard-redo", payload);
-    });
-
     socket.on("whiteboard-clear", ({ roomId }) => {
-      if (roomId) io.to(roomId).emit("whiteboard-clear");
+      if (!roomId) return;
+      io.to(roomId).emit("whiteboard-clear");
     });
 
-    /* ============================================================
-       ✔ MUSIC SYNC
-    ============================================================ */
     socket.on("music-sync", (payload) => {
+      if (!payload?.roomId) return;
       socket.to(payload.roomId).emit("music-sync", payload);
     });
 
-    /* ============================================================
-       ✔ USER DISCONNECT
-    ============================================================ */
+    /* ---------------------------
+       CALL / WEBRTC SIGNALING
+    ---------------------------- */
+    socket.on("call-user", ({ targetUserId, offer, callType, from }) => {
+      try {
+        if (!targetUserId || !from) {
+          io.to(socket.id).emit("call-failed", { reason: "Missing fields" });
+          return;
+        }
+
+        const targetSocketId = getReceiverSocketId(targetUserId);
+        if (!targetSocketId) {
+          // Target offline
+          io.to(socket.id).emit("call-failed", { reason: "User offline" });
+          return;
+        }
+
+        // Forward incoming call to target
+        io.to(targetSocketId).emit("incoming-call", { from, offer, callType });
+      } catch (err) {
+        console.error("call-user error:", err);
+        io.to(socket.id).emit("call-failed", { reason: "Server error" });
+      }
+    });
+
+    socket.on("call-accepted", ({ callerId, answer }) => {
+      try {
+        const callerSocket = getReceiverSocketId(callerId);
+        if (!callerSocket) return;
+        io.to(callerSocket).emit("call-accepted", { answer });
+      } catch (err) {
+        console.error("call-accepted error:", err);
+      }
+    });
+
+    socket.on("call-rejected", ({ callerId }) => {
+      try {
+        const callerSocket = getReceiverSocketId(callerId);
+        if (callerSocket) {
+          io.to(callerSocket).emit("call-rejected", { by: socket.id });
+        }
+      } catch (err) {
+        console.error("call-rejected error:", err);
+      }
+    });
+
+    socket.on("webrtc-ice-candidate", ({ targetUserId, candidate }) => {
+      try {
+        if (!targetUserId || !candidate) return;
+        const targetSocket = getReceiverSocketId(targetUserId);
+        if (targetSocket) {
+          io.to(targetSocket).emit("webrtc-ice-candidate", { candidate });
+        }
+      } catch (err) {
+        console.error("webrtc-ice-candidate error:", err);
+      }
+    });
+
+    socket.on("end-call", ({ targetUserId }) => {
+      try {
+        const targetSocket = getReceiverSocketId(targetUserId);
+        if (targetSocket) {
+          io.to(targetSocket).emit("call-ended", { by: socket.id });
+        }
+        // notify caller too
+        io.to(socket.id).emit("call-ended", { by: socket.id });
+      } catch (err) {
+        console.error("end-call error:", err);
+      }
+    });
+
+    /* ---------------------------
+       Disconnect
+    ---------------------------- */
     socket.on("disconnect", () => {
-      console.log("🔴 Disconnected:", socket.id);
+      console.log("🔴 Socket disconnected", socket.id);
 
       for (const uid in userSocketMap) {
         if (userSocketMap[uid] === socket.id) {
           delete userSocketMap[uid];
-          console.log(`❌ User offline → ${uid}`);
+          console.log(`❌ User offline -> ${uid}`);
         }
       }
 
@@ -212,10 +234,7 @@ export function createSocketServer(server) {
   return io;
 }
 
-/* ============================================================
-   ✔ GET SOCKET INSTANCE
-============================================================ */
 export function getIO() {
-  if (!io) throw new Error("Socket.IO not initialized!");
+  if (!io) throw new Error("Socket not initialized");
   return io;
 }
