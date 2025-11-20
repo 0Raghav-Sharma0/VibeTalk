@@ -32,43 +32,41 @@ export default function ChatContainer() {
       ? [authUser._id, selectedUser._id].sort().join("_")
       : null;
 
-  // Load messages on user select - SIMPLIFIED VERSION
+  // Load messages when user changes
   useEffect(() => {
-    console.log("🎯 ChatContainer useEffect - selectedUser:", selectedUser?._id);
-    
+    console.log(
+      "🎯 ChatContainer useEffect - selectedUser:",
+      selectedUser?._id
+    );
+
     if (!selectedUser?._id) {
       console.log("⏸️ No user selected, skipping message load");
       return;
     }
 
-    console.log("🚀 Loading messages for:", selectedUser.name);
-    
-    // Load messages
+    // 🟢 FIX: use fullName instead of name
+    console.log("🚀 Loading messages for:", selectedUser.fullName);
+
     getMessages(selectedUser._id);
-    
-    // Subscribe to real-time messages
     subscribeToMessages();
 
-    // Cleanup
     return () => {
       console.log("🧹 Cleaning up chat container");
       unsubscribeFromMessages();
     };
-  }, [selectedUser?._id]); // Only depend on selectedUser._id
+  }, [selectedUser?._id]);
 
-  // Auto scroll to bottom when messages change
+  // Auto-scroll
   useEffect(() => {
     if (messages.length > 0) {
       endRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Reset error state when user changes
+  // Reset error on user change
   useEffect(() => {
     setHasError(false);
   }, [selectedUser?._id]);
-
-  console.log("📊 RENDER - Loading:", isMessagesLoading, "Messages:", messages.length, "User:", selectedUser?._id);
 
   return (
     <div className="relative h-full bg-base-200 text-base-content overflow-hidden">
@@ -97,8 +95,10 @@ export default function ChatContainer() {
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
                 <div className="text-gray-600">Loading messages...</div>
+
+                {/* 🟢 FIX: use fullName instead of name */}
                 <div className="text-xs text-gray-400 mt-1">
-                  with {selectedUser.name}
+                  with {selectedUser.fullName}
                 </div>
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function ChatContainer() {
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-red-500">
                 <div className="text-lg mb-2">Failed to load messages</div>
-                <button 
+                <button
                   onClick={() => getMessages(selectedUser._id)}
                   className="btn btn-sm btn-outline mt-2"
                 >
@@ -118,7 +118,9 @@ export default function ChatContainer() {
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-gray-500">
                 <div className="text-lg mb-2">No messages yet</div>
-                <div className="text-sm">Say hello to start the conversation!</div>
+                <div className="text-sm">
+                  Say hello to start the conversation!
+                </div>
               </div>
             </div>
           ) : (
@@ -137,7 +139,7 @@ export default function ChatContainer() {
           )}
         </div>
 
-        {/* MESSAGE INPUT - Only show when user is selected */}
+        {/* MESSAGE INPUT */}
         {selectedUser && (
           <div className="border-t border-base-300 bg-base-100 px-3 py-2">
             <MessageInput />

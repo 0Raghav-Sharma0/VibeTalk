@@ -1,7 +1,19 @@
+// src/store/useAuthStore.js
 import { create } from "zustand";
-import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { axiosInstance } from "../lib/axios.js";
+
+/**
+ * Auth + Socket store
+ *
+ * Responsibilities:
+ * - Manage authUser object (from /auth endpoints)
+ * - Create / clean up a single socket connection (with userId query)
+ * - Expose onlineUsers list for other stores to consume
+ *
+ * NOTE: The server expects socket handshake query { userId } (see backend/socket.js).
+ */
 
 const BASE_URL =
   import.meta.env.MODE === "development"
@@ -9,20 +21,22 @@ const BASE_URL =
     : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
+  /******************************
+   * state
+   ******************************/
   authUser: null,
   isSigningUp: false,
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
-  onlineUsers: [],
+  onlineUsers: [], // array of userIds
   socket: null,
 
-  /* ============================================================
-     CHECK AUTH (runs on refresh)
-  ============================================================ */
+  /******************************
+   * check auth (runs on app load)
+   ******************************/
   checkAuth: async () => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       set({ authUser: null, isCheckingAuth: false });
       return;
@@ -31,29 +45,33 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.get("/auth/check-auth");
       set({ authUser: res.data });
+      // Connect socket after successful auth
       get().connectSocket();
     } catch (err) {
+      console.warn("checkAuth failed", err);
       set({ authUser: null });
     } finally {
       set({ isCheckingAuth: false });
     }
   },
 
-  /* ============================================================
-     SIGNUP
-  ============================================================ */
+  /******************************
+   * signup
+   ******************************/
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
-
       localStorage.setItem("token", res.data.token);
       set({ authUser: res.data });
 
+      // connect socket
       get().connectSocket();
+
       toast.success("Account created!");
       return true;
     } catch (err) {
+      console.error("signup error", err);
       toast.error(err.response?.data?.message || "Signup failed");
       return false;
     } finally {
@@ -61,21 +79,23 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-     LOGIN
-  ============================================================ */
+  /******************************
+   * login
+   ******************************/
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
-
       localStorage.setItem("token", res.data.token);
       set({ authUser: res.data });
 
+      // connect socket
       get().connectSocket();
+
       toast.success("Logged in!");
       return true;
     } catch (err) {
+      console.error("login error", err);
       toast.error("Invalid credentials");
       return false;
     } finally {
@@ -83,35 +103,31 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-     LOGOUT — FIXED (NO REFRESH NEEDED)
-  ============================================================ */
+  /******************************
+   * logout
+   ******************************/
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
     } catch (err) {
-      console.log("Logout error:", err);
+      console.warn("logout backend error (ignoring):", err);
     }
 
+    // clear token + local state
     localStorage.removeItem("token");
 
-    // 🔥 Reset all auth-related state
-    set({
-      authUser: null,
-      onlineUsers: [],
-    });
-
+    // reset store state and disconnect socket
+    set({ authUser: null, onlineUsers: [] });
     get().disconnectSocket();
 
     toast.success("Logged out");
-
-    // Optional redirect
+    // optional: redirect to login (your app already does this in logout flow)
     window.location.href = "/login";
   },
 
-  /* ============================================================
-     UPDATE PROFILE
-  ============================================================ */
+  /******************************
+   * update profile
+   ******************************/
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
@@ -119,47 +135,87 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: res.data });
       toast.success("Profile updated!");
     } catch (err) {
+      console.error("updateProfile error", err);
       toast.error(err.response?.data?.message || "Update failed");
     } finally {
       set({ isUpdatingProfile: false });
     }
   },
 
-  /* ============================================================
-     SOCKET: CONNECT
-  ============================================================ */
+  /******************************
+   * SOCKET: connect
+   *
+   * - Ensures only one socket exists.
+   * - Uses query: { userId } as your server expects.
+   * - Sets minimal core listeners (getOnlineUsers/connect/disconnect).
+   * - Other parts of app (chat, videocall) may also register listeners.
+   ******************************/
   connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser) return;
+    const { authUser, socket } = get();
 
-    // Avoid multiple connections
-    if (get().socket && get().socket.connected) return;
+    if (!authUser) {
+      console.warn("connectSocket: no authUser, skipping");
+      return;
+    }
 
-    const socket = io(BASE_URL, {
+    // avoid duplicate socket connections
+    if (socket && socket.connected) {
+      console.log("Socket already connected:", socket.id);
+      return;
+    }
+
+    // create socket
+    const sock = io(BASE_URL, {
       query: { userId: authUser._id },
       transports: ["websocket"],
+      // optional: automatic reconnection allowed by socket.io by default
     });
 
-    socket.on("connect", () => {
-      console.log("🟢 Connected to socket:", socket.id);
+    // connection events
+    sock.on("connect", () => {
+      console.log("🟢 Connected to socket:", sock.id);
     });
 
-    socket.on("disconnect", () => {
-      console.log("🔴 Socket disconnected");
+    sock.on("connect_error", (err) => {
+      console.warn("Socket connect_error:", err?.message || err);
     });
 
-    // NOTE: we still keep onlineUsers in this store - other stores subscribe to it
-    socket.on("getOnlineUsers", (ids) => set({ onlineUsers: ids }));
+    sock.on("disconnect", (reason) => {
+      console.log("🔴 Socket disconnected:", reason);
+      // keep socket reference for potential reconnect attempts,
+      // but mark onlineUsers empty until getOnlineUsers arrives again
+      set({ onlineUsers: [] });
+    });
 
-    set({ socket });
+    // server sends list of online userIds
+    sock.off("getOnlineUsers"); // safety: remove duplicate listeners
+    sock.on("getOnlineUsers", (ids) => {
+      // ensure array
+      const safe = Array.isArray(ids) ? ids : [];
+      set({ onlineUsers: safe });
+    });
+
+    // Save socket reference in store
+    set({ socket: sock });
   },
 
-  /* ============================================================
-     SOCKET: DISCONNECT (FIX)
-  ============================================================ */
+  /******************************
+   * SOCKET: disconnect
+   ******************************/
   disconnectSocket: () => {
-    const socket = get().socket;
-    if (socket) socket.disconnect();
-    set({ socket: null });
+    const s = get().socket;
+    if (!s) return;
+
+    try {
+      s.off("getOnlineUsers");
+      s.off("connect");
+      s.off("disconnect");
+      s.off("connect_error");
+      s.disconnect();
+    } catch (err) {
+      console.warn("disconnectSocket error", err);
+    } finally {
+      set({ socket: null, onlineUsers: [] });
+    }
   },
 }));

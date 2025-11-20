@@ -1,3 +1,4 @@
+// src/components/CallButtons.jsx
 import React, { useCallback } from "react";
 import { Phone, Video } from "lucide-react";
 import { useVideoCallStore } from "../store/useVideoCallStore";
@@ -10,15 +11,17 @@ const btnBase =
    transition hover:bg-base-300 active:scale-95";
 
 const CallButtons = () => {
-  const { initiateCall } = useVideoCallStore();
+  const { startCall } = useVideoCallStore();
   const { selectedUser } = useChatStore();
 
   const handleCall = useCallback(
     (type) => {
-      if (!selectedUser) return;
-      initiateCall(type);
+      if (!selectedUser?._id) return;
+
+      // ⭐ Correct call trigger
+      startCall(type, selectedUser._id);
     },
-    [initiateCall, selectedUser]
+    [selectedUser, startCall]
   );
 
   if (!selectedUser) return null;
@@ -45,7 +48,6 @@ const CallButtons = () => {
       >
         <Video size={16} className="text-info" />
       </button>
-
     </div>
   );
 };

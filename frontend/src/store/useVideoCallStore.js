@@ -1,40 +1,51 @@
+// src/store/useVideoCallStore.js
 import { create } from "zustand";
 
 export const useVideoCallStore = create((set, get) => ({
-
-  // --- STATE FLAGS ---
-  isIncomingCall: false,
-  isCalling: false,
-  isCallActive: false,
+  /* ============================================================
+       CORE STATES
+  ============================================================ */
+  isIncomingCall: false,  // You have an incoming ring
+  isCalling: false,       // You started a call
+  isCallActive: false,    // Both sides connected
   callType: "video",
 
-  // --- SIGNALING ---
-  incomingCallFrom: null,
-  callOffer: null,
-  peerId: null, // always the other user's ID for entire call
+  /* ============================================================
+       SIGNALING / META
+  ============================================================ */
+  incomingCallFrom: null, // userId who is calling you
+  callOffer: null,         // SDP offer from caller
+  peerId: null,            // the other user's ID in this call
 
-  // --- STREAMS ---
+  /* ============================================================
+       MEDIA STREAMS
+  ============================================================ */
   localStream: null,
   remoteStream: null,
 
-  // --- METADATA ---
+  /* ============================================================
+       CALL TIMER
+  ============================================================ */
   callStartTime: null,
   callDuration: 0,
 
-  // -------------------------------------------------------------
-  // Incoming call received
-  // -------------------------------------------------------------
-  setIncomingCall: (from, offer, type) => {
-    console.log("📞 INCOMING CALL", { from, type });
+  /* ============================================================
+       INCOMING CALL HANDLER
+  ============================================================ */
+  setIncomingCall: (from, offer, type = "video") => {
+    console.log("📞 Incoming call from:", from);
 
     set({
       isIncomingCall: true,
+      isCalling: false,
+      isCallActive: false,
+
       incomingCallFrom: from,
       callOffer: offer,
       callType: type || "video",
-      isCalling: false,
-      isCallActive: false,
-      peerId: from, // set NOW
+
+      peerId: from, // always store the other user's ID
+      callStartTime: null,
     });
   },
 
@@ -45,22 +56,24 @@ export const useVideoCallStore = create((set, get) => ({
       callOffer: null,
     }),
 
-  // -------------------------------------------------------------
-  // Outgoing call
-  // -------------------------------------------------------------
-  startCall: (type = "video", receiverId = null) => {
-    console.log("🎬 startCall", { type, receiverId });
-
+  /* ============================================================
+       OUTGOING CALL (User Clicks Call Button)
+  ============================================================ */
+  startCall: (type = "video", receiverId) => {
     if (!receiverId) return;
+
+    console.log("🎬 Starting outgoing call to:", receiverId);
 
     set({
       callType: type,
       isCalling: true,
       isIncomingCall: false,
       isCallActive: false,
+
       incomingCallFrom: null,
       callOffer: null,
-      peerId: receiverId, // set once here
+
+      peerId: receiverId, // the other user
       callStartTime: null,
       callDuration: 0,
     });
@@ -68,50 +81,57 @@ export const useVideoCallStore = create((set, get) => ({
 
   setCalling: (val) => set({ isCalling: val }),
 
-  // -------------------------------------------------------------
-  // Call becomes active
-  // -------------------------------------------------------------
+  /* ============================================================
+       CALL BECOMES ACTIVE (after answer is applied)
+  ============================================================ */
   setCallActive: (val) => {
-    const start = val ? Date.now() : null;
+    const startTime = val ? Date.now() : null;
 
     set({
       isCallActive: val,
-      isIncomingCall: false, // IMPORTANT FIX
+
+      // Once connected, no more incoming flags
+      isIncomingCall: false,
       incomingCallFrom: null,
       callOffer: null,
-      callStartTime: start,
+
+      callStartTime: startTime,
     });
   },
 
-  // -------------------------------------------------------------
-  // Streams
-  // -------------------------------------------------------------
+  /* ============================================================
+       STREAM SETTERS
+  ============================================================ */
   setLocalStream: (stream) => set({ localStream: stream }),
   setRemoteStream: (stream) => set({ remoteStream: stream }),
 
+  /* ============================================================
+       PEER ID
+  ============================================================ */
   setPeerId: (id) => set({ peerId: id }),
   clearPeerId: () => set({ peerId: null }),
 
-  // -------------------------------------------------------------
-  // Duration
-  // -------------------------------------------------------------
+  /* ============================================================
+       CALL TIMER UPDATE
+  ============================================================ */
   updateCallDuration: () => {
     const { callStartTime, isCallActive } = get();
+
     if (isCallActive && callStartTime) {
-      set({
-        callDuration: Math.floor((Date.now() - callStartTime) / 1000),
-      });
+      const seconds = Math.floor((Date.now() - callStartTime) / 1000);
+      set({ callDuration: seconds });
     }
   },
 
-  // -------------------------------------------------------------
-  // HARD RESET — no double values, stops EVERYTHING
-  // -------------------------------------------------------------
+  /* ============================================================
+       RESET EVERYTHING (AFTER HANGUP OR FAILURE)
+  ============================================================ */
   resetCallState: () => {
-    console.log("📞 RESET CALL");
+    console.log("🔄 RESET CALL STATE");
 
     const s = get();
 
+    // Stop streams safely
     try {
       s.localStream?.getTracks()?.forEach((t) => t.stop());
     } catch {}
@@ -125,11 +145,14 @@ export const useVideoCallStore = create((set, get) => ({
       isCalling: false,
       isCallActive: false,
       callType: "video",
+
       incomingCallFrom: null,
       callOffer: null,
       peerId: null,
+
       localStream: null,
       remoteStream: null,
+
       callStartTime: null,
       callDuration: 0,
     });
