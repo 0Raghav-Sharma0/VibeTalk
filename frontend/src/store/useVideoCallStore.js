@@ -1,40 +1,40 @@
-// src/store/useVideoCallStore.js
 import { create } from "zustand";
 
-/**
- * Centralized call state for the app.
- * Exposes helpers used by VideoCall UI + ChatHeader to start/accept/reject calls.
- *
- * This store intentionally keeps simple flags and media streams. The WebRTC logic
- * lives in VideoCall.jsx (so the component can own peer connections and refs).
- */
-
 export const useVideoCallStore = create((set, get) => ({
-  // State
+
+  // --- STATE FLAGS ---
   isIncomingCall: false,
   isCalling: false,
   isCallActive: false,
-  callType: "video", // "audio" or "video"
-  incomingCallFrom: null, // userId of caller
-  callOffer: null, // RTCSessionDescription from caller
+  callType: "video",
 
-  // Media streams
+  // --- SIGNALING ---
+  incomingCallFrom: null,
+  callOffer: null,
+  peerId: null, // always the other user's ID for entire call
+
+  // --- STREAMS ---
   localStream: null,
   remoteStream: null,
 
-  // Derived: whether we are in a call flow that will create outgoing offer
-  // Actions
+  // --- METADATA ---
+  callStartTime: null,
+  callDuration: 0,
 
-  // Called by backend socket 'incoming-call' handler
-  setIncomingCall: (from, offer, callType) => {
-    console.log("📞 INCOMING CALL", { from, callType });
+  // -------------------------------------------------------------
+  // Incoming call received
+  // -------------------------------------------------------------
+  setIncomingCall: (from, offer, type) => {
+    console.log("📞 INCOMING CALL", { from, type });
+
     set({
       isIncomingCall: true,
       incomingCallFrom: from,
       callOffer: offer,
-      callType: callType || "video",
+      callType: type || "video",
       isCalling: false,
       isCallActive: false,
+      peerId: from, // set NOW
     });
   },
 
@@ -45,49 +45,80 @@ export const useVideoCallStore = create((set, get) => ({
       callOffer: null,
     }),
 
-  // Called by UI when user clicks "call"
+  // -------------------------------------------------------------
+  // Outgoing call
+  // -------------------------------------------------------------
   startCall: (type = "video", receiverId = null) => {
-    // mark that we want to call — VideoCall.jsx will observe isCalling and kick off outgoing process
     console.log("🎬 startCall", { type, receiverId });
+
+    if (!receiverId) return;
+
     set({
       callType: type,
       isCalling: true,
+      isIncomingCall: false,
       isCallActive: false,
       incomingCallFrom: null,
       callOffer: null,
+      peerId: receiverId, // set once here
+      callStartTime: null,
+      callDuration: 0,
     });
   },
 
-  // Called by VideoCall.jsx to indicate outgoing attempt has begun (prevents double-start)
-  setCalling: (val) => {
-    console.log("📞 setCalling:", val);
-    set({ isCalling: val });
-  },
+  setCalling: (val) => set({ isCalling: val }),
 
-  // Called when call actually connected
+  // -------------------------------------------------------------
+  // Call becomes active
+  // -------------------------------------------------------------
   setCallActive: (val) => {
-    console.log("📞 setCallActive:", val);
-    set({ isCallActive: val });
+    const start = val ? Date.now() : null;
+
+    set({
+      isCallActive: val,
+      isIncomingCall: false, // IMPORTANT FIX
+      incomingCallFrom: null,
+      callOffer: null,
+      callStartTime: start,
+    });
   },
 
+  // -------------------------------------------------------------
   // Streams
+  // -------------------------------------------------------------
   setLocalStream: (stream) => set({ localStream: stream }),
   setRemoteStream: (stream) => set({ remoteStream: stream }),
 
-  // Resets everything and stops streams
+  setPeerId: (id) => set({ peerId: id }),
+  clearPeerId: () => set({ peerId: null }),
+
+  // -------------------------------------------------------------
+  // Duration
+  // -------------------------------------------------------------
+  updateCallDuration: () => {
+    const { callStartTime, isCallActive } = get();
+    if (isCallActive && callStartTime) {
+      set({
+        callDuration: Math.floor((Date.now() - callStartTime) / 1000),
+      });
+    }
+  },
+
+  // -------------------------------------------------------------
+  // HARD RESET — no double values, stops EVERYTHING
+  // -------------------------------------------------------------
   resetCallState: () => {
-    console.log("📞 resetCallState");
-    const state = get();
+    console.log("📞 RESET CALL");
+
+    const s = get();
+
     try {
-      if (state.localStream) state.localStream.getTracks().forEach((t) => t.stop());
-    } catch (e) {
-      // ignore
-    }
+      s.localStream?.getTracks()?.forEach((t) => t.stop());
+    } catch {}
+
     try {
-      if (state.remoteStream) state.remoteStream.getTracks().forEach((t) => t.stop());
-    } catch (e) {
-      // ignore
-    }
+      s.remoteStream?.getTracks()?.forEach((t) => t.stop());
+    } catch {}
 
     set({
       isIncomingCall: false,
@@ -96,8 +127,11 @@ export const useVideoCallStore = create((set, get) => ({
       callType: "video",
       incomingCallFrom: null,
       callOffer: null,
+      peerId: null,
       localStream: null,
       remoteStream: null,
+      callStartTime: null,
+      callDuration: 0,
     });
   },
 }));

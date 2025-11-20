@@ -18,13 +18,34 @@ export const useChatStore = create((set, get) => ({
   typing: {},
 
   /* ============================================================
-     LOAD USERS
+        SAFE ONLINE MERGE (MAIN FIX)
+  ============================================================ */
+  applyOnlineToUsers: (usersList, onlineIds) => {
+    if (!Array.isArray(usersList)) return [];
+
+    const safeOnlineIds = Array.isArray(onlineIds) ? onlineIds : [];
+    const onlineSet = new Set(safeOnlineIds);
+
+    return usersList.map((u) => ({
+      ...u,
+      isOnline: onlineSet.has(u._id),
+    }));
+  },
+
+  /* ============================================================
+        LOAD USERS
   ============================================================ */
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
       const res = await axiosInstance.get("/messages/users");
-      set({ users: res.data });
+
+      const onlineUsers = useAuthStore.getState().onlineUsers;
+      const apply = get().applyOnlineToUsers;
+
+      const merged = apply(res.data, onlineUsers);
+
+      set({ users: merged });
     } catch (error) {
       toast.error("Failed to load users");
     } finally {
@@ -33,10 +54,11 @@ export const useChatStore = create((set, get) => ({
   },
 
   /* ============================================================
-     LOAD MESSAGES FOR CURRENT CHAT
+        LOAD MESSAGES
   ============================================================ */
   getMessages: async (userId) => {
     set({ isMessagesLoading: true, messages: [] });
+
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data, isMessagesLoading: false });
@@ -47,7 +69,7 @@ export const useChatStore = create((set, get) => ({
   },
 
   /* ============================================================
-     SEND MESSAGE (SOCKET)
+        SEND MESSAGE
   ============================================================ */
   sendMessage: async (messageData) => {
     const socket = useAuthStore.getState().socket;
@@ -64,27 +86,30 @@ export const useChatStore = create((set, get) => ({
   },
 
   /* ============================================================
-     SOCKET: LISTEN (NEW MESSAGES + TYPING)
+        SOCKET LISTENER: NEW MESSAGES + TYPING
   ============================================================ */
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
 
-    /* NEW MESSAGES */
+    /* ---- NEW MESSAGE ---- */
     socket.off("newMessage");
     socket.on("newMessage", (msg) => {
       const { selectedUser, messages, unreadMessages } = get();
       const { authUser } = useAuthStore.getState();
 
+      // If YOU sent it
       if (msg.senderId === authUser._id) {
         set({ messages: [...messages, msg] });
         return;
       }
 
+      // If message is from the selected chat → push
       if (selectedUser && selectedUser._id === msg.senderId) {
         set({ messages: [...messages, msg] });
         return;
       }
 
+      // Otherwise → unread count
       const updatedUnread = {
         ...unreadMessages,
         [msg.senderId]: (unreadMessages[msg.senderId] || 0) + 1,
@@ -93,12 +118,11 @@ export const useChatStore = create((set, get) => ({
       set({ unreadMessages: updatedUnread });
     });
 
-    /* TYPING INDICATOR */
+    /* ---- TYPING ---- */
     socket.off("typing");
     socket.on("typing", ({ senderId, isTyping }) => {
       const typingMap = { ...get().typing };
       typingMap[senderId] = isTyping;
-
       set({ typing: typingMap });
     });
   },
@@ -110,7 +134,7 @@ export const useChatStore = create((set, get) => ({
   },
 
   /* ============================================================
-     SELECT USER (RESET UNREAD)
+        SELECT USER + RESET UNREAD
   ============================================================ */
   setSelectedUser: (selectedUser) => {
     if (!selectedUser) {
@@ -122,11 +146,47 @@ export const useChatStore = create((set, get) => ({
     const updatedUnread = { ...unreadMessages };
     delete updatedUnread[selectedUser._id];
 
+    // apply live online status to selected user
+    const online = useAuthStore.getState().onlineUsers || [];
+    const isOnline = Array.isArray(online)
+      ? online.includes(selectedUser._id)
+      : false;
+
     set({
-      selectedUser,
+      selectedUser: { ...selectedUser, isOnline },
       unreadMessages: updatedUnread,
       messages: [],
       isMessagesLoading: false,
     });
   },
 }));
+
+/* ================================================================
+      REAL-TIME ONLINE LISTENER FROM AUTH STORE
+================================================================ */
+useAuthStore.subscribe(
+  (onlineIds) => {
+    const safeIds = Array.isArray(onlineIds) ? onlineIds : [];
+    const apply = useChatStore.getState().applyOnlineToUsers;
+
+    setTimeout(() => {
+      useChatStore.setState((state) => {
+        const updatedUsers = apply(state.users, safeIds);
+
+        let updatedSelected = state.selectedUser;
+        if (updatedSelected) {
+          updatedSelected = {
+            ...updatedSelected,
+            isOnline: safeIds.includes(updatedSelected._id),
+          };
+        }
+
+        return {
+          users: updatedUsers,
+          selectedUser: updatedSelected,
+        };
+      });
+    });
+  },
+  (s) => s.onlineUsers // selector
+);

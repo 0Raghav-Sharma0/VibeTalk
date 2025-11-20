@@ -40,6 +40,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           <img
             src={selectedUser.profilePic || '/boy.png'}
             className="w-10 h-10 rounded-full object-cover border border-base-300"
+            alt={selectedUser.fullName}
           />
 
           {/* ONLINE DOT */}
@@ -64,7 +65,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
       {/* ACTION BUTTONS */}
       <div className="flex items-center gap-2">
 
-        {/* 🔊 Voice Call */}
+        {/* Voice Call */}
         <IconBtn
           title="Voice Call"
           onClick={() => startCall("audio", selectedUser._id)}
@@ -72,7 +73,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           <Phone size={16} className="text-success" />
         </IconBtn>
 
-        {/* 📹 Video Call */}
+        {/* Video Call */}
         <IconBtn
           title="Video Call"
           onClick={() => startCall("video", selectedUser._id)}
@@ -80,11 +81,10 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           <Video size={16} className="text-info" />
         </IconBtn>
 
-        {/* 🎵 Music Player */}
+        {/* Music Player */}
         <IconBtn
           title="Music Player"
           onClick={() => {
-            // auto close whiteboard if music opens
             if (showWhiteboard) setShowWhiteboard(false);
             toggleMusicPlayer();
           }}
@@ -92,11 +92,10 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           <Music2 size={16} className="text-secondary" />
         </IconBtn>
 
-        {/* 🖊️ WHITEBOARD BUTTON (NEW) */}
+        {/* Whiteboard */}
         <IconBtn
           title="Whiteboard"
           onClick={() => {
-            // auto close music if whiteboard opens
             if (isMusicPlayerOpen) toggleMusicPlayer();
             setShowWhiteboard(!showWhiteboard);
           }}
@@ -107,7 +106,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           />
         </IconBtn>
 
-        {/* ❌ Close Chat */}
+        {/* Close Chat */}
         <IconBtn
           title="Close Chat"
           onClick={() => setSelectedUser(null)}

@@ -1,4 +1,3 @@
-// src/store/useAuthStore.js
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
@@ -149,6 +148,7 @@ export const useAuthStore = create((set, get) => ({
       console.log("🔴 Socket disconnected");
     });
 
+    // NOTE: we still keep onlineUsers in this store - other stores subscribe to it
     socket.on("getOnlineUsers", (ids) => set({ onlineUsers: ids }));
 
     set({ socket });

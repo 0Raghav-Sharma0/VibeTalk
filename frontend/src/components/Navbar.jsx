@@ -9,10 +9,10 @@ const Navbar = ({ onOpenSidebar }) => {
   return (
     <header className="fixed top-0 w-full z-40 bg-base-100 border-b border-base-300/80">
       <div className="flex items-center justify-between h-14 px-4 sm:px-6">
-
-        {/* LEFT SECTION: Mobile Button + Logo */}
+        
+        {/* LEFT SECTION */}
         <div className="flex items-center gap-3">
-
+          
           {/* MOBILE SIDEBAR BUTTON */}
           <button
             className="md:hidden btn btn-ghost btn-square"
@@ -21,7 +21,7 @@ const Navbar = ({ onOpenSidebar }) => {
             <Users className="w-5 h-5" />
           </button>
 
-          {/* LOGO + TITLE */}
+          {/* LOGO */}
           <Link to="/" className="flex items-center gap-2 select-none">
             <MessageSquare className="w-7 h-7 text-primary" />
             <h1 className="text-xl font-semibold tracking-tight text-base-content">
@@ -30,7 +30,7 @@ const Navbar = ({ onOpenSidebar }) => {
           </Link>
         </div>
 
-        {/* RIGHT BUTTONS */}
+        {/* RIGHT SECTION */}
         <div className="flex items-center gap-3">
 
           {/* SETTINGS */}
@@ -68,13 +68,13 @@ const Navbar = ({ onOpenSidebar }) => {
                 </div>
               </Link>
 
-              {/* LOGOUT */}
+              {/* 🔥 FIXED LOGOUT BUTTON (LIGHT MODE SAFE) */}
               <button
                 onClick={logout}
                 className="
-                  px-3 py-1.5 rounded-md text-sm
-                  bg-error/10 border border-error/40 text-error
-                  hover:bg-error hover:text-error-content hover:border-error
+                  px-3 py-1.5 rounded-md text-sm font-medium
+                  bg-red-50 text-red-600 border border-red-200
+                  hover:bg-red-600 hover:text-white hover:border-red-600
                   transition
                 "
               >

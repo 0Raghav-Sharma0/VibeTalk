@@ -35,16 +35,28 @@ const Sidebar = ({ onClose }) => {
   };
 
   /* ============================================================
-      SORT USERS — UNREAD ON TOP (Telegram style)
+        SORT USERS → UNREAD FIRST → ONLINE → ALPHABETICAL
   ============================================================ */
   const sortedUsers = [...users].sort((a, b) => {
     const unreadA = unreadMessages[a._id] || 0;
     const unreadB = unreadMessages[b._id] || 0;
 
+    // 1️⃣ unread messages on top
     if (unreadA > 0 && unreadB === 0) return -1;
     if (unreadB > 0 && unreadA === 0) return 1;
 
-    return 0;
+    // 2️⃣ online next
+    const onlineA = onlineUsers.includes(a._id);
+    const onlineB = onlineUsers.includes(b._id);
+
+    if (onlineA && !onlineB) return -1;
+    if (onlineB && !onlineA) return 1;
+
+    // 3️⃣ safe alphabetical sorting
+    const nameA = a.fullName || "";
+    const nameB = b.fullName || "";
+
+    return nameA.localeCompare(nameB);
   });
 
   const filteredUsers = showOnlineOnly
@@ -86,7 +98,6 @@ const Sidebar = ({ onClose }) => {
         {filteredUsers.map((user) => {
           const isOnline = onlineUsers.includes(user._id);
           const isSelected = selectedUser?._id === user._id;
-
           const unread = unreadMessages[user._id] || 0;
           const isTyping = typing[user._id];
 
@@ -125,10 +136,9 @@ const Sidebar = ({ onClose }) => {
                       : "font-medium text-base-content"
                   }`}
                 >
-                  {user.fullName}
+                  {user.fullName || "Unknown User"}
                 </p>
 
-                {/* Typing Indicator */}
                 {isTyping ? (
                   <p className="text-xs text-purple-500 font-medium animate-pulse">
                     typing…
