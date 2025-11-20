@@ -13,7 +13,11 @@ const allowedOrigins = [
   "https://blah-blah-jvc4.vercel.app",
   "https://blah-blah-hky1.vercel.app",
   "https://blah-blah-3.onrender.com",
+
+  // ⭐ ADD THIS
+  "https://visionary-hotteok-e390a5.netlify.app"
 ];
+
 
 function isOriginAllowed(origin) {
   if (!origin) return false;
