@@ -1,4 +1,3 @@
-// src/components/VideoCall.jsx
 import React, { useRef, useEffect, useState } from "react";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useAuthStore } from "../store/useAuthStore";
@@ -38,13 +37,11 @@ const VideoCall = () => {
   } = useVideoCallStore();
 
   const { authUser, socket } = useAuthStore();
-  const { selectedUser, setSelectedUser, users } = useChatStore();
+  const { selectedUser } = useChatStore();
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const peerConnectionRef = useRef(null);
-  const ringtoneRef = useRef(null);
-  const callTimerRef = useRef(null);
 
   const originalCameraRef = useRef(null);
   const screenStreamRef = useRef(null);
@@ -53,91 +50,6 @@ const VideoCall = () => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callStatus, setCallStatus] = useState("Connecting...");
-  const [callDuration, setCallDuration] = useState(0);
-  const [incomingCaller, setIncomingCaller] = useState(null);
-
-  /* ===========================
-        RINGTONE & NOTIFICATION
-  ============================ */
-  useEffect(() => {
-    // Initialize ringtone audio - same for both audio and video calls
-    ringtoneRef.current = new Audio('/songs/ringtone.mp3');
-    ringtoneRef.current.loop = true;
-
-    return () => {
-      if (ringtoneRef.current) {
-        ringtoneRef.current.pause();
-        ringtoneRef.current = null;
-      }
-    };
-  }, []);
-
-  // Play ringtone for incoming call (both audio and video)
-  useEffect(() => {
-    if (isIncomingCall && ringtoneRef.current) {
-      ringtoneRef.current.play().catch(e => console.log("Ringtone play failed:", e));
-      
-      // Browser notification for incoming call
-      if (Notification.permission === 'granted') {
-        const callTypeText = callType === 'video' ? 'Video Call' : 'Audio Call';
-        new Notification('Incoming Call', {
-          body: `${incomingCaller?.fullName || 'Someone'} is calling you (${callTypeText})`,
-          icon: incomingCaller?.profilePic || '/boy.png',
-          requireInteraction: true,
-          tag: 'incoming-call'
-        });
-      }
-    } else {
-      if (ringtoneRef.current) {
-        ringtoneRef.current.pause();
-        ringtoneRef.current.currentTime = 0;
-      }
-    }
-  }, [isIncomingCall, incomingCaller, callType]);
-
-  // Request notification permission
-  useEffect(() => {
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  // Find caller info for incoming call
-  useEffect(() => {
-    if (isIncomingCall && incomingCallFrom && users) {
-      const caller = users.find(user => user._id === incomingCallFrom);
-      setIncomingCaller(caller);
-      
-      // Auto-open chat for the caller if not already selected
-      if (caller && selectedUser?._id !== caller._id) {
-        setSelectedUser(caller);
-      }
-    }
-  }, [isIncomingCall, incomingCallFrom, users, selectedUser, setSelectedUser]);
-
-  /* ===========================
-        CALL DURATION TIMER
-  ============================ */
-  useEffect(() => {
-    if (isCallActive) {
-      const startTime = Date.now();
-      callTimerRef.current = setInterval(() => {
-        setCallDuration(Math.floor((Date.now() - startTime) / 1000));
-      }, 1000);
-    } else {
-      if (callTimerRef.current) {
-        clearInterval(callTimerRef.current);
-        callTimerRef.current = null;
-      }
-      setCallDuration(0);
-    }
-
-    return () => {
-      if (callTimerRef.current) {
-        clearInterval(callTimerRef.current);
-      }
-    };
-  }, [isCallActive]);
 
   /* ===========================
         INIT LOCAL STREAM
@@ -178,6 +90,7 @@ const VideoCall = () => {
       ],
     });
 
+    // Add tracks from stream
     if (stream) {
       stream.getTracks().forEach((track) => {
         pc.addTrack(track, stream);
@@ -186,11 +99,11 @@ const VideoCall = () => {
 
     pc.ontrack = (event) => {
       console.log("Received remote stream");
-      const rStream = event.streams[0];
-      setRemoteStream(rStream);
+      const remoteStream = event.streams[0];
+      setRemoteStream(remoteStream);
 
       if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = rStream;
+        remoteVideoRef.current.srcObject = remoteStream;
       }
 
       setCallActive(true);
@@ -209,7 +122,7 @@ const VideoCall = () => {
     pc.onconnectionstatechange = () => {
       console.log("Connection state:", pc.connectionState);
       setCallStatus(pc.connectionState);
-
+      
       if (pc.connectionState === "connected") {
         setCallStatus("Connected");
       } else if (["failed", "disconnected", "closed"].includes(pc.connectionState)) {
@@ -251,7 +164,6 @@ const VideoCall = () => {
         targetUserId: selectedUser._id,
         offer,
         callType,
-        from: authUser?._id,
       });
 
       console.log("Outgoing call initiated to:", selectedUser._id);
@@ -268,12 +180,6 @@ const VideoCall = () => {
     if (!incomingCallFrom || !callOffer) {
       console.error("No incoming call data");
       return;
-    }
-
-    // Stop ringtone
-    if (ringtoneRef.current) {
-      ringtoneRef.current.pause();
-      ringtoneRef.current.currentTime = 0;
     }
 
     clearIncomingCall();
@@ -305,12 +211,6 @@ const VideoCall = () => {
   };
 
   const rejectCall = () => {
-    // Stop ringtone
-    if (ringtoneRef.current) {
-      ringtoneRef.current.pause();
-      ringtoneRef.current.currentTime = 0;
-    }
-
     if (incomingCallFrom) {
       socket.emit("call-rejected", { callerId: incomingCallFrom });
     }
@@ -335,12 +235,6 @@ const VideoCall = () => {
 
   const cleanupCall = () => {
     console.log("Cleaning up call...");
-
-    // Stop ringtone if playing
-    if (ringtoneRef.current) {
-      ringtoneRef.current.pause();
-      ringtoneRef.current.currentTime = 0;
-    }
 
     // Stop all media tracks
     if (screenStreamRef.current) {
@@ -367,7 +261,6 @@ const VideoCall = () => {
     setIsScreenSharing(false);
     setIsVideoEnabled(true);
     setIsAudioEnabled(true);
-    setIncomingCaller(null);
     
     // Reset store state
     resetCallState();
@@ -381,14 +274,7 @@ const VideoCall = () => {
 
     const handleIncomingCall = (data) => {
       console.log("Incoming call:", data);
-      
-      // Ensure chat is opened for the caller
-      const caller = users?.find(user => user._id === data.from);
-      if (caller) {
-        setSelectedUser(caller);
-      }
-      
-      setIncomingCall?.(data.from, data.offer, data.callType);
+      setIncomingCall(data.from, data.offer, data.callType);
     };
 
     const handleCallAccepted = async (data) => {
@@ -410,7 +296,7 @@ const VideoCall = () => {
         try {
           await pc.addIceCandidate(data.candidate);
         } catch (error) {
-          console.warn("addIceCandidate failed:", error);
+          console.error("Error adding ICE candidate:", error);
         }
       }
     };
@@ -438,7 +324,7 @@ const VideoCall = () => {
       socket.off("call-ended", handleCallEnded);
       socket.off("call-rejected");
     };
-  }, [socket, setIncomingCall, authUser, users, setSelectedUser]);
+  }, [socket, setIncomingCall]);
 
   // Start outgoing call when isCalling becomes true
   useEffect(() => {
@@ -464,19 +350,20 @@ const VideoCall = () => {
 
       screenStreamRef.current = screenStream;
 
+      // Replace video track with screen share
       const videoTrack = screenStream.getVideoTracks()[0];
       const sender = pc.getSenders().find(s => s.track?.kind === "video");
       
       if (sender) {
         await sender.replaceTrack(videoTrack);
-      } else {
-        pc.addTrack(videoTrack, screenStream);
       }
 
+      // Update local video display
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = screenStream;
       }
 
+      // Handle when user stops screen share
       videoTrack.onended = () => {
         stopScreenShare();
       };
@@ -489,26 +376,27 @@ const VideoCall = () => {
 
   const stopScreenShare = async () => {
     const pc = peerConnectionRef.current;
-    if (!pc) return;
+    if (!pc || !originalCameraRef.current) return;
 
     try {
+      // Stop screen stream
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach(track => track.stop());
         screenStreamRef.current = null;
       }
 
+      // Switch back to camera
       const cameraStream = originalCameraRef.current;
-      if (cameraStream) {
-        const videoTrack = cameraStream.getVideoTracks()[0];
-        const sender = pc.getSenders().find(s => s.track?.kind === "video");
-        
-        if (sender && videoTrack) {
-          await sender.replaceTrack(videoTrack);
-        }
+      const videoTrack = cameraStream.getVideoTracks()[0];
+      const sender = pc.getSenders().find(s => s.track?.kind === "video");
+      
+      if (sender && videoTrack) {
+        await sender.replaceTrack(videoTrack);
+      }
 
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = cameraStream;
-        }
+      // Update local video display
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = cameraStream;
       }
 
       setIsScreenSharing(false);
@@ -544,42 +432,6 @@ const VideoCall = () => {
     }
   };
 
-  /* =================================================
-     Ensure video elements always get srcObject on update
-  ==================================================*/
-  useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      try {
-        if (localVideoRef.current.srcObject !== localStream) {
-          localVideoRef.current.srcObject = localStream;
-        }
-      } catch (e) {
-        console.warn("Could not attach local stream to video element", e);
-      }
-    }
-  }, [localStream]);
-
-  useEffect(() => {
-    if (remoteVideoRef.current && remoteStream) {
-      try {
-        if (remoteVideoRef.current.srcObject !== remoteStream) {
-          remoteVideoRef.current.srcObject = remoteStream;
-        }
-      } catch (e) {
-        console.warn("Could not attach remote stream to video element", e);
-      }
-    }
-  }, [remoteStream]);
-
-  /* ===========================
-        FORMAT CALL DURATION
-  ============================ */
-  const formatCallDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
   /* ===========================
           RENDER
   ============================ */
@@ -612,7 +464,7 @@ const VideoCall = () => {
                     <Video size={60} className="mx-auto mb-4 opacity-60" />
                     <p className="text-xl">{callStatus}</p>
                     <p className="text-sm opacity-70 mt-2">
-                      {selectedUser?.fullName || incomingCaller?.fullName || "Connecting..."}
+                      {selectedUser?.fullName || "Connecting..."}
                     </p>
                   </div>
                 ) : (
@@ -620,7 +472,7 @@ const VideoCall = () => {
                     <Phone size={60} className="mx-auto mb-4 opacity-60" />
                     <p className="text-xl">{callStatus}</p>
                     <p className="text-sm opacity-70 mt-2">
-                      {selectedUser?.fullName || incomingCaller?.fullName || "Connecting..."}
+                      {selectedUser?.fullName || "Connecting..."}
                     </p>
                   </div>
                 )}
@@ -628,7 +480,7 @@ const VideoCall = () => {
             )}
           </div>
 
-          {/* LOCAL VIDEO — PiP (Only for video calls) */}
+          {/* LOCAL VIDEO — PiP */}
           {localStream && callType === "video" && (
             <div className="absolute top-6 right-6 w-52 h-36 bg-black/80 border-2 border-white/20 rounded-xl overflow-hidden shadow-2xl">
               <video
@@ -636,7 +488,7 @@ const VideoCall = () => {
                 autoPlay
                 muted
                 playsInline
-                className="absolute inset-0 w-full h-full object-cover"
+                className="w-full h-full object-cover"
               />
               {!isVideoEnabled && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -709,47 +561,10 @@ const VideoCall = () => {
           )}
         </div>
 
-        {/* CALL STATUS & DURATION */}
-        <div className="absolute top-6 left-6 text-white bg-black/50 px-4 py-2 rounded-full flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            {callType === 'video' ? <Video size={16} /> : <Phone size={16} />}
-            <span>{callStatus}</span>
-          </div>
-          {isCallActive && callDuration > 0 && (
-            <div className="border-l border-white/30 pl-4">
-              {formatCallDuration(callDuration)}
-            </div>
-          )}
+        {/* CALL STATUS */}
+        <div className="absolute top-6 left-6 text-white bg-black/50 px-4 py-2 rounded-full">
+          {callStatus}
         </div>
-
-        {/* INCOMING CALL INFO */}
-        {isIncomingCall && incomingCaller && (
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 text-white text-center bg-black/50 px-6 py-4 rounded-2xl backdrop-blur-sm">
-            <div className="flex items-center gap-4">
-              <img
-                src={incomingCaller.profilePic || '/boy.png'}
-                className="w-16 h-16 rounded-full object-cover border-2 border-white/30"
-              />
-              <div className="text-left">
-                <p className="text-xl font-semibold">{incomingCaller.fullName}</p>
-                <p className="text-sm opacity-70 flex items-center gap-1 mt-1">
-                  {callType === 'video' ? (
-                    <>
-                      <Video size={14} />
-                      Incoming Video Call
-                    </>
-                  ) : (
-                    <>
-                      <Phone size={14} />
-                      Incoming Audio Call
-                    </>
-                  )}
-                </p>
-                <p className="text-xs opacity-50 mt-2">🔔 Ringing...</p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* CLOSE BUTTON */}
         <button 
