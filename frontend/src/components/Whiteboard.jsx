@@ -22,7 +22,7 @@ export default function Whiteboard({ roomId }) {
     "#4cd964", "#5ac8fa", "#007aff", "#5856d6", "#ff2d55"
   ];
 
-  /* ========== Drawing helpers (MUST be defined before any useEffect that references them) ========== */
+  /* ========== Core drawing functions ========== */
 
   const drawShape = useCallback((ctx, data) => {
     const { startX, startY, endX, endY, tool, isFilled } = data;
@@ -255,9 +255,8 @@ export default function Whiteboard({ roomId }) {
     }
   }, [saveToHistory]);
 
-  /* ==========================================
-     Utility: get coordinates scaled to canvas
-  ========================================== */
+  /* ========== Event handlers ========== */
+
   const getCoords = (e) => {
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -272,97 +271,7 @@ export default function Whiteboard({ roomId }) {
 
     return { x, y };
   };
-  /* ==========================================
-     JOIN ROOM
-  ========================================== */
-  useEffect(() => {
-    if (roomId && socket) socket.emit("join-room", roomId);
-  }, [roomId, socket]);
 
-  /* ==========================================
-     INITIALIZE CANVAS (resize & context)
-  ========================================== */
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const resize = () => {
-      const temp = document.createElement("canvas");
-      const tempCtx = temp.getContext("2d");
-
-      if (ctxRef.current) {
-        temp.width = canvas.width;
-        temp.height = canvas.height;
-        tempCtx.drawImage(canvas, 0, 0);
-      }
-
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = Math.floor(rect.width);
-      canvas.height = Math.floor(rect.height);
-
-      const ctx = canvas.getContext("2d");
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.lineWidth = size;
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
-
-      if (temp.width > 0) ctx.drawImage(temp, 0, 0);
-      ctxRef.current = ctx;
-    };
-
-    setTimeout(resize, 100);
-    window.addEventListener("resize", resize);
-    return () => window.removeEventListener("resize", resize);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /* ==========================================
-     UPDATE CONTEXT (tool/color/size)
-  ========================================== */
-  useEffect(() => {
-    if (ctxRef.current) {
-      if (tool === "eraser") {
-        ctxRef.current.globalCompositeOperation = "destination-out";
-        ctxRef.current.strokeStyle = "rgba(0,0,0,1)";
-      } else {
-        ctxRef.current.globalCompositeOperation = "source-over";
-        ctxRef.current.strokeStyle = color;
-        ctxRef.current.fillStyle = color;
-      }
-      ctxRef.current.lineWidth = size;
-    }
-  }, [tool, color, size]);
-
-  /* ==========================================
-     SOCKET: receive draw / clear
-     (Now safe because drawOnCanvas & saveToHistory are defined above)
-  ========================================== */
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleDraw = (payload) => {
-      drawOnCanvas({ ...payload, remote: true });
-    };
-
-    const handleClear = () => {
-      const ctx = ctxRef.current;
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      saveToHistory();
-    };
-
-    socket.on("whiteboard-draw", handleDraw);
-    socket.on("whiteboard-clear", handleClear);
-
-    return () => {
-      socket.off("whiteboard-draw", handleDraw);
-      socket.off("whiteboard-clear", handleClear);
-    };
-  }, [socket, drawOnCanvas, saveToHistory]);
-
-  /* ==========================================
-     MOUSE / TOUCH EVENT HANDLERS
-  ========================================== */
   const handleDown = (e) => {
     if (!isDrawingEnabled) return;
     if (e.preventDefault) e.preventDefault();
@@ -398,18 +307,100 @@ export default function Whiteboard({ roomId }) {
     else finishShape(x, y);
   };
 
-  /* ==========================================
-     CLEAR & DOWNLOAD
-  ========================================== */
+  /* ========== Effects ========== */
+
+  useEffect(() => {
+    if (roomId && socket) socket.emit("join-room", roomId);
+  }, [roomId, socket]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resize = () => {
+      const temp = document.createElement("canvas");
+      const tempCtx = temp.getContext("2d");
+
+      if (ctxRef.current) {
+        temp.width = canvas.width;
+        temp.height = canvas.height;
+        tempCtx.drawImage(canvas, 0, 0);
+      }
+
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width);
+      canvas.height = Math.floor(rect.height);
+
+      const ctx = canvas.getContext("2d");
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.lineWidth = size;
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+
+      if (temp.width > 0) ctx.drawImage(temp, 0, 0);
+      ctxRef.current = ctx;
+    };
+
+    setTimeout(resize, 100);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  useEffect(() => {
+    if (ctxRef.current) {
+      if (tool === "eraser") {
+        ctxRef.current.globalCompositeOperation = "destination-out";
+        ctxRef.current.strokeStyle = "rgba(0,0,0,1)";
+        ctxRef.current.fillStyle = "rgba(0,0,0,1)";
+      } else {
+        ctxRef.current.globalCompositeOperation = "source-over";
+        ctxRef.current.strokeStyle = color;
+        ctxRef.current.fillStyle = color;
+      }
+      ctxRef.current.lineWidth = size;
+    }
+  }, [tool, color, size]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleDraw = (payload) => {
+      drawOnCanvas({ ...payload, remote: true });
+    };
+
+    const handleClear = () => {
+      const ctx = ctxRef.current;
+      if (ctx && canvasRef.current) {
+        ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        saveToHistory();
+      }
+    };
+
+    socket.on("whiteboard-draw", handleDraw);
+    socket.on("whiteboard-clear", handleClear);
+
+    return () => {
+      socket.off("whiteboard-draw", handleDraw);
+      socket.off("whiteboard-clear", handleClear);
+    };
+  }, [socket, drawOnCanvas, saveToHistory]);
+
+  /* ========== Actions ========== */
+
   const clearBoard = () => {
     const ctx = ctxRef.current;
-    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    saveToHistory();
-    if (socket && roomId) socket.emit("whiteboard-clear", { roomId });
+    if (ctx && canvasRef.current) {
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      saveToHistory();
+      if (socket && roomId) socket.emit("whiteboard-clear", { roomId });
+    }
   };
 
   const downloadCanvas = () => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const link = document.createElement("a");
     link.download = `whiteboard-${roomId || "drawing"}-${Date.now()}.png`;
     link.href = canvas.toDataURL();
@@ -417,9 +408,8 @@ export default function Whiteboard({ roomId }) {
   };
 
   const isFreehandTool = tool === "pen" || tool === "eraser";
-  /* ==========================================
-     UI
-  ========================================== */
+
+  /* ========== Render ========== */
   return (
     <div className="flex flex-col h-full bg-base-100 border-l border-base-300">
       <div className="p-3 flex flex-wrap gap-3 items-center border-b bg-base-200">
