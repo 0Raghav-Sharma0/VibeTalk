@@ -10,6 +10,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore.js";
 import { useVideoCallStore } from "./store/useVideoCallStore";
 import { useThemeStore } from "./store/useThemeStore.js";
+import { useChatStore } from "./store/useChatStore.js";   // ⭐ MUST IMPORT THIS
 import { Toaster } from "react-hot-toast";
 import "ldrs/grid";
 
@@ -33,7 +34,7 @@ const App = () => {
     setTheme(savedTheme);
   }, [setTheme]);
 
-  // Incoming call handler
+  // Incoming call listener
   useEffect(() => {
     if (!socket) return;
 
@@ -44,6 +45,20 @@ const App = () => {
 
     socket.on("incoming-call", handleIncomingCall);
     return () => socket.off("incoming-call", handleIncomingCall);
+  }, [socket]);
+
+  // ⭐⭐⭐ GLOBAL CHAT NOTIFICATION LISTENER — FIXES YOUR PROBLEM ⭐⭐⭐
+  useEffect(() => {
+    if (!socket) return;
+
+    const chatStore = useChatStore.getState();
+
+    // Attach the "newMessage" listener globally
+    chatStore.subscribeToMessages();
+
+    return () => {
+      chatStore.unsubscribeFromMessages();
+    };
   }, [socket]);
 
   // Loading screen while checking auth
@@ -64,13 +79,11 @@ const App = () => {
 
       {/* ROUTES */}
       <Routes>
-        {/* MAIN HOME ROUTE */}
         <Route
           path="/"
           element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
         />
 
-        {/* ADD /home ROUTE (FIX) */}
         <Route
           path="/home"
           element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
@@ -97,10 +110,9 @@ const App = () => {
         />
       </Routes>
 
-      {/* VIDEO CALL UI ALWAYS ACTIVE */}
+      {/* Always loaded video call UI */}
       <VideoCall />
 
-      {/* TOASTER */}
       <Toaster
         position="top-right"
         toastOptions={{

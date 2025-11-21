@@ -3,6 +3,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { axiosInstance } from "../lib/axios.js";
+import { requestNotificationPermission, showSystemNotification } from "../utils/notifications";
 
 /**
  * Auth + Socket store
@@ -107,23 +108,27 @@ export const useAuthStore = create((set, get) => ({
    * logout
    ******************************/
   logout: async () => {
-    try {
-      await axiosInstance.post("/auth/logout");
-    } catch (err) {
-      console.warn("logout backend error (ignoring):", err);
-    }
+  try {
+    await axiosInstance.post("/auth/logout");
+  } catch (err) {
+    console.warn("logout backend error:", err);
+  }
 
-    // clear token + local state
-    localStorage.removeItem("token");
+  localStorage.removeItem("token");
 
-    // reset store state and disconnect socket
-    set({ authUser: null, onlineUsers: [] });
-    get().disconnectSocket();
+  // FULL SOCKET RESET
+  const s = get().socket;
+  if (s) {
+    s.removeAllListeners();
+    s.disconnect();
+  }
 
-    toast.success("Logged out");
-    // optional: redirect to login (your app already does this in logout flow)
-    window.location.href = "/login";
-  },
+  set({ authUser: null, socket: null, onlineUsers: [] });
+
+  // VERY IMPORTANT
+  window.location.replace("/login"); 
+},
+
 
   /******************************
    * update profile
@@ -173,7 +178,9 @@ export const useAuthStore = create((set, get) => ({
 
     // connection events
     sock.on("connect", () => {
+
       console.log("🟢 Connected to socket:", sock.id);
+      requestNotificationPermission();
     });
 
     sock.on("connect_error", (err) => {

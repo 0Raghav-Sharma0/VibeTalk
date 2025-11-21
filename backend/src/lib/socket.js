@@ -1,6 +1,7 @@
 // backend/src/lib/socket.js
 import { Server } from "socket.io";
 import Message from "../models/message.model.js";
+import User from "../models/user.model.js";
 
 /* ============================================================
    ALLOWED ORIGINS
@@ -39,9 +40,8 @@ export function createSocketServer(server) {
   io = new Server(server, {
     cors: {
       origin: (origin, callback) => {
-        if (!origin || isOriginAllowed(origin)) {
-          callback(null, true);
-        } else {
+        if (!origin || isOriginAllowed(origin)) callback(null, true);
+        else {
           console.warn("❌ BLOCKED ORIGIN:", origin);
           callback(new Error("CORS Not Allowed"));
         }
@@ -57,12 +57,25 @@ export function createSocketServer(server) {
     console.log("🟢 Socket connected:", socket.id);
 
     const userId = socket.handshake.query?.userId;
+
     if (userId) {
+      // 🧹 HARD CLEANUP: remove ANY mapping of this socketId
+      for (const uid in userSocketMap) {
+        if (userSocketMap[uid] === socket.id) {
+          delete userSocketMap[uid];
+        }
+      }
+
+      // 🧹 HARD CLEANUP: remove previous socket of this user
+      if (userSocketMap[userId]) {
+        delete userSocketMap[userId];
+      }
+
+      // Add new mapping
       userSocketMap[userId] = socket.id;
       console.log(`👤 User Online: ${userId} -> ${socket.id}`);
     }
 
-    // Broadcast list
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
     /* ============================================================
@@ -80,20 +93,28 @@ export function createSocketServer(server) {
           video: video ?? null,
         });
 
+        const sender = await User.findById(senderId).select("fullName profilePic");
+
+        const enrichedMessage = {
+          ...message.toObject(),
+          senderName: sender?.fullName || "New Message",
+          senderAvatar: sender?.profilePic || null,
+        };
+
         const targetSocket = getReceiverSocketId(receiverId);
 
-        // send to receiver if online
-        if (targetSocket) io.to(targetSocket).emit("newMessage", message);
+        if (targetSocket) {
+          io.to(targetSocket).emit("newMessage", enrichedMessage);
+        }
 
-        // send back to sender copy
-        io.to(socket.id).emit("newMessage", message);
+        io.to(socket.id).emit("newMessage", enrichedMessage);
       } catch (err) {
         console.error("sendMessage error:", err);
       }
     });
 
     /* ============================================================
-         TYPING / DELIVERED / SEEN
+         TYPING
     ============================================================ */
     socket.on("typing", ({ senderId, receiverId, isTyping }) => {
       const targetSocket = getReceiverSocketId(receiverId);
@@ -102,6 +123,9 @@ export function createSocketServer(server) {
       }
     });
 
+    /* ============================================================
+         DELIVERED / SEEN
+    ============================================================ */
     socket.on("msg-delivered", async ({ messageId, receiverId }) => {
       try {
         await Message.findByIdAndUpdate(messageId, { delivered: true });
@@ -132,7 +156,7 @@ export function createSocketServer(server) {
     });
 
     /* ============================================================
-         WHITEBOARD / MUSIC
+         WHITEBOARD / MUSIC  ✅ (ADDED BACK)
     ============================================================ */
     socket.on("join-room", (roomId) => {
       if (roomId) socket.join(roomId);
@@ -154,23 +178,14 @@ export function createSocketServer(server) {
     });
 
     /* ============================================================
-         CALLING / WEBRTC SIGNALING (THE BIG FIX)
+         CALLING
     ============================================================ */
 
-    /**
-     * CALL USER
-     * Caller → server → callee
-     * Sends: offer, callType
-     */
     socket.on("call-user", ({ targetUserId, offer, callType }) => {
       const from = socket.handshake.query?.userId;
 
-      if (!targetUserId || !from) {
-        io.to(socket.id).emit("call-failed", { reason: "Invalid target" });
-        return;
-      }
-
       const targetSocket = getReceiverSocketId(targetUserId);
+
       if (!targetSocket) {
         io.to(socket.id).emit("call-failed", { reason: "User Offline" });
         return;
@@ -183,41 +198,24 @@ export function createSocketServer(server) {
       });
     });
 
-    /**
-     * CALL ACCEPTED
-     * Callee → server → caller
-     * Sends: answer SDP
-     */
     socket.on("call-accepted", ({ callerId, answer }) => {
       const targetSocket = getReceiverSocketId(callerId);
       if (targetSocket)
         io.to(targetSocket).emit("call-accepted", { answer });
     });
 
-    /**
-     * CALL REJECTED
-     */
     socket.on("call-rejected", ({ callerId }) => {
       const targetSocket = getReceiverSocketId(callerId);
       if (targetSocket)
         io.to(targetSocket).emit("call-rejected", { by: socket.id });
     });
 
-    /**
-     * ICE CANDIDATE
-     * Either side → server → other side
-     */
     socket.on("webrtc-ice-candidate", ({ targetUserId, candidate }) => {
       const targetSocket = getReceiverSocketId(targetUserId);
-      if (targetSocket) {
+      if (targetSocket)
         io.to(targetSocket).emit("webrtc-ice-candidate", { candidate });
-      }
     });
 
-    /**
-     * END CALL
-     * Either side can end it
-     */
     socket.on("end-call", ({ targetUserId }) => {
       const targetSocket = getReceiverSocketId(targetUserId);
 

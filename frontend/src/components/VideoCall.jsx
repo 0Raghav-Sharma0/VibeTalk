@@ -3,6 +3,8 @@ import React, { useRef, useEffect, useState } from "react";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
+import { showSystemNotification } from "../utils/notifications";
+
 
 import {
   X,
@@ -482,8 +484,22 @@ const VideoCall = () => {
     if (!socket) return;
 
     const handleIncomingCall = (data) => {
-      setIncomingCall(data.from, data.offer, data.callType);
-    };
+
+  // Only notify if tab not focused
+  if (document.hidden) {
+    showSystemNotification({
+      title: "Incoming Call",
+      body: `${data.callerName || "Someone"} is calling you...`,
+      icon: "/call_icon.png",
+      onClick: () => {
+        window.focus();
+      },
+    });
+  }
+
+  setIncomingCall(data.from, data.offer, data.callType);
+};
+
 
     const handleCallAccepted = async (data) => {
       const pc = peerConnectionRef.current;

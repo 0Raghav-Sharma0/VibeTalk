@@ -3,6 +3,7 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
+import { showSystemNotification } from "../utils/notifications";
 
 export const useChatStore = create((set, get) => ({
   messages: [],
@@ -18,11 +19,10 @@ export const useChatStore = create((set, get) => ({
   typing: {},
 
   /* ============================================================
-        SAFE ONLINE MERGE (MAIN FIX)
+        SAFE ONLINE MERGE
   ============================================================ */
   applyOnlineToUsers: (usersList, onlineIds) => {
     if (!Array.isArray(usersList)) return [];
-
     const safeOnlineIds = Array.isArray(onlineIds) ? onlineIds : [];
     const onlineSet = new Set(safeOnlineIds);
 
@@ -44,7 +44,6 @@ export const useChatStore = create((set, get) => ({
       const apply = get().applyOnlineToUsers;
 
       const merged = apply(res.data, onlineUsers);
-
       set({ users: merged });
     } catch (error) {
       toast.error("Failed to load users");
@@ -97,25 +96,31 @@ export const useChatStore = create((set, get) => ({
       const { selectedUser, messages, unreadMessages } = get();
       const { authUser } = useAuthStore.getState();
 
-      // If YOU sent it
+      // You sent it
       if (msg.senderId === authUser._id) {
         set({ messages: [...messages, msg] });
         return;
       }
 
-      // If message is from the selected chat → push
+      // Chat is open with this user → append normally
       if (selectedUser && selectedUser._id === msg.senderId) {
         set({ messages: [...messages, msg] });
-        return;
+      } else {
+        // Add unread
+        const updatedUnread = {
+          ...unreadMessages,
+          [msg.senderId]: (unreadMessages[msg.senderId] || 0) + 1,
+        };
+        set({ unreadMessages: updatedUnread });
+
+        // ⭐ ALWAYS show notification if message is from another user
+        showSystemNotification({
+          title: msg.senderName || "New Message",
+          body: msg.text || "Sent you a message",
+          icon: "/message_icon.png",
+          onClick: () => window.focus(),
+        });
       }
-
-      // Otherwise → unread count
-      const updatedUnread = {
-        ...unreadMessages,
-        [msg.senderId]: (unreadMessages[msg.senderId] || 0) + 1,
-      };
-
-      set({ unreadMessages: updatedUnread });
     });
 
     /* ---- TYPING ---- */
@@ -146,7 +151,6 @@ export const useChatStore = create((set, get) => ({
     const updatedUnread = { ...unreadMessages };
     delete updatedUnread[selectedUser._id];
 
-    // apply live online status to selected user
     const online = useAuthStore.getState().onlineUsers || [];
     const isOnline = Array.isArray(online)
       ? online.includes(selectedUser._id)
@@ -161,9 +165,9 @@ export const useChatStore = create((set, get) => ({
   },
 }));
 
-/* ================================================================
-      REAL-TIME ONLINE LISTENER FROM AUTH STORE
-================================================================ */
+/* ============================================================
+        REAL-TIME ONLINE LISTENER
+============================================================ */
 useAuthStore.subscribe(
   (onlineIds) => {
     const safeIds = Array.isArray(onlineIds) ? onlineIds : [];
@@ -188,5 +192,5 @@ useAuthStore.subscribe(
       });
     });
   },
-  (s) => s.onlineUsers // selector
+  (s) => s.onlineUsers
 );
