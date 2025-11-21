@@ -52,6 +52,7 @@ const VideoCall = () => {
   const remoteVideoRef = useRef(null);
   const remoteAudioRef = useRef(null);
   const peerConnectionRef = useRef(null);
+  const ringtoneAudioRef = useRef(null);
 
   const originalCameraRef = useRef(null);
   const screenStreamRef = useRef(null);
@@ -61,6 +62,84 @@ const VideoCall = () => {
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callStatus, setCallStatus] = useState("Connecting...");
+
+  /* ==========================
+     Ringtone Functions
+  ========================== */
+  const playRingtone = () => {
+    try {
+      if (!ringtoneAudioRef.current) {
+        ringtoneAudioRef.current = new Audio("/songs/new.mp3");
+        ringtoneAudioRef.current.loop = true;
+        ringtoneAudioRef.current.volume = 0.7;
+      }
+      
+      // Reset audio to beginning and play
+      ringtoneAudioRef.current.currentTime = 0;
+      ringtoneAudioRef.current.play().catch(e => {
+        console.warn("Failed to play ringtone:", e);
+      });
+      
+      console.log("🔔 Playing ringtone");
+    } catch (error) {
+      console.error("Error playing ringtone:", error);
+    }
+  };
+
+  const stopRingtone = () => {
+    try {
+      if (ringtoneAudioRef.current) {
+        ringtoneAudioRef.current.pause();
+        ringtoneAudioRef.current.currentTime = 0;
+        console.log("🔕 Stopped ringtone");
+      }
+    } catch (error) {
+      console.error("Error stopping ringtone:", error);
+    }
+  };
+
+  /* ==========================
+     Play ringtone for incoming calls
+  ========================== */
+  useEffect(() => {
+    if (isIncomingCall) {
+      console.log("📞 Incoming call detected - playing ringtone");
+      playRingtone();
+    } else {
+      stopRingtone();
+    }
+  }, [isIncomingCall]);
+
+  /* ==========================
+     Play ringtone for outgoing calls (while calling)
+  ========================== */
+  useEffect(() => {
+    if (isCalling && !isCallActive) {
+      console.log("📞 Outgoing call - playing ringtone");
+      playRingtone();
+    } else {
+      stopRingtone();
+    }
+  }, [isCalling, isCallActive]);
+
+  /* ==========================
+     Stop ringtone when call is answered or ended
+  ========================== */
+  useEffect(() => {
+    if (isCallActive) {
+      console.log("📞 Call answered - stopping ringtone");
+      stopRingtone();
+    }
+  }, [isCallActive]);
+
+  /* ==========================
+     Cleanup ringtone on component unmount
+  ========================== */
+  useEffect(() => {
+    return () => {
+      stopRingtone();
+    };
+  }, []);
 
   const setLocalVideoObject = (stream) => {
     try {
@@ -176,6 +255,9 @@ const VideoCall = () => {
   ========================== */
   const cleanupCall = () => {
     console.log("🧹 FULL CLEANUP - Stopping all media tracks...");
+
+    // Stop ringtone first
+    stopRingtone();
 
     // 1) Stop screen share tracks
     try {
