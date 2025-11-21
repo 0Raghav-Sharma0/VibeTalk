@@ -11,27 +11,27 @@ export default function Whiteboard({ roomId }) {
   const drawingHistory = useRef([]);
   const historyIndex = useRef(-1);
 
-  const [tool, setTool] = useState("pen"); // "pen", "eraser", "line", "rectangle", "circle"
+  const [tool, setTool] = useState("pen");
   const [color, setColor] = useState("#000000");
   const [size, setSize] = useState(4);
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(true);
   const [isFilled, setIsFilled] = useState(false);
 
-  // Color palette options
   const colorPalette = [
-    "#000000", "#ffffff", "#ff3b30", "#ff9500", "#ffcc00", 
+    "#000000", "#ffffff", "#ff3b30", "#ff9500", "#ffcc00",
     "#4cd964", "#5ac8fa", "#007aff", "#5856d6", "#ff2d55"
   ];
 
-  // JOIN ROOM
+  /* ==========================================
+      JOIN ROOM
+  ========================================== */
   useEffect(() => {
-    if (roomId && socket) {
-      socket.emit("join-room", roomId);
-      console.log("🟢 Joined whiteboard room:", roomId);
-    }
+    if (roomId && socket) socket.emit("join-room", roomId);
   }, [roomId, socket]);
 
-  // INITIALIZE CANVAS
+  /* ==========================================
+      INITIALIZE CANVAS
+  ========================================== */
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -39,15 +39,13 @@ export default function Whiteboard({ roomId }) {
     const resize = () => {
       const temp = document.createElement("canvas");
       const tempCtx = temp.getContext("2d");
-      
-      // Save current drawing
+
       if (ctxRef.current) {
         temp.width = canvas.width;
         temp.height = canvas.height;
         tempCtx.drawImage(canvas, 0, 0);
       }
 
-      // Set new dimensions
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
@@ -59,29 +57,23 @@ export default function Whiteboard({ roomId }) {
       ctx.strokeStyle = color;
       ctx.fillStyle = color;
 
-      // Restore drawing
-      if (temp.width > 0) {
-        ctx.drawImage(temp, 0, 0);
-      }
+      if (temp.width > 0) ctx.drawImage(temp, 0, 0);
       ctxRef.current = ctx;
     };
 
-    // Initial resize
     setTimeout(resize, 100);
     window.addEventListener("resize", resize);
-    
-    return () => {
-      window.removeEventListener("resize", resize);
-    };
+    return () => window.removeEventListener("resize", resize);
   }, []);
 
-  // Update context when tool or color changes
+  /* ==========================================
+      UPDATE CONTEXT
+  ========================================== */
   useEffect(() => {
     if (ctxRef.current) {
       if (tool === "eraser") {
         ctxRef.current.globalCompositeOperation = "destination-out";
         ctxRef.current.strokeStyle = "rgba(0,0,0,1)";
-        ctxRef.current.fillStyle = "rgba(0,0,0,1)";
       } else {
         ctxRef.current.globalCompositeOperation = "source-over";
         ctxRef.current.strokeStyle = color;
@@ -91,23 +83,20 @@ export default function Whiteboard({ roomId }) {
     }
   }, [tool, color, size]);
 
-  // RECEIVE DRAW FROM OTHER USER - FIXED FOR SHAPES
+  /* ==========================================
+      RECEIVE EVENTS
+  ========================================== */
   useEffect(() => {
     if (!socket) return;
 
-    const handleDraw = (data) => {
-      console.log("📨 Received draw data:", data);
-      drawOnCanvas(data);
+    const handleDraw = (payload) => {
+      drawOnCanvas({ ...payload, remote: true });
     };
 
     const handleClear = () => {
-      console.log("🗑️ Clearing whiteboard");
-      const canvas = canvasRef.current;
       const ctx = ctxRef.current;
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        saveToHistory();
-      }
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      saveToHistory();
     };
 
     socket.on("whiteboard-draw", handleDraw);
@@ -119,50 +108,47 @@ export default function Whiteboard({ roomId }) {
     };
   }, [socket]);
 
-  // Draw on canvas (handles both freehand and shapes)
+  /* ==========================================
+      DRAW ON CANVAS (Remote + Local)
+  ========================================== */
   const drawOnCanvas = useCallback((data) => {
     const ctx = ctxRef.current;
     if (!ctx) return;
 
-    console.log("🎨 Drawing received:", data);
+    const prevComp = ctx.globalCompositeOperation;
+    const prevStroke = ctx.strokeStyle;
+    const prevFill = ctx.fillStyle;
+    const prevWidth = ctx.lineWidth;
 
-    const originalComposite = ctx.globalCompositeOperation;
-    const originalStyle = ctx.strokeStyle;
-    const originalFill = ctx.fillStyle;
-    const originalWidth = ctx.lineWidth;
-
-    // Set drawing properties based on data
     if (data.tool === "eraser") {
       ctx.globalCompositeOperation = "destination-out";
       ctx.strokeStyle = "rgba(0,0,0,1)";
-      ctx.fillStyle = "rgba(0,0,0,1)";
     } else {
       ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = data.color || "#000000";
-      ctx.fillStyle = data.color || "#000000";
+      ctx.strokeStyle = data.color;
+      ctx.fillStyle = data.color;
     }
-    ctx.lineWidth = data.size || 4;
+    ctx.lineWidth = data.size;
 
-    // Draw based on tool type
     if (data.tool === "pen" || data.tool === "eraser") {
-      // Freehand drawing
       ctx.beginPath();
       ctx.moveTo(data.lastX, data.lastY);
       ctx.lineTo(data.x, data.y);
       ctx.stroke();
     } else {
-      // Shape drawing
+      // 🟢 NO HISTORY RESTORE FOR REMOTE SHAPES
       drawShape(ctx, data);
     }
 
-    // Restore original context
-    ctx.globalCompositeOperation = originalComposite;
-    ctx.strokeStyle = originalStyle;
-    ctx.fillStyle = originalFill;
-    ctx.lineWidth = originalWidth;
+    ctx.globalCompositeOperation = prevComp;
+    ctx.strokeStyle = prevStroke;
+    ctx.fillStyle = prevFill;
+    ctx.lineWidth = prevWidth;
   }, []);
 
-  // Draw different shapes
+  /* ==========================================
+      DRAW SHAPES
+  ========================================== */
   const drawShape = useCallback((ctx, data) => {
     const { startX, startY, endX, endY, tool, isFilled } = data;
     const width = endX - startX;
@@ -178,26 +164,16 @@ export default function Whiteboard({ roomId }) {
         break;
 
       case "rectangle":
-        if (isFilled) {
-          ctx.fillRect(startX, startY, width, height);
-        } else {
-          ctx.strokeRect(startX, startY, width, height);
-        }
+        if (isFilled) ctx.fillRect(startX, startY, width, height);
+        else ctx.strokeRect(startX, startY, width, height);
         break;
 
       case "circle":
-        const centerX = (startX + endX) / 2;
-        const centerY = (startY + endY) / 2;
-        const radiusX = Math.abs(endX - startX) / 2;
-        const radiusY = Math.abs(endY - startY) / 2;
-        const radius = Math.max(radiusX, radiusY);
-        
-        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-        if (isFilled) {
-          ctx.fill();
-        } else {
-          ctx.stroke();
-        }
+        const cx = (startX + endX) / 2;
+        const cy = (startY + endY) / 2;
+        const r = Math.max(Math.abs(width), Math.abs(height)) / 2;
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        isFilled ? ctx.fill() : ctx.stroke();
         break;
 
       default:
@@ -205,124 +181,43 @@ export default function Whiteboard({ roomId }) {
     }
   }, []);
 
-  // Save canvas state to history
+  /* ==========================================
+      HISTORY
+  ========================================== */
   const saveToHistory = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const ctx = ctxRef.current;
+    if (!canvas || !ctx) return;
 
-    const imageData = ctxRef.current.getImageData(0, 0, canvas.width, canvas.height);
-    
+    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
     if (historyIndex.current < drawingHistory.current.length - 1) {
-      drawingHistory.current = drawingHistory.current.slice(0, historyIndex.current + 1);
+      drawingHistory.current = drawingHistory.current.slice(
+        0,
+        historyIndex.current + 1
+      );
     }
 
-    drawingHistory.current.push(imageData);
-    historyIndex.current = drawingHistory.current.length - 1;
+    drawingHistory.current.push(img);
+    historyIndex.current++;
 
-    // Limit history to 50 states
     if (drawingHistory.current.length > 50) {
       drawingHistory.current.shift();
       historyIndex.current--;
     }
   }, []);
 
-  // Undo functionality
-  const undo = useCallback(() => {
-    if (historyIndex.current > 0) {
-      historyIndex.current--;
-      const imageData = drawingHistory.current[historyIndex.current];
-      ctxRef.current.putImageData(imageData, 0, 0);
-    } else if (historyIndex.current === 0) {
-      ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      historyIndex.current = -1;
-      drawingHistory.current = [];
-    }
-  }, []);
-
-  // Redo functionality
-  const redo = useCallback(() => {
-    if (historyIndex.current < drawingHistory.current.length - 1) {
-      historyIndex.current++;
-      const imageData = drawingHistory.current[historyIndex.current];
-      ctxRef.current.putImageData(imageData, 0, 0);
-    }
-  }, []);
-
-  // Get mouse/touch coordinates
-  const getCoordinates = useCallback((e) => {
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    
-    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-    
-    return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
-    };
-  }, []);
-
-  // Freehand drawing functions
-  const startFreehand = useCallback((x, y) => {
-    if (!isDrawingEnabled) return;
-
-    isDrawing.current = true;
-    startPos.current = { x, y };
-    
-    const ctx = ctxRef.current;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  }, [isDrawingEnabled]);
-
-  const drawFreehand = useCallback((x, y) => {
-    if (!isDrawing.current || !isDrawingEnabled) return;
-
-    const ctx = ctxRef.current;
-    
-    ctx.lineTo(x, y);
-    ctx.stroke();
-
-    // SYNC TO SERVER - FIXED: Send proper data structure
-    if (socket && roomId) {
-      socket.emit("whiteboard-draw", {
-        roomId,
-        lastX: startPos.current.x,
-        lastY: startPos.current.y,
-        x,
-        y,
-        color,
-        size,
-        tool
-      });
-    }
-
-    startPos.current = { x, y };
-  }, [roomId, color, size, tool, socket, isDrawingEnabled]);
-
-  // Shape drawing functions
-  const startShape = useCallback((x, y) => {
-    if (!isDrawingEnabled) return;
-
-    isDrawing.current = true;
-    startPos.current = { x, y };
-    
-    // Save state before starting shape for preview
-    saveToHistory();
-  }, [isDrawingEnabled, saveToHistory]);
-
+  /* ==========================================
+      SHAPE PREVIEW (LOCAL ONLY)
+  ========================================== */
   const drawCurrentShape = useCallback((x, y) => {
-    if (!isDrawing.current || !isDrawingEnabled) return;
-
     const ctx = ctxRef.current;
-    
-    // Clear and redraw from history for preview
+
+    // 🟢 IMPORTANT: ONLY RESTORE FOR LOCAL PREVIEW
     if (historyIndex.current >= 0) {
       ctx.putImageData(drawingHistory.current[historyIndex.current], 0, 0);
     }
 
-    // Draw the current shape preview
     drawShape(ctx, {
       startX: startPos.current.x,
       startY: startPos.current.y,
@@ -333,12 +228,12 @@ export default function Whiteboard({ roomId }) {
       color,
       size
     });
-  }, [tool, isFilled, color, size, isDrawingEnabled, drawShape]);
+  }, [tool, isFilled, color, size, drawShape]);
 
+  /* ==========================================
+      FINISH SHAPE
+  ========================================== */
   const finishShape = useCallback((x, y) => {
-    if (!isDrawing.current) return;
-
-    // Final draw
     drawShape(ctxRef.current, {
       startX: startPos.current.x,
       startY: startPos.current.y,
@@ -350,92 +245,56 @@ export default function Whiteboard({ roomId }) {
       size
     });
 
-    // SYNC TO SERVER - FIXED: Send shape data using same event
-    if (socket && roomId) {
-      socket.emit("whiteboard-draw", {
-        roomId,
-        startX: startPos.current.x,
-        startY: startPos.current.y,
-        endX: x,
-        endY: y,
-        tool,
-        isFilled,
-        color,
-        size
-      });
-    }
+    socket.emit("whiteboard-draw", {
+      roomId,
+      startX: startPos.current.x,
+      startY: startPos.current.y,
+      endX: x,
+      endY: y,
+      tool,
+      isFilled,
+      color,
+      size,
+      remote: true    // 🟢 KEY FIX
+    });
 
     saveToHistory();
     isDrawing.current = false;
   }, [roomId, tool, isFilled, color, size, socket, saveToHistory, drawShape]);
 
-  // Event handlers
-  const handleMouseDown = (e) => {
-    const { x, y } = getCoordinates(e);
+  /* ==========================================
+      FREEHAND
+  ========================================== */
+  const startFreehand = useCallback((x, y) => {
+    isDrawing.current = true;
+    startPos.current = { x, y };
 
-    if (tool === "pen" || tool === "eraser") {
-      startFreehand(x, y);
-    } else {
-      startShape(x, y);
-    }
-  };
+    const ctx = ctxRef.current;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  }, []);
 
-  const handleMouseMove = (e) => {
-    const { x, y } = getCoordinates(e);
-
-    if (tool === "pen" || tool === "eraser") {
-      drawFreehand(x, y);
-    } else if (isDrawing.current) {
-      drawCurrentShape(x, y);
-    }
-  };
-
-  const handleMouseUp = (e) => {
+  const drawFreehand = useCallback((x, y) => {
     if (!isDrawing.current) return;
 
-    const { x, y } = getCoordinates(e);
+    const ctx = ctxRef.current;
+    ctx.lineTo(x, y);
+    ctx.stroke();
 
-    if (tool === "pen" || tool === "eraser") {
-      stopDrawing();
-    } else {
-      finishShape(x, y);
-    }
-  };
+    socket.emit("whiteboard-draw", {
+      roomId,
+      lastX: startPos.current.x,
+      lastY: startPos.current.y,
+      x,
+      y,
+      tool,
+      color,
+      size,
+      remote: true
+    });
 
-  const handleTouchStart = (e) => {
-    e.preventDefault();
-    const { x, y } = getCoordinates(e);
-
-    if (tool === "pen" || tool === "eraser") {
-      startFreehand(x, y);
-    } else {
-      startShape(x, y);
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    e.preventDefault();
-    const { x, y } = getCoordinates(e);
-
-    if (tool === "pen" || tool === "eraser") {
-      drawFreehand(x, y);
-    } else if (isDrawing.current) {
-      drawCurrentShape(x, y);
-    }
-  };
-
-  const handleTouchEnd = (e) => {
-    e.preventDefault();
-    if (!isDrawing.current) return;
-
-    const { x, y } = getCoordinates(e);
-
-    if (tool === "pen" || tool === "eraser") {
-      stopDrawing();
-    } else {
-      finishShape(x, y);
-    }
-  };
+    startPos.current = { x, y };
+  }, [roomId, color, size, tool, socket]);
 
   const stopDrawing = useCallback(() => {
     if (isDrawing.current) {
@@ -444,190 +303,132 @@ export default function Whiteboard({ roomId }) {
     }
   }, [saveToHistory]);
 
-  // CLEAR CANVAS
-  const clearBoard = () => {
+  /* ==========================================
+      MOUSE / TOUCH EVENTS
+  ========================================== */
+  const getCoords = (e) => {
     const canvas = canvasRef.current;
-    const ctx = ctxRef.current;
-    if (ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      saveToHistory();
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
 
-      if (socket && roomId) {
-        socket.emit("whiteboard-clear", { roomId });
-      }
+    const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
+
+    return { x: x * scaleX, y: y * scaleY };
+  };
+
+  const handleDown = (e) => {
+    const { x, y } = getCoords(e);
+
+    if (tool === "pen" || tool === "eraser") startFreehand(x, y);
+    else {
+      saveToHistory();
+      isDrawing.current = true;
+      startPos.current = { x, y };
     }
   };
 
-  // DOWNLOAD CANVAS
+  const handleMove = (e) => {
+    if (!isDrawingEnabled) return;
+
+    const { x, y } = getCoords(e);
+
+    if (tool === "pen" || tool === "eraser") drawFreehand(x, y);
+    else if (isDrawing.current) drawCurrentShape(x, y);
+  };
+
+  const handleUp = (e) => {
+    if (!isDrawing.current) return;
+
+    const { x, y } = getCoords(e);
+
+    if (tool === "pen" || tool === "eraser") stopDrawing();
+    else finishShape(x, y);
+  };
+
+  /* ==========================================
+      CLEAR
+  ========================================== */
+  const clearBoard = () => {
+    const ctx = ctxRef.current;
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    saveToHistory();
+    socket.emit("whiteboard-clear", { roomId });
+  };
+
+  /* ==========================================
+      DOWNLOAD
+  ========================================== */
   const downloadCanvas = () => {
     const canvas = canvasRef.current;
-    const link = document.createElement('a');
-    link.download = `whiteboard-${roomId || 'drawing'}-${Date.now()}.png`;
+    const link = document.createElement("a");
+    link.download = `whiteboard-${roomId}-${Date.now()}.png`;
     link.href = canvas.toDataURL();
     link.click();
   };
 
   const isFreehandTool = tool === "pen" || tool === "eraser";
 
+  /* ==========================================
+      UI
+  ========================================== */
   return (
     <div className="flex flex-col h-full bg-base-100 border-l border-base-300">
       {/* Toolbar */}
       <div className="p-3 flex flex-wrap gap-3 items-center border-b bg-base-200">
-        {/* Tool Selection */}
+
+        {/* Tools */}
         <div className="flex gap-1 bg-base-300 rounded-lg p-1">
-          <button
-            onClick={() => setTool("pen")}
-            className={`p-2 rounded ${tool === "pen" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`}
-            title="Pen"
-          >
-            ✏️
-          </button>
-          <button
-            onClick={() => setTool("eraser")}
-            className={`p-2 rounded ${tool === "eraser" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`}
-            title="Eraser"
-          >
-            🧽
-          </button>
-          <button
-            onClick={() => setTool("line")}
-            className={`p-2 rounded ${tool === "line" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`}
-            title="Line"
-          >
-            📏
-          </button>
-          <button
-            onClick={() => setTool("rectangle")}
-            className={`p-2 rounded ${tool === "rectangle" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`}
-            title="Rectangle"
-          >
-            ⬜
-          </button>
-          <button
-            onClick={() => setTool("circle")}
-            className={`p-2 rounded ${tool === "circle" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`}
-            title="Circle"
-          >
-            ⭕
-          </button>
+          <button onClick={() => setTool("pen")} className={`p-2 rounded ${tool === "pen" ? "bg-primary" : "hover:bg-base-100"}`}>✏️</button>
+          <button onClick={() => setTool("eraser")} className={`p-2 rounded ${tool === "eraser" ? "bg-primary" : "hover:bg-base-100"}`}>🧽</button>
+          <button onClick={() => setTool("line")} className={`p-2 rounded ${tool === "line" ? "bg-primary" : "hover:bg-base-100"}`}>📏</button>
+          <button onClick={() => setTool("rectangle")} className={`p-2 rounded ${tool === "rectangle" ? "bg-primary" : "hover:bg-base-100"}`}>⬜</button>
+          <button onClick={() => setTool("circle")} className={`p-2 rounded ${tool === "circle" ? "bg-primary" : "hover:bg-base-100"}`}>⭕</button>
         </div>
 
-        {/* Color Palette */}
+        {/* Colors */}
         <div className="flex gap-1 items-center">
           {colorPalette.map((col) => (
-            <button
-              key={col}
-              onClick={() => setColor(col)}
-              className={`w-6 h-6 rounded border-2 ${color === col ? "border-primary" : "border-base-300"}`}
-              style={{ backgroundColor: col }}
-              title={col}
-            />
+            <button key={col} onClick={() => setColor(col)} className={`w-6 h-6 rounded border-2 ${color === col ? "border-primary" : "border-base-300"}`} style={{ backgroundColor: col }} />
           ))}
-          <input
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-            className="w-8 h-8 rounded border border-base-300 cursor-pointer"
-            title="Custom Color"
-          />
+          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded border border-base-300" />
         </div>
 
-        {/* Brush Size Slider */}
+        {/* Brush Size */}
         <div className="flex gap-2 items-center">
-          <span className="text-sm font-medium">
-            {tool === "eraser" ? "Eraser Size" : "Brush Size"}:
-          </span>
-          <input
-            type="range"
-            min="2"
-            max="25"
-            value={size}
-            onChange={(e) => setSize(Number(e.target.value))}
-            className="w-24"
-          />
-          <span className="text-sm w-8">{size}px</span>
+          <span>{tool === "eraser" ? "Eraser" : "Brush"} Size:</span>
+          <input type="range" min="2" max="25" value={size} onChange={(e) => setSize(Number(e.target.value))} />
+          <span>{size}px</span>
         </div>
 
-        {/* Fill Toggle for Shapes */}
+        {/* Filled */}
         {!isFreehandTool && (
-          <button
-            onClick={() => setIsFilled(!isFilled)}
-            className={`px-3 py-1 rounded ${isFilled ? "bg-primary text-primary-content" : "bg-base-300"}`}
-            title={isFilled ? "Filled" : "Outline"}
-          >
+          <button onClick={() => setIsFilled(!isFilled)} className={`px-3 py-1 rounded ${isFilled ? "bg-primary" : "bg-base-300"}`}>
             {isFilled ? "🟦 Filled" : "⬜ Outline"}
           </button>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex gap-2 ml-auto">
-          <button
-            onClick={undo}
-            className="px-3 py-1 rounded bg-base-300 hover:bg-base-100 transition-colors"
-            title="Undo"
-          >
-            ↩️ Undo
-          </button>
-          <button
-            onClick={redo}
-            className="px-3 py-1 rounded bg-base-300 hover:bg-base-100 transition-colors"
-            title="Redo"
-          >
-            ↪️ Redo
-          </button>
-          <button
-            onClick={() => setIsDrawingEnabled(!isDrawingEnabled)}
-            className={`px-3 py-1 rounded transition-colors ${
-              isDrawingEnabled ? "bg-success text-success-content" : "bg-error text-error-content"
-            }`}
-            title={isDrawingEnabled ? "Disable Drawing" : "Enable Drawing"}
-          >
-            {isDrawingEnabled ? "✅ Draw" : "🚫 Draw"}
-          </button>
-          <button
-            onClick={downloadCanvas}
-            className="px-3 py-1 rounded bg-info text-info-content hover:bg-info/80 transition-colors"
-            title="Download"
-          >
-            💾 Save
-          </button>
-          <button
-            onClick={clearBoard}
-            className="px-3 py-1 rounded bg-error text-error-content hover:bg-error/80 transition-colors"
-            title="Clear Board"
-          >
-            🗑️ Clear
-          </button>
+        {/* Actions */}
+        <div className="ml-auto flex gap-2">
+          <button onClick={clearBoard} className="px-3 py-1 bg-error text-error-content rounded">🗑️ Clear</button>
+          <button onClick={downloadCanvas} className="px-3 py-1 bg-info text-info-content rounded">💾 Save</button>
         </div>
       </div>
 
       {/* Canvas */}
-      <div className="flex-1 bg-gray-100 overflow-hidden">
+      <div className="flex-1 bg-gray-100">
         <canvas
           ref={canvasRef}
-          className="w-full h-full bg-white touch-none cursor-crosshair"
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          className="w-full h-full bg-white touch-none"
+          onMouseDown={handleDown}
+          onMouseMove={handleMove}
+          onMouseUp={handleUp}
+          onMouseLeave={handleUp}
+          onTouchStart={(e) => (e.preventDefault(), handleDown(e))}
+          onTouchMove={(e) => (e.preventDefault(), handleMove(e))}
+          onTouchEnd={(e) => (e.preventDefault(), handleUp(e))}
         />
-      </div>
-
-      {/* Status Bar */}
-      <div className="px-3 py-2 bg-base-200 border-t border-base-300 text-sm text-base-content/70">
-        <div className="flex justify-between items-center">
-          <span>
-            Tool: <strong>{tool}</strong> | 
-            Color: <span style={{ color }}>●</span> | 
-            Size: <strong>{size}px</strong>
-          </span>
-          <span>
-            Room: <strong>{roomId || 'No Room'}</strong>
-          </span>
-        </div>
       </div>
     </div>
   );
