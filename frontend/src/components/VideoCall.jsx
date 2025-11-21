@@ -50,7 +50,7 @@ const VideoCall = () => {
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const remoteAudioRef = useRef(null); // <-- audio element for audio-only calls
+  const remoteAudioRef = useRef(null); // audio element for audio-only calls
   const peerConnectionRef = useRef(null);
 
   // Keep a permanent reference to the camera stream (so screen share can swap back)
@@ -88,12 +88,8 @@ const VideoCall = () => {
     try {
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = stream;
-        // ensure playback attempt (should be allowed because user initiated call)
         const p = remoteAudioRef.current.play?.();
-        if (p && p.catch) p.catch(() => {
-          // autoplay may be blocked in some browsers; user interaction is typically required.
-          // we silently ignore the rejection here.
-        });
+        if (p && p.catch) p.catch(() => {});
       }
     } catch (e) {
       console.warn("Failed to set remote audio srcObject", e);
@@ -111,10 +107,9 @@ const VideoCall = () => {
           : { video: false, audio: true };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      originalCameraRef.current = stream; // keep camera for toggles / screen share fallback
+      originalCameraRef.current = stream;
       setLocalStream(stream);
-      // For video calls we show camera in PIP; for audio-only we don't attempt to show video.
-      // setLocalVideoObject is safe if localVideoRef is null / not rendered for audio-only.
+
       setLocalVideoObject(stream);
 
       // Ensure initial audio/video enabled state matches UI state
@@ -133,17 +128,15 @@ const VideoCall = () => {
 
   /* ==========================
      Create RTCPeerConnection + handlers
-     This returns a PC ready to accept addTrack and negotiation.
   ========================== */
   const createPeerConnection = (targetUserId) => {
     const pc = new RTCPeerConnection(STUN_CONFIG);
 
-    // Create inbound MediaStream container for tracks (so ontrack can add)
-    let inboundStream = remoteStream || null;
+    // inbound stream container
+    let inboundStream = remoteStream || new MediaStream();
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        // send to peer via signaling
         socket?.emit("webrtc-ice-candidate", {
           targetUserId,
           candidate: event.candidate,
@@ -151,28 +144,21 @@ const VideoCall = () => {
       }
     };
 
-    // Add incoming track to a MediaStream and attach to remote video/audio element
     pc.ontrack = (event) => {
       try {
-        if (!inboundStream) inboundStream = new MediaStream();
-
-        // event.streams[0] is most common; otherwise add track(s)
+        // prefer event.streams[0] when available
         if (event.streams && event.streams[0]) {
           inboundStream = event.streams[0];
         } else if (event.track) {
+          inboundStream = inboundStream || new MediaStream();
           inboundStream.addTrack(event.track);
         }
 
-        // Save in store
         setRemoteStream(inboundStream);
 
-        // Route the remote media to the correct element:
-        // - video calls: attach to remote <video>
-        // - audio calls: attach to hidden <audio>
         if (callType === "video") {
           setRemoteVideoObject(inboundStream);
         } else {
-          // audio-only
           setRemoteAudioObject(inboundStream);
         }
 
@@ -202,7 +188,7 @@ const VideoCall = () => {
       }
     };
 
-    // convenience places to store buffered candidates on pc instance
+    // convenience buffer for remote ICEs
     pc._remoteIceBuffer = [];
 
     return pc;
@@ -214,7 +200,6 @@ const VideoCall = () => {
   const cleanupCall = () => {
     console.log("Cleaning up call...");
 
-    // Stop screen share stream if present
     try {
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach((t) => t.stop());
@@ -222,7 +207,6 @@ const VideoCall = () => {
       }
     } catch (e) {}
 
-    // Stop original camera (kept in originalCameraRef)
     try {
       if (originalCameraRef.current) {
         originalCameraRef.current.getTracks().forEach((t) => t.stop());
@@ -230,14 +214,12 @@ const VideoCall = () => {
       }
     } catch (e) {}
 
-    // Stop localStream in store (if exists)
     try {
       if (localStream) {
         localStream.getTracks().forEach((t) => t.stop());
       }
     } catch (e) {}
 
-    // Close PC
     try {
       if (peerConnectionRef.current) {
         peerConnectionRef.current.ontrack = null;
@@ -248,7 +230,6 @@ const VideoCall = () => {
       }
     } catch (e) {}
 
-    // Clear remote audio element
     try {
       if (remoteAudioRef.current) {
         try {
@@ -256,15 +237,20 @@ const VideoCall = () => {
         } catch {}
         remoteAudioRef.current.srcObject = null;
       }
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+      }
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null;
+      }
     } catch (e) {}
 
-    // Reset UI states
     setIsScreenSharing(false);
     setIsVideoEnabled(true);
     setIsAudioEnabled(true);
     setCallStatus("Ended");
 
-    // Reset store state (streams cleared inside store)
+    // clear store
     resetCallState();
   };
 
@@ -275,8 +261,6 @@ const VideoCall = () => {
 
   /* ==========================
      Outgoing call flow (caller)
-     - Ensure local stream added BEFORE creating offer
-     - Use onnegotiationneeded to createOffer after tracks added
   ========================== */
   const startOutgoingCall = async () => {
     const receiverId = selectedUser?._id || peerId;
@@ -287,6 +271,7 @@ const VideoCall = () => {
     }
 
     setCallStatus("Calling...");
+
     // 1) get local media
     const stream = await initializeLocalStream();
     if (!stream) {
@@ -294,25 +279,15 @@ const VideoCall = () => {
       return;
     }
 
-    // 2) create pc
+    // 2) create pc and wire negotiation handler BEFORE adding tracks
     const pc = createPeerConnection(receiverId);
     peerConnectionRef.current = pc;
 
-    // 3) add tracks
-    stream.getTracks().forEach((track) => {
-      pc.addTrack(track, stream);
-    });
-
-    // 4) set local video (camera)
-    setLocalVideoObject(stream);
-
-    // 5) negotiationneeded handler: create offer AFTER tracks added
+    // set negotiation handler early
     pc.onnegotiationneeded = async () => {
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-
-        // send actual localDescription (with sdp) to remote
         socket?.emit("call-user", {
           targetUserId: receiverId,
           offer: pc.localDescription,
@@ -323,30 +298,23 @@ const VideoCall = () => {
       }
     };
 
-    // If the browser doesn't always fire negotiationneeded immediately,
-    // createOffer proactively (safe because we already added tracks)
+    // 3) add tracks
     try {
-      if (pc.signalingState === "stable" && !pc._didCreateOffer) {
-        pc._didCreateOffer = true;
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket?.emit("call-user", {
-          targetUserId: receiverId,
-          offer: pc.localDescription,
-          callType,
-        });
-      }
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
     } catch (err) {
-      // ignore; negotiationneeded will handle it
-      console.debug("proactive offer error (ignored):", err);
+      console.error("Error adding local tracks:", err);
     }
+
+    // 4) set local video (camera)
+    setLocalVideoObject(stream);
+
+    // Note: DO NOT create proactive offer here. Rely on onnegotiationneeded.
   };
 
   /* ==========================
      Accept incoming call (callee)
-     - create pc
-     - add local tracks BEFORE creating answer?
-       Actually answer is created after setRemoteDescription, but local tracks must be added before setLocalDescription(answer)
   ========================== */
   const acceptCall = async () => {
     if (!incomingCallFrom || !callOffer) {
@@ -365,25 +333,30 @@ const VideoCall = () => {
       return;
     }
 
+    // 2) create pc and set onnegotiationneeded (though callee typically won't need to negotiate)
     const pc = createPeerConnection(incomingCallFrom);
     peerConnectionRef.current = pc;
 
-    // Add local tracks to pc BEFORE creating an answer (so tracks are included in answer)
-    stream.getTracks().forEach((track) => {
-      pc.addTrack(track, stream);
-    });
+    // Add local tracks BEFORE creating answer so they are included in SDP
+    try {
+      stream.getTracks().forEach((track) => {
+        pc.addTrack(track, stream);
+      });
+    } catch (err) {
+      console.error("Error adding local tracks (acceptCall):", err);
+    }
 
     setLocalVideoObject(stream);
 
     try {
-      // 2) set remote description (offer from caller)
+      // 3) set remote description (offer from caller)
       const remoteDesc =
         typeof callOffer === "object" && callOffer.type
           ? callOffer
           : { type: "offer", sdp: callOffer?.sdp || callOffer };
       await pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
 
-      // If we have any buffered remote ICE candidates, add them now
+      // drain buffered remote ICE candidates (if any)
       if (pc._remoteIceBuffer && pc._remoteIceBuffer.length) {
         for (const c of pc._remoteIceBuffer) {
           try {
@@ -395,11 +368,11 @@ const VideoCall = () => {
         pc._remoteIceBuffer = [];
       }
 
-      // 3) create answer and set local description
+      // 4) create answer and set local description
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      // 4) send answer back to caller
+      // 5) send answer back to caller
       socket?.emit("call-accepted", {
         callerId: incomingCallFrom,
         answer: pc.localDescription,
@@ -426,8 +399,8 @@ const VideoCall = () => {
     if (!socket) return;
 
     const handleIncomingCall = (data) => {
-      // data: { from, offer, callType }
       console.log("Incoming call (socket):", data);
+      // data: { from, offer, callType }
       setIncomingCall(data.from, data.offer, data.callType);
     };
 
@@ -469,12 +442,17 @@ const VideoCall = () => {
       if (!pc) return;
 
       try {
-        // If remoteDescription not yet set, buffer candidate on pc
-        if (!pc.remoteDescription || pc.remoteDescription.type === null) {
+        // Buffer candidate if remoteDescription not set or not usable yet
+        if (
+          !pc.remoteDescription ||
+          !pc.remoteDescription.type ||
+          pc.remoteDescription.type === null
+        ) {
           pc._remoteIceBuffer = pc._remoteIceBuffer || [];
           pc._remoteIceBuffer.push(data.candidate);
           return;
         }
+
         await pc.addIceCandidate(data.candidate);
       } catch (err) {
         console.error("Error adding ICE candidate", err);
@@ -512,7 +490,6 @@ const VideoCall = () => {
 
   /* ==========================
      Start outgoing call when isCalling becomes true
-     (the store's startCall sets isCalling and peerId)
   ========================== */
   useEffect(() => {
     if (isCalling && !isIncomingCall && !isCallActive) {
@@ -566,7 +543,6 @@ const VideoCall = () => {
         screenStreamRef.current = null;
       }
 
-      // restore camera track to sender
       const cameraStream = originalCameraRef.current;
       if (!cameraStream) return;
 
@@ -706,7 +682,6 @@ const VideoCall = () => {
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-4 items-center">
           {isIncomingCall ? (
             <>
-              {/* INCOMING CALL CONTROLS */}
               <button
                 className="btn btn-error w-16 h-16 rounded-full shadow-lg"
                 onClick={rejectCall}
@@ -722,7 +697,6 @@ const VideoCall = () => {
             </>
           ) : (
             <>
-              {/* ACTIVE CALL CONTROLS */}
               <button
                 className={`btn w-14 h-14 rounded-full border-2 ${
                   isAudioEnabled ? "btn-ghost border-white/20" : "btn-error border-error"
