@@ -50,14 +50,11 @@ const VideoCall = () => {
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const remoteAudioRef = useRef(null); // audio element for audio-only calls
+  const remoteAudioRef = useRef(null);
   const peerConnectionRef = useRef(null);
 
-  // Keep a permanent reference to the camera stream (so screen share can swap back)
   const originalCameraRef = useRef(null);
   const screenStreamRef = useRef(null);
-
-  // Buffer for remote ICE candidates that arrive before remoteDescription is set
   const iceBufferRef = useRef([]);
 
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -65,9 +62,6 @@ const VideoCall = () => {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callStatus, setCallStatus] = useState("Connecting...");
 
-  /* ==========================
-     Helpers: set DOM video/audio srcObject safely
-  ========================== */
   const setLocalVideoObject = (stream) => {
     try {
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
@@ -96,9 +90,6 @@ const VideoCall = () => {
     }
   };
 
-  /* ==========================
-     Initialize local camera/mic stream
-  ========================== */
   const initializeLocalStream = async () => {
     try {
       const constraints =
@@ -109,10 +100,8 @@ const VideoCall = () => {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       originalCameraRef.current = stream;
       setLocalStream(stream);
-
       setLocalVideoObject(stream);
 
-      // Ensure initial audio/video enabled state matches UI state
       stream.getAudioTracks().forEach((t) => (t.enabled = isAudioEnabled));
       if (stream.getVideoTracks().length) {
         stream.getVideoTracks().forEach((t) => (t.enabled = isVideoEnabled));
@@ -127,12 +116,10 @@ const VideoCall = () => {
   };
 
   /* ==========================
-     Create RTCPeerConnection + handlers
+     Peer connection factory
   ========================== */
   const createPeerConnection = (targetUserId) => {
     const pc = new RTCPeerConnection(STUN_CONFIG);
-
-    // inbound stream container
     let inboundStream = remoteStream || new MediaStream();
 
     pc.onicecandidate = (event) => {
@@ -146,7 +133,6 @@ const VideoCall = () => {
 
     pc.ontrack = (event) => {
       try {
-        // prefer event.streams[0] when available
         if (event.streams && event.streams[0]) {
           inboundStream = event.streams[0];
         } else if (event.track) {
@@ -156,11 +142,8 @@ const VideoCall = () => {
 
         setRemoteStream(inboundStream);
 
-        if (callType === "video") {
-          setRemoteVideoObject(inboundStream);
-        } else {
-          setRemoteAudioObject(inboundStream);
-        }
+        if (callType === "video") setRemoteVideoObject(inboundStream);
+        else setRemoteAudioObject(inboundStream);
 
         setCallActive(true);
         setCallStatus("Connected");
@@ -172,13 +155,9 @@ const VideoCall = () => {
     pc.onconnectionstatechange = () => {
       console.log("PC connectionState:", pc.connectionState);
       setCallStatus(pc.connectionState);
-      if (pc.connectionState === "connected") {
-        setCallStatus("Connected");
-      } else if (
-        ["failed", "disconnected", "closed"].includes(pc.connectionState)
-      ) {
+      if (pc.connectionState === "connected") setCallStatus("Connected");
+      else if (["failed", "disconnected", "closed"].includes(pc.connectionState))
         handleRemoteEnd();
-      }
     };
 
     pc.oniceconnectionstatechange = () => {
@@ -188,53 +167,79 @@ const VideoCall = () => {
       }
     };
 
-    // convenience buffer for remote ICEs
     pc._remoteIceBuffer = [];
-
     return pc;
   };
 
   /* ==========================
-     Clean up everything
+     Enhanced Cleanup - Stops ALL media tracks completely
   ========================== */
   const cleanupCall = () => {
-    console.log("Cleaning up call...");
+    console.log("🧹 FULL CLEANUP - Stopping all media tracks...");
 
+    // 1) Stop screen share tracks
     try {
       if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach((t) => t.stop());
+        screenStreamRef.current.getTracks().forEach((track) => {
+          console.log("🛑 Stopping screen track:", track.kind, track.id);
+          track.stop();
+          track.enabled = false;
+        });
         screenStreamRef.current = null;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Error stopping screen share:", e);
+    }
 
+    // 2) Stop original camera stream
     try {
       if (originalCameraRef.current) {
-        originalCameraRef.current.getTracks().forEach((t) => t.stop());
+        originalCameraRef.current.getTracks().forEach((track) => {
+          console.log("🛑 Stopping camera track:", track.kind, track.id);
+          track.stop();
+          track.enabled = false;
+        });
         originalCameraRef.current = null;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Error stopping camera:", e);
+    }
 
+    // 3) Stop current local stream
     try {
       if (localStream) {
-        localStream.getTracks().forEach((t) => t.stop());
+        localStream.getTracks().forEach((track) => {
+          console.log("🛑 Stopping local stream track:", track.kind, track.id);
+          track.stop();
+          track.enabled = false;
+        });
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Error stopping local stream:", e);
+    }
 
+    // 4) Close peer connection
     try {
       if (peerConnectionRef.current) {
+        console.log("🔌 Closing RTCPeerConnection...");
+        // Remove all event listeners first
         peerConnectionRef.current.ontrack = null;
         peerConnectionRef.current.onicecandidate = null;
         peerConnectionRef.current.onconnectionstatechange = null;
+        peerConnectionRef.current.oniceconnectionstatechange = null;
+        
+        // Close connection
         peerConnectionRef.current.close();
         peerConnectionRef.current = null;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Error closing peer connection:", e);
+    }
 
+    // 5) Clear all video/audio elements
     try {
       if (remoteAudioRef.current) {
-        try {
-          remoteAudioRef.current.pause();
-        } catch {}
+        remoteAudioRef.current.pause();
         remoteAudioRef.current.srcObject = null;
       }
       if (remoteVideoRef.current) {
@@ -243,47 +248,67 @@ const VideoCall = () => {
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = null;
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Error clearing media elements:", e);
+    }
 
+    // 6) Reset all UI states
     setIsScreenSharing(false);
     setIsVideoEnabled(true);
     setIsAudioEnabled(true);
     setCallStatus("Ended");
 
-    // clear store
-    resetCallState();
+    // 7) Force a small delay to ensure all tracks are stopped
+    setTimeout(() => {
+      // 8) Reset store - this will trigger component unmount
+      resetCallState();
+      console.log("✅ FULL CLEANUP COMPLETED - All media stopped");
+    }, 100);
+  };
+
+  /* ==========================
+     Enhanced End Call - Stops both sides
+  ========================== */
+  const endCall = () => {
+    console.log("📞 ENDING CALL - Stopping media on both sides...");
+    
+    const targetUserId = selectedUser?._id || incomingCallFrom || peerId;
+    
+    // Send end-call signal to other user FIRST
+    if (targetUserId && socket) {
+      socket.emit("end-call", { targetUserId });
+      console.log("📤 Sent end-call signal to:", targetUserId);
+    }
+
+    // Then cleanup locally
+    cleanupCall();
   };
 
   const handleRemoteEnd = () => {
-    console.log("Remote ended call / connection lost");
+    console.log("📞 REMOTE ENDED CALL - Cleaning up locally...");
     cleanupCall();
   };
 
   /* ==========================
-     Outgoing call flow (caller)
+     Outgoing call (caller)
   ========================== */
   const startOutgoingCall = async () => {
     const receiverId = selectedUser?._id || peerId;
     if (!receiverId) {
-      console.error("No target to call");
       setCalling(false);
       return;
     }
 
     setCallStatus("Calling...");
-
-    // 1) get local media
     const stream = await initializeLocalStream();
     if (!stream) {
       setCalling(false);
       return;
     }
 
-    // 2) create pc and wire negotiation handler BEFORE adding tracks
     const pc = createPeerConnection(receiverId);
     peerConnectionRef.current = pc;
 
-    // set negotiation handler early
     pc.onnegotiationneeded = async () => {
       try {
         const offer = await pc.createOffer();
@@ -298,50 +323,36 @@ const VideoCall = () => {
       }
     };
 
-    // 3) add tracks
     try {
-      stream.getTracks().forEach((track) => {
-        pc.addTrack(track, stream);
-      });
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
     } catch (err) {
       console.error("Error adding local tracks:", err);
     }
 
-    // 4) set local video (camera)
     setLocalVideoObject(stream);
-
-    // Note: DO NOT create proactive offer here. Rely on onnegotiationneeded.
   };
 
   /* ==========================
-     Accept incoming call (callee)
+     Accept incoming (callee)
   ========================== */
   const acceptCall = async () => {
-    if (!incomingCallFrom || !callOffer) {
-      console.error("No incoming call data");
-      return;
-    }
+    if (!incomingCallFrom || !callOffer) return;
 
     clearIncomingCall();
     setCalling(true);
     setCallStatus("Connecting...");
 
-    // 1) get local media
     const stream = await initializeLocalStream();
     if (!stream) {
       setCalling(false);
       return;
     }
 
-    // 2) create pc and set onnegotiationneeded (though callee typically won't need to negotiate)
     const pc = createPeerConnection(incomingCallFrom);
     peerConnectionRef.current = pc;
 
-    // Add local tracks BEFORE creating answer so they are included in SDP
     try {
-      stream.getTracks().forEach((track) => {
-        pc.addTrack(track, stream);
-      });
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
     } catch (err) {
       console.error("Error adding local tracks (acceptCall):", err);
     }
@@ -349,30 +360,22 @@ const VideoCall = () => {
     setLocalVideoObject(stream);
 
     try {
-      // 3) set remote description (offer from caller)
       const remoteDesc =
         typeof callOffer === "object" && callOffer.type
           ? callOffer
           : { type: "offer", sdp: callOffer?.sdp || callOffer };
       await pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
 
-      // drain buffered remote ICE candidates (if any)
       if (pc._remoteIceBuffer && pc._remoteIceBuffer.length) {
         for (const c of pc._remoteIceBuffer) {
-          try {
-            await pc.addIceCandidate(c);
-          } catch (e) {
-            console.warn("addIceCandidate buffered failed", e);
-          }
+          try { await pc.addIceCandidate(c); } catch (e) { console.warn("addIceCandidate buffered failed", e); }
         }
         pc._remoteIceBuffer = [];
       }
 
-      // 4) create answer and set local description
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
 
-      // 5) send answer back to caller
       socket?.emit("call-accepted", {
         callerId: incomingCallFrom,
         answer: pc.localDescription,
@@ -386,30 +389,23 @@ const VideoCall = () => {
   };
 
   const rejectCall = () => {
-    if (incomingCallFrom) {
-      socket?.emit("call-rejected", { callerId: incomingCallFrom });
-    }
+    if (incomingCallFrom) socket?.emit("call-rejected", { callerId: incomingCallFrom });
     resetCallState();
   };
 
   /* ==========================
-     Handle incoming socket messages: answer / ice / incoming-call / end
+     SOCKET HANDLERS
   ========================== */
   useEffect(() => {
     if (!socket) return;
 
     const handleIncomingCall = (data) => {
-      console.log("Incoming call (socket):", data);
-      // data: { from, offer, callType }
       setIncomingCall(data.from, data.offer, data.callType);
     };
 
     const handleCallAccepted = async (data) => {
-      // data: { answer }
-      console.log("Call accepted (socket):", data);
       const pc = peerConnectionRef.current;
       if (!pc) return;
-
       try {
         const remoteDesc =
           typeof data.answer === "object" && data.answer.type
@@ -418,14 +414,10 @@ const VideoCall = () => {
 
         await pc.setRemoteDescription(new RTCSessionDescription(remoteDesc));
 
-        // drain buffered remote ICE candidates
+        // FIX: Caller must drain ICE buffer after applying answer
         if (pc._remoteIceBuffer && pc._remoteIceBuffer.length) {
-          for (const c of pc._remoteIceBuffer) {
-            try {
-              await pc.addIceCandidate(c);
-            } catch (e) {
-              console.warn("Error adding buffered candidate after answer", e);
-            }
+          for (const candidate of pc._remoteIceBuffer) {
+            try { await pc.addIceCandidate(candidate); } catch (e) { console.warn("Buffered ICE apply failed", e); }
           }
           pc._remoteIceBuffer = [];
         }
@@ -437,22 +429,15 @@ const VideoCall = () => {
     };
 
     const handleIceCandidate = async (data) => {
-      // data: { candidate }
       const pc = peerConnectionRef.current;
       if (!pc) return;
 
       try {
-        // Buffer candidate if remoteDescription not set or not usable yet
-        if (
-          !pc.remoteDescription ||
-          !pc.remoteDescription.type ||
-          pc.remoteDescription.type === null
-        ) {
+        if (!pc.remoteDescription || !pc.remoteDescription.type) {
           pc._remoteIceBuffer = pc._remoteIceBuffer || [];
           pc._remoteIceBuffer.push(data.candidate);
           return;
         }
-
         await pc.addIceCandidate(data.candidate);
       } catch (err) {
         console.error("Error adding ICE candidate", err);
@@ -460,7 +445,7 @@ const VideoCall = () => {
     };
 
     const handleCallEnded = () => {
-      console.log("Call ended by remote");
+      console.log("📞 Received call-ended signal from remote");
       handleRemoteEnd();
     };
 
@@ -468,14 +453,8 @@ const VideoCall = () => {
     socket.on("call-accepted", handleCallAccepted);
     socket.on("webrtc-ice-candidate", handleIceCandidate);
     socket.on("call-ended", handleCallEnded);
-    socket.on("call-rejected", () => {
-      console.log("Call rejected by callee");
-      resetCallState();
-    });
-    socket.on("call-failed", (d) => {
-      console.warn("Call failed:", d);
-      resetCallState();
-    });
+    socket.on("call-rejected", () => resetCallState());
+    socket.on("call-failed", () => resetCallState());
 
     return () => {
       socket.off("incoming-call", handleIncomingCall);
@@ -485,21 +464,17 @@ const VideoCall = () => {
       socket.off("call-rejected");
       socket.off("call-failed");
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, setIncomingCall]);
 
   /* ==========================
-     Start outgoing call when isCalling becomes true
+     Auto-start outgoing when store flag is set
   ========================== */
   useEffect(() => {
-    if (isCalling && !isIncomingCall && !isCallActive) {
-      startOutgoingCall();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (isCalling && !isIncomingCall && !isCallActive) startOutgoingCall();
   }, [isCalling, isIncomingCall, isCallActive, selectedUser?._id, peerId]);
 
   /* ==========================
-     Screen share
+     Screen share (ENHANCED)
   ========================== */
   const startScreenShare = async () => {
     if (callType !== "video") return;
@@ -507,25 +482,44 @@ const VideoCall = () => {
     if (!pc) return;
 
     try {
-      const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: true,
-      });
+      // Request display media (may include system audio where supported)
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+      if (!screenStream) return;
 
       screenStreamRef.current = screenStream;
 
-      const videoTrack = screenStream.getVideoTracks()[0];
-      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+      const screenVideoTrack = screenStream.getVideoTracks()[0];
+      const screenAudioTrack = screenStream.getAudioTracks()[0];
 
-      if (sender && videoTrack) {
-        await sender.replaceTrack(videoTrack);
+      // Replace or add video sender
+      let videoSender = pc.getSenders().find((s) => s.track?.kind === "video");
+      if (videoSender && screenVideoTrack) {
+        await videoSender.replaceTrack(screenVideoTrack);
+      } else if (screenVideoTrack) {
+        try { pc.addTrack(screenVideoTrack, screenStream); } catch (e) { console.warn("addTrack(screenVideo) failed", e); }
       }
 
+      // Replace or add audio sender (if displayMedia provides it)
+      if (screenAudioTrack) {
+        let audioSender = pc.getSenders().find((s) => s.track?.kind === "audio");
+        if (audioSender) {
+          try { await audioSender.replaceTrack(screenAudioTrack); } catch (e) { console.warn("replaceTrack(screenAudioAudio) failed", e); }
+        } else {
+          try { pc.addTrack(screenAudioTrack, screenStream); } catch (e) { console.warn("addTrack(screenAudio) failed", e); }
+        }
+      }
+
+      // Show the screen stream in local preview (use combined stream where possible)
       setLocalVideoObject(screenStream);
 
-      videoTrack.onended = () => {
-        stopScreenShare();
+      // When user stops sharing (browser stop), revert automatically
+      const onScreenEnded = async () => {
+        // small delay to allow track state to settle
+        try { await stopScreenShare(); } catch (e) { console.warn("stopScreenShare on ended failed", e); }
       };
+
+      // attach handlers for all tracks ending
+      screenStream.getTracks().forEach((t) => (t.onended = onScreenEnded));
 
       setIsScreenSharing(true);
     } catch (err) {
@@ -538,22 +532,42 @@ const VideoCall = () => {
     if (!pc) return;
 
     try {
+      // Stop and clear screen stream tracks
       if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach((t) => t.stop());
+        screenStreamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch (e) {} });
         screenStreamRef.current = null;
       }
 
+      // Restore camera/video sender to original camera track (if available)
       const cameraStream = originalCameraRef.current;
-      if (!cameraStream) return;
+      const cameraVideoTrack = cameraStream?.getVideoTracks()[0];
+      const cameraAudioTrack = cameraStream?.getAudioTracks()[0];
 
-      const videoTrack = cameraStream.getVideoTracks()[0];
-      const sender = pc.getSenders().find((s) => s.track?.kind === "video");
-
-      if (sender && videoTrack) {
-        await sender.replaceTrack(videoTrack);
+      // Find the current senders
+      const videoSender = pc.getSenders().find((s) => s.track?.kind === "video");
+      if (videoSender) {
+        if (cameraVideoTrack) {
+          try { await videoSender.replaceTrack(cameraVideoTrack); } catch (e) { console.warn("replaceTrack(cameraVideo) failed", e); }
+        } else {
+          // no camera - stop sending video
+          try { await videoSender.replaceTrack(null); } catch (e) { console.warn("remove video sender failed", e); }
+        }
       }
 
-      setLocalVideoObject(cameraStream);
+      const audioSender = pc.getSenders().find((s) => s.track?.kind === "audio");
+      if (audioSender) {
+        if (cameraAudioTrack) {
+          try { await audioSender.replaceTrack(cameraAudioTrack); } catch (e) { console.warn("replaceTrack(cameraAudio) failed", e); }
+        } else {
+          try { await audioSender.replaceTrack(null); } catch (e) { console.warn("remove audio sender failed", e); }
+        }
+      }
+
+      // Restore local preview to camera or existing local stream
+      if (cameraStream) setLocalVideoObject(cameraStream);
+      else if (localStream) setLocalVideoObject(localStream);
+      else setLocalVideoObject(null);
+
       setIsScreenSharing(false);
     } catch (err) {
       console.error("Error stopping screen share:", err);
@@ -596,17 +610,6 @@ const VideoCall = () => {
     } catch (e) {
       console.warn("toggleVideo failed", e);
     }
-  };
-
-  /* ==========================
-     End call (local hangup)
-  ========================== */
-  const endCall = () => {
-    const targetUserId = selectedUser?._id || incomingCallFrom || peerId;
-    if (targetUserId) {
-      socket?.emit("end-call", { targetUserId });
-    }
-    cleanupCall();
   };
 
   /* ==========================
