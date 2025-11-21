@@ -6,38 +6,42 @@ export const uploadFile = async (req, res) => {
     const file = req.file;
     if (!file) return res.status(400).json({ error: "No file received" });
 
-    // Determine correct resource type
-    let resourceType = "raw";
+    // Extract extension
+    const ext = file.originalname.split(".").pop().toLowerCase();
 
+    // Detect correct Cloudinary type
+    let resourceType = "raw";
     if (file.mimetype.startsWith("image/")) {
       resourceType = "image";
-    } else if (
-      file.mimetype.startsWith("video/") ||
-      file.mimetype.includes("audio") || 
-      file.originalname.endsWith(".mp3") ||
-      file.originalname.endsWith(".wav") ||
-      file.originalname.endsWith(".m4a")
-    ) {
-      resourceType = "video"; // Cloudinary rule: audio = video
+    } 
+    else if (file.mimetype.startsWith("video/") || file.mimetype.startsWith("audio/")) {
+      resourceType = "video";  
     }
+
+    const baseName = file.originalname.replace("." + ext, "");
 
     const upload = await cloudinary.uploader.upload(file.path, {
       resource_type: resourceType,
       folder: "chat_files",
+
+      // ✔ keep filename
+      public_id: baseName,
+      use_filename: true,
+      unique_filename: false,
+
+      // ❌ DO NOT USE `format` for RAW files (causes corruption)
+      // format: ext,  ← REMOVE THIS
     });
 
     fs.unlinkSync(file.path);
 
-    return res.json({
+    res.json({
       url: upload.secure_url,
       name: file.originalname,
-      size: file.size,
-      type: file.mimetype,
-      resource_type: resourceType,
     });
 
   } catch (err) {
-    console.error("❌ FILE UPLOAD ERROR:", err);
+    console.error("UPLOAD ERROR:", err);
     res.status(500).json({ error: "File upload failed" });
   }
 };

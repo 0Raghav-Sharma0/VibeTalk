@@ -70,19 +70,25 @@ export const useChatStore = create((set, get) => ({
   /* ============================================================
         SEND MESSAGE
   ============================================================ */
-  sendMessage: async (messageData) => {
-    const socket = useAuthStore.getState().socket;
-    const { selectedUser } = get();
-    const { authUser } = useAuthStore.getState();
+  sendMessage: async (msgData) => {
+  const { authUser, socket } = useAuthStore.getState();
+  const { selectedUser } = get();
 
-    socket.emit("sendMessage", {
-      senderId: authUser._id,
-      receiverId: selectedUser._id,
-      text: messageData.text,
-      image: messageData.image || null,
-      video: messageData.video || null,
-    });
-  },
+  if (!selectedUser) {
+    console.warn("❌ No selectedUser in sendMessage");
+    return;
+  }
+
+  const payload = {
+    senderId: authUser._id,
+    receiverId: selectedUser._id,
+    ...msgData,
+  };
+
+  socket.emit("sendMessage", payload);
+},
+
+
 
   /* ============================================================
         SOCKET LISTENER: NEW MESSAGES + TYPING

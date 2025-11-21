@@ -22,6 +22,15 @@ export default function Whiteboard({ roomId }) {
     "#4cd964", "#5ac8fa", "#007aff", "#5856d6", "#ff2d55"
   ];
 
+  const tools = [
+    { id: "pen", icon: "✏️", label: "Pen" },
+    { id: "eraser", icon: "🧽", label: "Eraser" },
+    { id: "line", icon: "📏", label: "Line" },
+    { id: "rectangle", icon: "⬜", label: "Rectangle" },
+    { id: "ellipse", icon: "⭕", label: "Ellipse" },
+    { id: "circle", icon: "⚪", label: "Circle" }
+  ];
+
   /* ========== Core drawing functions ========== */
 
   const drawShape = useCallback((ctx, data) => {
@@ -412,75 +421,183 @@ export default function Whiteboard({ roomId }) {
   /* ========== Render ========== */
   return (
     <div className="flex flex-col h-full bg-base-100 border-l border-base-300">
-      <div className="p-3 flex flex-wrap gap-3 items-center border-b bg-base-200">
-        <div className="flex gap-1 bg-base-300 rounded-lg p-1">
-          <button onClick={() => setTool("pen")} className={`p-2 rounded ${tool === "pen" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`} title="Pen">✏️</button>
-          <button onClick={() => setTool("eraser")} className={`p-2 rounded ${tool === "eraser" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`} title="Eraser">🧽</button>
-          <button onClick={() => setTool("line")} className={`p-2 rounded ${tool === "line" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`} title="Line">📏</button>
-          <button onClick={() => setTool("rectangle")} className={`p-2 rounded ${tool === "rectangle" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`} title="Rectangle">⬜</button>
-          <button onClick={() => setTool("ellipse")} className={`p-2 rounded ${tool === "ellipse" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`} title="Ellipse">⭕</button>
-          <button onClick={() => setTool("circle")} className={`p-2 rounded ${tool === "circle" ? "bg-primary text-primary-content" : "hover:bg-base-100"}`} title="Circle (max radius)">⚪</button>
+      {/* Top Toolbar - Enhanced with better spacing and visual hierarchy */}
+      <div className="p-4 flex flex-wrap gap-4 items-center border-b bg-base-200/80 backdrop-blur-sm">
+        {/* Tools Section */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Tools</label>
+          <div className="flex gap-1 bg-base-300 rounded-xl p-1.5 shadow-sm">
+            {tools.map(({ id, icon, label }) => (
+              <button
+                key={id}
+                onClick={() => setTool(id)}
+                className={`
+                  p-2.5 rounded-lg transition-all duration-200 min-w-[44px] group relative
+                  ${tool === id 
+                    ? "bg-primary shadow-md scale-105 text-primary-content" 
+                    : "hover:bg-base-100 hover:scale-102 text-base-content"
+                  }
+                `}
+                title={label}
+              >
+                <span className="text-lg">{icon}</span>
+                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                  <div className="bg-base-300 text-xs text-base-content px-2 py-1 rounded-md whitespace-nowrap">
+                    {label}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex gap-1 items-center">
-          {colorPalette.map((col) => (
-            <button
-              key={col}
-              onClick={() => setColor(col)}
-              className={`w-6 h-6 rounded border-2 ${color === col ? "border-primary" : "border-base-300"}`}
-              style={{ backgroundColor: col }}
-              title={col}
+        {/* Colors Section */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Colors</label>
+          <div className="flex gap-2 items-center bg-base-300 rounded-xl p-2.5 shadow-sm">
+            <div className="flex gap-1.5">
+              {colorPalette.map((col) => (
+                <button
+                  key={col}
+                  onClick={() => setColor(col)}
+                  className={`
+                    w-7 h-7 rounded-full border-2 transition-transform duration-200 hover:scale-110 shadow-sm
+                    ${color === col ? "border-primary scale-110 ring-2 ring-primary/30" : "border-base-300"}
+                  `}
+                  style={{ backgroundColor: col }}
+                  title={col}
+                />
+              ))}
+            </div>
+            <div className="w-px h-6 bg-base-400 mx-1"></div>
+            <input 
+              type="color" 
+              value={color} 
+              onChange={(e) => setColor(e.target.value)} 
+              className="w-8 h-8 rounded-lg border border-base-300 cursor-pointer shadow-sm" 
+              title="Custom Color" 
             />
-          ))}
-          <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded border border-base-300" title="Custom Color" />
+          </div>
         </div>
 
-        <div className="flex gap-2 items-center">
-          <span className="text-sm font-medium">{tool === "eraser" ? "Eraser" : "Brush"} Size:</span>
-          <input type="range" min="2" max="25" value={size} onChange={(e) => setSize(Number(e.target.value))} className="w-24" />
-          <span className="text-sm w-8">{size}px</span>
+        {/* Brush Size Section */}
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">
+            {tool === "eraser" ? "Eraser Size" : "Brush Size"}
+          </label>
+          <div className="flex gap-3 items-center bg-base-300 rounded-xl px-4 py-2.5 shadow-sm">
+            <input 
+              type="range" 
+              min="2" 
+              max="25" 
+              value={size} 
+              onChange={(e) => setSize(Number(e.target.value))} 
+              className="w-24 accent-primary" 
+            />
+            <div className="flex items-center gap-2 min-w-[60px]">
+              <div 
+                className="rounded-full bg-base-content"
+                style={{
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  backgroundColor: tool === "eraser" ? '#9ca3af' : color
+                }}
+              ></div>
+              <span className="text-sm font-medium w-6">{size}</span>
+            </div>
+          </div>
         </div>
 
+        {/* Fill Toggle */}
         {!isFreehandTool && (
-          <button onClick={() => setIsFilled(!isFilled)} className={`px-3 py-1 rounded ${isFilled ? "bg-primary text-primary-content" : "bg-base-300"}`} title={isFilled ? "Filled" : "Outline"}>
-            {isFilled ? "🟦 Filled" : "⬜ Outline"}
-          </button>
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Fill</label>
+            <button 
+              onClick={() => setIsFilled(!isFilled)} 
+              className={`
+                px-4 py-2.5 rounded-xl transition-all duration-200 font-medium
+                ${isFilled 
+                  ? "bg-primary text-primary-content shadow-md" 
+                  : "bg-base-300 hover:bg-base-100 shadow-sm"
+                }
+              `}
+            >
+              {isFilled ? "🟦 Filled" : "⬜ Outline"}
+            </button>
+          </div>
         )}
 
-        <div className="ml-auto flex gap-2">
-          <button onClick={() => {
-            if (historyIndex.current > 0) {
-              historyIndex.current--;
-              const img = drawingHistory.current[historyIndex.current];
-              ctxRef.current.putImageData(img, 0, 0);
-            } else if (historyIndex.current === 0) {
-              ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-              historyIndex.current = -1;
-              drawingHistory.current = [];
-            }
-          }} className="px-3 py-1 rounded bg-base-300 hover:bg-base-100">↩️ Undo</button>
+        {/* Actions Section */}
+        <div className="flex flex-col gap-2 ml-auto">
+          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Actions</label>
+          <div className="flex gap-2">
+            <div className="flex gap-1 bg-base-300 rounded-xl p-1.5 shadow-sm">
+              <button 
+                onClick={() => {
+                  if (historyIndex.current > 0) {
+                    historyIndex.current--;
+                    const img = drawingHistory.current[historyIndex.current];
+                    ctxRef.current.putImageData(img, 0, 0);
+                  } else if (historyIndex.current === 0) {
+                    ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                    historyIndex.current = -1;
+                    drawingHistory.current = [];
+                  }
+                }} 
+                className="p-2.5 rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105"
+                title="Undo"
+              >
+                ↩️
+              </button>
+              <button 
+                onClick={() => {
+                  if (historyIndex.current < drawingHistory.current.length - 1) {
+                    historyIndex.current++;
+                    const img = drawingHistory.current[historyIndex.current];
+                    ctxRef.current.putImageData(img, 0, 0);
+                  }
+                }} 
+                className="p-2.5 rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105"
+                title="Redo"
+              >
+                ↪️
+              </button>
+            </div>
 
-          <button onClick={() => {
-            if (historyIndex.current < drawingHistory.current.length - 1) {
-              historyIndex.current++;
-              const img = drawingHistory.current[historyIndex.current];
-              ctxRef.current.putImageData(img, 0, 0);
-            }
-          }} className="px-3 py-1 rounded bg-base-300 hover:bg-base-100">↪️ Redo</button>
+            <button 
+              onClick={() => setIsDrawingEnabled(!isDrawingEnabled)} 
+              className={`
+                px-4 py-2.5 rounded-xl transition-all duration-200 font-medium
+                ${isDrawingEnabled 
+                  ? "bg-success text-success-content shadow-md" 
+                  : "bg-error text-error-content shadow-md"
+                }
+              `}
+            >
+              {isDrawingEnabled ? "🎯 Drawing" : "🚫 Locked"}
+            </button>
 
-          <button onClick={() => setIsDrawingEnabled(!isDrawingEnabled)} className={`px-3 py-1 rounded ${isDrawingEnabled ? "bg-success text-success-content" : "bg-error text-error-content"}`}>
-            {isDrawingEnabled ? "✅ Draw" : "🚫 Draw"}
-          </button>
-
-          <button onClick={downloadCanvas} className="px-3 py-1 rounded bg-info text-info-content hover:bg-info/80">💾 Save</button>
-          <button onClick={clearBoard} className="px-3 py-1 rounded bg-error text-error-content hover:bg-error/80">🗑️ Clear</button>
+            <button 
+              onClick={downloadCanvas} 
+              className="px-4 py-2.5 rounded-xl bg-info text-info-content hover:bg-info/90 transition-all duration-200 shadow-md font-medium"
+            >
+              💾 Save
+            </button>
+            <button 
+              onClick={clearBoard} 
+              className="px-4 py-2.5 rounded-xl bg-error text-error-content hover:bg-error/90 transition-all duration-200 shadow-md font-medium"
+            >
+              🗑️ Clear
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 bg-gray-100 overflow-hidden">
+      {/* Canvas Area */}
+      <div className="flex-1 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative">
         <canvas
           ref={canvasRef}
-          className="w-full h-full bg-white touch-none cursor-crosshair"
+          className="w-full h-full bg-white touch-none cursor-crosshair shadow-inner"
           onMouseDown={handleDown}
           onMouseMove={handleMove}
           onMouseUp={handleUp}
@@ -489,18 +606,69 @@ export default function Whiteboard({ roomId }) {
           onTouchMove={(e) => { e.preventDefault(); handleMove(e); }}
           onTouchEnd={(e) => { e.preventDefault(); handleUp(e); }}
         />
+        
+        {/* Drawing Status Overlay */}
+        {!isDrawingEnabled && (
+          <div className="absolute inset-0 bg-base-100/80 backdrop-blur-sm flex items-center justify-center">
+            <div className="bg-error text-error-content px-6 py-4 rounded-xl shadow-lg text-lg font-semibold">
+              🚫 Drawing Disabled
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="px-3 py-2 bg-base-200 border-t border-base-300 text-sm text-base-content/70">
-        <div className="flex justify-between items-center">
-          <span>
-            Tool: <strong>{tool}</strong> |
-            Color: <span style={{ color }}>●</span> |
-            Size: <strong>{size}px</strong>
-          </span>
-          <span>
-            Room: <strong>{roomId || 'No Room'}</strong>
-          </span>
+      {/* Enhanced Bottom Status Bar */}
+      <div className="bg-base-200/90 backdrop-blur-sm border-t border-base-300">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Left Side - Current Settings */}
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-base-content/60">Tool:</span>
+                  <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-semibold text-sm capitalize">
+                    {tool}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-base-content/60">Color:</span>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-base-300 rounded-lg">
+                    <div 
+                      className="w-4 h-4 rounded-full border border-base-400 shadow-sm"
+                      style={{ backgroundColor: color }}
+                    ></div>
+                    <span className="text-sm font-mono font-semibold">{color}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-base-content/60">Size:</span>
+                  <span className="px-3 py-1.5 bg-base-300 rounded-lg font-semibold text-sm">
+                    {size}px
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side - Room Info & Status */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${socket ? 'bg-success animate-pulse' : 'bg-error'}`}></div>
+                <span className="text-sm font-medium text-base-content/60">Status:</span>
+                <span className="text-sm font-semibold">{socket ? 'Connected' : 'Disconnected'}</span>
+              </div>
+
+              <div className="w-px h-6 bg-base-400"></div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-base-content/60">Room:</span>
+                <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-semibold text-sm">
+                  {roomId || 'No Room'}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

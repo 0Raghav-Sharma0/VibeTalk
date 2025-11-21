@@ -29,7 +29,14 @@ const messageSchema = new mongoose.Schema(
       default: null,
     },
 
-    // WhatsApp-style delivery states
+    // FILE SUPPORT 🔥
+    file: {
+      url: { type: String, default: null },
+      name: { type: String, default: null },
+      size: { type: Number, default: null },
+      type: { type: String, default: null },
+    },
+
     delivered: {
       type: Boolean,
       default: false,
@@ -40,7 +47,6 @@ const messageSchema = new mongoose.Schema(
       default: false,
     },
 
-    // Emoji reactions
     reactions: [
       {
         userId: {

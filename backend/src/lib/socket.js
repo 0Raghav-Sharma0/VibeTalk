@@ -82,36 +82,38 @@ export function createSocketServer(server) {
          MESSAGING
     ============================================================ */
     socket.on("sendMessage", async (data) => {
-      try {
-        const { senderId, receiverId, text, image, video } = data;
+  try {
+    const { senderId, receiverId, text, image, video, file } = data;
 
-        const message = await Message.create({
-          senderId,
-          receiverId,
-          text: text ?? "",
-          image: image ?? null,
-          video: video ?? null,
-        });
-
-        const sender = await User.findById(senderId).select("fullName profilePic");
-
-        const enrichedMessage = {
-          ...message.toObject(),
-          senderName: sender?.fullName || "New Message",
-          senderAvatar: sender?.profilePic || null,
-        };
-
-        const targetSocket = getReceiverSocketId(receiverId);
-
-        if (targetSocket) {
-          io.to(targetSocket).emit("newMessage", enrichedMessage);
-        }
-
-        io.to(socket.id).emit("newMessage", enrichedMessage);
-      } catch (err) {
-        console.error("sendMessage error:", err);
-      }
+    const message = await Message.create({
+      senderId,
+      receiverId,
+      text: text ?? "",
+      image: image ?? null,
+      video: video ?? null,
+      file: file ?? null,   // 🔥 ADD THIS
     });
+
+    const sender = await User.findById(senderId).select("fullName profilePic");
+
+    const enrichedMessage = {
+      ...message.toObject(),
+      senderName: sender?.fullName || "New Message",
+      senderAvatar: sender?.profilePic || null,
+    };
+
+    const targetSocket = getReceiverSocketId(receiverId);
+
+    if (targetSocket) {
+      io.to(targetSocket).emit("newMessage", enrichedMessage);
+    }
+
+    io.to(socket.id).emit("newMessage", enrichedMessage);
+  } catch (err) {
+    console.error("sendMessage error:", err);
+  }
+});
+
 
     /* ============================================================
          TYPING
