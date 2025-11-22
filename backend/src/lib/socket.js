@@ -188,9 +188,11 @@ export function createSocketServer(server) {
       socket.to(payload.roomId).emit("music-sync", payload);
     });
  /* ============================================================
-   VIDEO CALLING
+   VIDEO CALLING - CLEAN VERSION
+   Replace your entire video calling section with this
 ============================================================ */
 
+// Step 1: Call initiation notification (no offer yet)
 socket.on("call-initiated", (data) => {
   const { from, to, callType, callerName } = data;
   
@@ -212,14 +214,11 @@ socket.on("call-initiated", (data) => {
 
   console.log(`📞 Call initiated: ${from} -> ${to} (${callType})`);
   
-  io.to(target).emit("incoming-call", {
-    from,
-    callType,
-    callerName: callerName || "Unknown",
-    offer: null,
-  });
+  // Just a simple notification - NO incoming-call event yet
+  // The actual call setup happens via call-signal
 });
 
+// Step 2: Handle ALL WebRTC signaling (offers, answers, ICE)
 socket.on("call-signal", (data) => {
   const { to, from, data: signalData, callType } = data;
   
@@ -240,16 +239,19 @@ socket.on("call-signal", (data) => {
   }
 
   const signalType = signalData.type || 'ice';
-  console.log(`📡 Forwarding signal: ${from} -> ${to} (${signalType})`);
+  console.log(`📡 Forwarding ${signalType}: ${from} -> ${to}`);
   
+  // ⭐ KEY FIX: Send incoming-call ONLY for offers
   if (signalType === 'offer') {
+    console.log(`📞 Sending incoming call with offer to ${to}`);
     io.to(target).emit("incoming-call", {
       from,
       callType: callType || "video",
-      callerName: "Unknown",
+      callerName: "Caller",
       offer: signalData,
     });
   } else {
+    // For answers and ICE candidates, forward via call-signal
     io.to(target).emit("call-signal", {
       to,
       from,
@@ -259,6 +261,7 @@ socket.on("call-signal", (data) => {
   }
 });
 
+// End call
 socket.on("end-call", ({ targetUserId }) => {
   if (!targetUserId) return;
   
@@ -271,6 +274,7 @@ socket.on("end-call", ({ targetUserId }) => {
   socket.emit("call-ended", { by: userId });
 });
 
+// Reject call
 socket.on("call-rejected", ({ callerId }) => {
   if (!callerId) return;
   
@@ -282,6 +286,7 @@ socket.on("call-rejected", ({ callerId }) => {
   }
 });
 
+// Call failed
 socket.on("call-failed", ({ targetUserId, reason }) => {
   if (!targetUserId) return;
   
