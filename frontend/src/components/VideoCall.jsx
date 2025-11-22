@@ -45,7 +45,6 @@ const VideoCall = () => {
   const screenStreamRef = useRef(null);
   const originalStreamRef = useRef(null);
   
-  // Prevent duplicate processing
   const processingCallRef = useRef(false);
   const mountedRef = useRef(true);
   const reconnectAttempts = useRef(0);
@@ -58,12 +57,10 @@ const VideoCall = () => {
   const [callStatus, setCallStatus] = useState("Initializing...");
   const [connectionQuality, setConnectionQuality] = useState("good");
 
-  // ==================== UTILITIES ====================
   const getTargetUserId = useCallback(() => {
     return selectedUser?._id || peerId || incomingCallFrom;
   }, [selectedUser, peerId, incomingCallFrom]);
 
-  // ==================== RINGTONE ====================
   const playRingtone = useCallback(() => {
     try {
       if (!ringtoneAudioRef.current) {
@@ -85,7 +82,6 @@ const VideoCall = () => {
     } catch (e) {}
   }, []);
 
-  // ==================== MEDIA MANAGEMENT ====================
   const getMediaConstraints = useCallback(() => {
     if (callType === "video") {
       return {
@@ -127,7 +123,6 @@ const VideoCall = () => {
       localStreamRef.current = stream;
       originalStreamRef.current = stream;
 
-      // Apply initial states
       stream.getAudioTracks().forEach(track => {
         track.enabled = isAudioEnabled;
       });
@@ -137,7 +132,6 @@ const VideoCall = () => {
           track.enabled = isVideoEnabled;
         });
 
-        // Attach to video element
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
           localVideoRef.current.muted = true;
@@ -181,7 +175,6 @@ const VideoCall = () => {
     }
   }, []);
 
-  // ==================== PEER CONNECTION ====================
   const createPeerConnection = useCallback((initiator, stream) => {
     if (peerRef.current) {
       console.log("🔄 Destroying existing peer");
@@ -202,7 +195,7 @@ const VideoCall = () => {
     try {
       const peer = new Peer({
         initiator,
-        trickle: true, // Enable trickle ICE for faster connection
+        trickle: true,
         stream: stream || null,
         config: {
           iceServers: [
@@ -213,7 +206,6 @@ const VideoCall = () => {
         },
       });
 
-      // Signal event
       peer.on("signal", (data) => {
         if (!socket || !mountedRef.current) return;
         
@@ -226,18 +218,33 @@ const VideoCall = () => {
         });
       });
 
-      // Stream event
+      // ⭐ FIXED: Proper remote stream handling
       peer.on("stream", (remoteStream) => {
         if (!mountedRef.current) return;
         
-        console.log("📹 Received remote stream");
+        console.log("📹 Received remote stream", {
+          hasVideo: remoteStream.getVideoTracks().length > 0,
+          hasAudio: remoteStream.getAudioTracks().length > 0,
+          isVideo: callType === "video",
+        });
         
-        if (callType === "video" && remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteStream;
-          remoteVideoRef.current.play().catch(console.error);
-        } else if (remoteAudioRef.current) {
-          remoteAudioRef.current.srcObject = remoteStream;
-          remoteAudioRef.current.play().catch(console.error);
+        // ⭐ KEY FIX: Attach to REMOTE elements only
+        if (callType === "video") {
+          if (remoteVideoRef.current) {
+            console.log("🎥 Attaching remote VIDEO stream");
+            remoteVideoRef.current.srcObject = remoteStream;
+            remoteVideoRef.current.play().catch(err => {
+              console.error("Remote video play error:", err);
+            });
+          }
+        } else {
+          if (remoteAudioRef.current) {
+            console.log("🔊 Attaching remote AUDIO stream");
+            remoteAudioRef.current.srcObject = remoteStream;
+            remoteAudioRef.current.play().catch(err => {
+              console.error("Remote audio play error:", err);
+            });
+          }
         }
 
         setCallActive(true);
@@ -248,7 +255,6 @@ const VideoCall = () => {
         reconnectAttempts.current = 0;
       });
 
-      // Connection events
       peer.on("connect", () => {
         console.log("✅ Peer connected");
         setCallStatus("Connected");
@@ -284,7 +290,6 @@ const VideoCall = () => {
     }
   }, [socket, authUser, callType, isCallActive, getTargetUserId, setCallActive, setCalling, clearIncomingCall, stopRingtone]);
 
-  // ==================== CALL HANDLERS ====================
   const startOutgoingCall = useCallback(async () => {
     if (processingCallRef.current) {
       console.log("⏭️ Call already processing");
@@ -330,7 +335,6 @@ const VideoCall = () => {
       return;
     }
 
-    // Signal the offer
     try {
       peer.signal(callOffer);
     } catch (error) {
@@ -407,7 +411,6 @@ const VideoCall = () => {
     }, 100);
   }, [stopRingtone, cleanupStreams, resetCallState]);
 
-  // ==================== CONTROLS ====================
   const toggleVideo = useCallback(() => {
     if (callType !== "video") return;
     
@@ -450,7 +453,6 @@ const VideoCall = () => {
         await localVideoRef.current.play();
       }
 
-      // Replace tracks
       const videoTrack = screenStream.getVideoTracks()[0];
       const sender = peerRef.current._pc.getSenders().find(s => s.track?.kind === 'video');
       if (sender && videoTrack) {
@@ -493,7 +495,6 @@ const VideoCall = () => {
     }
   }, []);
 
-  // ==================== SOCKET LISTENERS ====================
   useEffect(() => {
     if (!socket) return;
 
@@ -535,7 +536,6 @@ const VideoCall = () => {
     };
   }, [socket, authUser, handleCallEnd, cleanupCall]);
 
-  // ==================== EFFECTS ====================
   useEffect(() => {
     if (isIncomingCall || (isCalling && !isCallActive)) {
       playRingtone();
@@ -559,7 +559,6 @@ const VideoCall = () => {
     };
   }, [cleanupCall]);
 
-  // ==================== RENDER ====================
   if (!isIncomingCall && !isCallActive && !isCalling) {
     return null;
   }
