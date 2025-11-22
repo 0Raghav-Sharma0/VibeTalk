@@ -7,6 +7,7 @@ import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 import VideoCall from "./components/VideoCall";
+import CallListener from "./components/CallListener"; // ⭐ ADD THIS
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore.js";
 import { useVideoCallStore } from "./store/useVideoCallStore";
@@ -65,6 +66,9 @@ const App = () => {
     >
       <Navbar />
 
+      {/* ⭐ GLOBAL CALL LISTENER - ADD THIS ⭐ */}
+      <CallListener />
+
       {/* ROUTES */}
       <Routes>
         <Route
@@ -79,7 +83,7 @@ const App = () => {
 
         <Route
           path="/signup"
-          element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
+          element={!authUser ? <SignUpPage /> : <Navigate to="/signup" replace />}
         />
 
         <Route

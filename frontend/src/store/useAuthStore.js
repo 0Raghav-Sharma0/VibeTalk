@@ -1,20 +1,8 @@
-// src/store/useAuthStore.js
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { axiosInstance } from "../lib/axios.js";
 import { requestNotificationPermission, showSystemNotification } from "../utils/notifications";
-
-/**
- * Auth + Socket store
- *
- * Responsibilities:
- * - Manage authUser object (from /auth endpoints)
- * - Create / clean up a single socket connection (with userId query)
- * - Expose onlineUsers list for other stores to consume
- *
- * NOTE: The server expects socket handshake query { userId } (see backend/socket.js).
- */
 
 const BASE_URL =
   import.meta.env.MODE === "development"
@@ -22,20 +10,14 @@ const BASE_URL =
     : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
-  /******************************
-   * state
-   ******************************/
   authUser: null,
   isSigningUp: false,
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
-  onlineUsers: [], // array of userIds
+  onlineUsers: [],
   socket: null,
 
-  /******************************
-   * check auth (runs on app load)
-   ******************************/
   checkAuth: async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -46,7 +28,6 @@ export const useAuthStore = create((set, get) => ({
     try {
       const res = await axiosInstance.get("/auth/check-auth");
       set({ authUser: res.data });
-      // Connect socket after successful auth
       get().connectSocket();
     } catch (err) {
       console.warn("checkAuth failed", err);
@@ -56,19 +37,13 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /******************************
-   * signup
-   ******************************/
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
       const res = await axiosInstance.post("/auth/signup", data);
       localStorage.setItem("token", res.data.token);
       set({ authUser: res.data });
-
-      // connect socket
       get().connectSocket();
-
       toast.success("Account created!");
       return true;
     } catch (err) {
@@ -80,19 +55,13 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /******************************
-   * login
-   ******************************/
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
       localStorage.setItem("token", res.data.token);
       set({ authUser: res.data });
-
-      // connect socket
       get().connectSocket();
-
       toast.success("Logged in!");
       return true;
     } catch (err) {
@@ -104,35 +73,25 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /******************************
-   * logout
-   ******************************/
   logout: async () => {
-  try {
-    await axiosInstance.post("/auth/logout");
-  } catch (err) {
-    console.warn("logout backend error:", err);
-  }
+    try {
+      await axiosInstance.post("/auth/logout");
+    } catch (err) {
+      console.warn("logout backend error:", err);
+    }
 
-  localStorage.removeItem("token");
+    localStorage.removeItem("token");
 
-  // FULL SOCKET RESET
-  const s = get().socket;
-  if (s) {
-    s.removeAllListeners();
-    s.disconnect();
-  }
+    const s = get().socket;
+    if (s) {
+      s.removeAllListeners();
+      s.disconnect();
+    }
 
-  set({ authUser: null, socket: null, onlineUsers: [] });
+    set({ authUser: null, socket: null, onlineUsers: [] });
+    window.location.replace("/login");
+  },
 
-  // VERY IMPORTANT
-  window.location.replace("/login"); 
-},
-
-
-  /******************************
-   * update profile
-   ******************************/
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
@@ -147,14 +106,6 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /******************************
-   * SOCKET: connect
-   *
-   * - Ensures only one socket exists.
-   * - Uses query: { userId } as your server expects.
-   * - Sets minimal core listeners (getOnlineUsers/connect/disconnect).
-   * - Other parts of app (chat, videocall) may also register listeners.
-   ******************************/
   connectSocket: () => {
     const { authUser, socket } = get();
 
@@ -163,22 +114,17 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
 
-    // avoid duplicate socket connections
     if (socket && socket.connected) {
       console.log("Socket already connected:", socket.id);
       return;
     }
 
-    // create socket
     const sock = io(BASE_URL, {
       query: { userId: authUser._id },
       transports: ["websocket"],
-      // optional: automatic reconnection allowed by socket.io by default
     });
 
-    // connection events
     sock.on("connect", () => {
-
       console.log("🟢 Connected to socket:", sock.id);
       requestNotificationPermission();
     });
@@ -189,35 +135,73 @@ export const useAuthStore = create((set, get) => ({
 
     sock.on("disconnect", (reason) => {
       console.log("🔴 Socket disconnected:", reason);
-      // keep socket reference for potential reconnect attempts,
-      // but mark onlineUsers empty until getOnlineUsers arrives again
       set({ onlineUsers: [] });
     });
 
-    // server sends list of online userIds
-    sock.off("getOnlineUsers"); // safety: remove duplicate listeners
+    sock.off("getOnlineUsers");
     sock.on("getOnlineUsers", (ids) => {
-      // ensure array
       const safe = Array.isArray(ids) ? ids : [];
       set({ onlineUsers: safe });
     });
 
-    // Save socket reference in store
+    sock.off("incoming-call");
+    sock.on("incoming-call", ({ from, callType, callerName, offer }) => {
+      console.log("📞 INCOMING CALL EVENT:", { from, callType, hasOffer: !!offer });
+      
+      import("./useVideoCallStore").then(({ useVideoCallStore }) => {
+        const { setIncomingCall } = useVideoCallStore.getState();
+        setIncomingCall(from, offer, callType);
+        
+        showSystemNotification({
+          title: `Incoming ${callType} call`,
+          body: `${callerName || "Someone"} is calling you...`,
+          icon: "/phone-icon.png",
+          onClick: () => window.focus(),
+        });
+      });
+    });
+
+    sock.off("call-failed");
+    sock.on("call-failed", ({ reason }) => {
+      console.log("❌ CALL FAILED:", reason);
+      
+      import("./useVideoCallStore").then(({ useVideoCallStore }) => {
+        const { resetCallState } = useVideoCallStore.getState();
+        resetCallState();
+        toast.error(reason || "Call failed");
+      });
+    });
+
+    sock.off("call-rejected");
+    sock.on("call-rejected", ({ by }) => {
+      console.log("❌ CALL REJECTED by:", by);
+      
+      import("./useVideoCallStore").then(({ useVideoCallStore }) => {
+        const { resetCallState } = useVideoCallStore.getState();
+        resetCallState();
+        toast.error("Call was rejected");
+      });
+    });
+
+    sock.off("call-ended");
+    sock.on("call-ended", ({ by }) => {
+      console.log("📞 CALL ENDED by:", by);
+      
+      import("./useVideoCallStore").then(({ useVideoCallStore }) => {
+        const { resetCallState } = useVideoCallStore.getState();
+        resetCallState();
+      });
+    });
+
     set({ socket: sock });
   },
 
-  /******************************
-   * SOCKET: disconnect
-   ******************************/
   disconnectSocket: () => {
     const s = get().socket;
     if (!s) return;
 
     try {
-      s.off("getOnlineUsers");
-      s.off("connect");
-      s.off("disconnect");
-      s.off("connect_error");
+      s.removeAllListeners();
       s.disconnect();
     } catch (err) {
       console.warn("disconnectSocket error", err);

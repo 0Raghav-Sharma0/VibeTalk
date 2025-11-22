@@ -24,16 +24,11 @@ const VideoCall = () => {
     isCalling,
     callType,
     incomingCallFrom,
-    localStream,
-    remoteStream,
     clearIncomingCall,
     setCallActive,
     setCalling,
     resetCallState,
-    setLocalStream,
-    setRemoteStream,
     callOffer,
-    setIncomingCall,
     peerId,
   } = useVideoCallStore();
 
@@ -46,19 +41,22 @@ const VideoCall = () => {
   const remoteAudioRef = useRef(null);
   const ringtoneAudioRef = useRef(null);
   const peerRef = useRef(null);
-  const originalStreamRef = useRef(null);
+  const localStreamRef = useRef(null);
   const screenStreamRef = useRef(null);
+  const originalStreamRef = useRef(null);
   
-  // Stability refs
-  const callStartedRef = useRef(false);
-  const socketInitializedRef = useRef(false);
-  const componentMountedRef = useRef(true);
+  // Prevent duplicate processing
+  const processingCallRef = useRef(false);
+  const mountedRef = useRef(true);
+  const reconnectAttempts = useRef(0);
+  const MAX_RECONNECT = 3;
 
   // State
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
-  const [callStatus, setCallStatus] = useState("");
+  const [callStatus, setCallStatus] = useState("Initializing...");
+  const [connectionQuality, setConnectionQuality] = useState("good");
 
   // ==================== UTILITIES ====================
   const getTargetUserId = useCallback(() => {
@@ -71,12 +69,12 @@ const VideoCall = () => {
       if (!ringtoneAudioRef.current) {
         ringtoneAudioRef.current = new Audio("/songs/new.mp3");
         ringtoneAudioRef.current.loop = true;
-        ringtoneAudioRef.current.volume = 0.7;
+        ringtoneAudioRef.current.volume = 0.5;
       }
       ringtoneAudioRef.current.currentTime = 0;
-      ringtoneAudioRef.current.play().catch(() => {});
+      ringtoneAudioRef.current.play().catch(console.error);
     } catch (e) {
-      console.warn("Ringtone play error:", e);
+      console.warn("Ringtone error:", e);
     }
   }, []);
 
@@ -84,104 +82,94 @@ const VideoCall = () => {
     try {
       ringtoneAudioRef.current?.pause();
       if (ringtoneAudioRef.current) ringtoneAudioRef.current.currentTime = 0;
-    } catch (e) {
-      console.warn("Ringtone stop error:", e);
-    }
+    } catch (e) {}
   }, []);
 
   // ==================== MEDIA MANAGEMENT ====================
-  const initializeLocalStream = useCallback(async () => {
-    try {
-      console.log("🎥 Initializing local stream for:", callType);
-      
-      let stream;
-      if (callType === "video") {
-        // For video calls, get both video and audio
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            frameRate: { ideal: 30 },
-            facingMode: "user"
-          },
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
-        
-        console.log("📹 Video tracks:", stream.getVideoTracks().length);
-        console.log("🎤 Audio tracks:", stream.getAudioTracks().length);
-        
-        // Set up local video element immediately
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-          localVideoRef.current.play().catch(err => {
-            console.error("❌ Failed to play local video:", err);
-          });
-        }
-      } else {
-        // For audio calls, only get audio
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: false,
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-          }
-        });
-      }
-      
-      originalStreamRef.current = stream;
-      setLocalStream(stream);
+  const getMediaConstraints = useCallback(() => {
+    if (callType === "video") {
+      return {
+        video: {
+          width: { ideal: 1280, max: 1920 },
+          height: { ideal: 720, max: 1080 },
+          frameRate: { ideal: 24, max: 30 },
+          facingMode: "user",
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          sampleRate: 48000,
+        },
+      };
+    }
+    return {
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        sampleRate: 48000,
+      },
+    };
+  }, [callType]);
 
-      // Apply initial track states
-      if (stream.getAudioTracks().length > 0) {
-        stream.getAudioTracks().forEach(track => {
-          track.enabled = isAudioEnabled;
-          console.log("🎤 Audio track enabled:", track.enabled);
-        });
-      }
-      
-      if (callType === "video" && stream.getVideoTracks().length > 0) {
+  const initializeLocalStream = useCallback(async () => {
+    if (localStreamRef.current) {
+      console.log("✅ Local stream already exists");
+      return localStreamRef.current;
+    }
+
+    try {
+      console.log("🎥 Getting user media...");
+      const constraints = getMediaConstraints();
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      localStreamRef.current = stream;
+      originalStreamRef.current = stream;
+
+      // Apply initial states
+      stream.getAudioTracks().forEach(track => {
+        track.enabled = isAudioEnabled;
+      });
+
+      if (callType === "video") {
         stream.getVideoTracks().forEach(track => {
           track.enabled = isVideoEnabled;
-          console.log("📹 Video track enabled:", track.enabled);
         });
+
+        // Attach to video element
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+          localVideoRef.current.muted = true;
+          await localVideoRef.current.play().catch(console.error);
+        }
       }
 
-      console.log("✅ Local stream initialized successfully");
+      console.log("✅ Local stream initialized");
       return stream;
     } catch (error) {
-      console.error("❌ Failed to get local media:", error);
-      setCallStatus("Media Access Failed");
-      resetCallState();
+      console.error("❌ Media access error:", error);
+      setCallStatus("Cannot access camera/microphone");
+      setTimeout(() => cleanupCall(), 2000);
       return null;
     }
-  }, [callType, isAudioEnabled, isVideoEnabled, setLocalStream, resetCallState]);
+  }, [callType, isAudioEnabled, isVideoEnabled, getMediaConstraints]);
 
-  const cleanupMedia = useCallback(() => {
-    console.log("🧹 Cleaning up media streams");
+  const cleanupStreams = useCallback(() => {
+    console.log("🧹 Cleaning up streams");
     
-    // Stop all media tracks
-    [originalStreamRef.current, screenStreamRef.current].forEach(stream => {
+    [localStreamRef.current, screenStreamRef.current, originalStreamRef.current].forEach(stream => {
       if (stream) {
         stream.getTracks().forEach(track => {
-          try {
-            track.stop();
-          } catch (e) {
-            // Track might already be stopped
-          }
+          track.stop();
         });
       }
     });
 
-    // Clear refs
-    originalStreamRef.current = null;
+    localStreamRef.current = null;
     screenStreamRef.current = null;
+    originalStreamRef.current = null;
 
-    // Clear video elements
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = null;
     }
@@ -189,91 +177,47 @@ const VideoCall = () => {
       remoteVideoRef.current.srcObject = null;
     }
     if (remoteAudioRef.current) {
-      remoteAudioRef.current.pause();
       remoteAudioRef.current.srcObject = null;
     }
   }, []);
 
-  const cleanupPeer = useCallback(() => {
-    console.log("🧹 Cleaning up peer connection");
+  // ==================== PEER CONNECTION ====================
+  const createPeerConnection = useCallback((initiator, stream) => {
     if (peerRef.current) {
+      console.log("🔄 Destroying existing peer");
       try {
         peerRef.current.destroy();
-      } catch (e) {
-        console.warn("Peer destroy error:", e);
-      }
+      } catch (e) {}
       peerRef.current = null;
     }
-  }, []);
 
-  const cleanupCall = useCallback(() => {
-    if (componentMountedRef.current) {
-      console.log("🧹 Full call cleanup");
-      callStartedRef.current = false;
-      stopRingtone();
-      cleanupPeer();
-      cleanupMedia();
-      
-      setIsScreenSharing(false);
-      setIsVideoEnabled(true);
-      setIsAudioEnabled(true);
-      setCallStatus("");
-      
-      // Use setTimeout to avoid state updates during render
-      setTimeout(() => {
-        if (componentMountedRef.current) {
-          resetCallState();
-        }
-      }, 100);
-    }
-  }, [stopRingtone, cleanupPeer, cleanupMedia, resetCallState]);
-
-  // ==================== CALL CONTROLS ====================
-  const endCall = useCallback(() => {
-    console.log("📞 Ending call");
-    const targetUserId = getTargetUserId();
-    if (socket && targetUserId) {
-      socket.emit("end-call", { targetUserId });
-    }
-    cleanupCall();
-  }, [socket, getTargetUserId, cleanupCall]);
-
-  const handleRemoteEnd = useCallback(() => {
-    console.log("📞 Remote ended call");
-    setCallStatus("Call Ended");
-    setTimeout(cleanupCall, 1000);
-  }, [cleanupCall]);
-
-  // ==================== SIMPLE-PEER SETUP ====================
-  const createPeer = useCallback((initiator, stream) => {
     const targetUserId = getTargetUserId();
     if (!targetUserId) {
-      console.error("❌ No target user ID for peer creation");
+      console.error("❌ No target user");
       return null;
     }
 
-    console.log(`🎯 Creating ${initiator ? 'initiator' : 'receiver'} peer for:`, targetUserId);
-
-    // Cleanup existing peer
-    cleanupPeer();
+    console.log(`🔗 Creating ${initiator ? 'initiator' : 'receiver'} peer`);
 
     try {
       const peer = new Peer({
         initiator,
-        trickle: false,
+        trickle: true, // Enable trickle ICE for faster connection
         stream: stream || null,
         config: {
           iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:global.stun.twilio.com:3478' }
-          ]
-        }
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun2.l.google.com:19302" },
+          ],
+        },
       });
 
-      peer.on('signal', (data) => {
-        console.log("📡 Peer signal generated:", data.type);
-        if (!socket || !componentMountedRef.current) return;
+      // Signal event
+      peer.on("signal", (data) => {
+        if (!socket || !mountedRef.current) return;
         
+        console.log("📡 Sending signal:", data.type);
         socket.emit("call-signal", {
           to: targetUserId,
           from: authUser?._id,
@@ -282,590 +226,485 @@ const VideoCall = () => {
         });
       });
 
-      peer.on('stream', (remoteStream) => {
-        if (!componentMountedRef.current) return;
+      // Stream event
+      peer.on("stream", (remoteStream) => {
+        if (!mountedRef.current) return;
         
         console.log("📹 Received remote stream");
-        console.log("📹 Remote video tracks:", remoteStream.getVideoTracks().length);
-        console.log("🎤 Remote audio tracks:", remoteStream.getAudioTracks().length);
         
-        setRemoteStream(remoteStream);
-        
-        // Handle video call
-        if (callType === "video") {
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = remoteStream;
-            remoteVideoRef.current.play().catch(err => {
-              console.error("❌ Failed to play remote video:", err);
-            });
-          }
-        } 
-        // Handle audio call
-        else {
-          if (remoteAudioRef.current) {
-            remoteAudioRef.current.srcObject = remoteStream;
-            remoteAudioRef.current.play().catch(console.error);
-          }
+        if (callType === "video" && remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteStream;
+          remoteVideoRef.current.play().catch(console.error);
+        } else if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.play().catch(console.error);
         }
 
         setCallActive(true);
-        setCallStatus("Connected");
         setCalling(false);
         clearIncomingCall();
         stopRingtone();
+        setCallStatus("Connected");
+        reconnectAttempts.current = 0;
       });
 
-      peer.on('connect', () => {
-        if (!componentMountedRef.current) return;
+      // Connection events
+      peer.on("connect", () => {
         console.log("✅ Peer connected");
         setCallStatus("Connected");
       });
 
-      peer.on('close', () => {
-        if (!componentMountedRef.current) return;
-        console.log("🔌 Peer connection closed");
-        handleRemoteEnd();
+      peer.on("close", () => {
+        console.log("🔌 Peer closed");
+        handleCallEnd();
       });
 
-      peer.on('error', (err) => {
-        if (!componentMountedRef.current) return;
+      peer.on("error", (err) => {
         console.error("❌ Peer error:", err);
-        setCallStatus("Connection Error");
-        handleRemoteEnd();
+        
+        if (reconnectAttempts.current < MAX_RECONNECT && isCallActive) {
+          reconnectAttempts.current++;
+          setCallStatus(`Reconnecting... (${reconnectAttempts.current}/${MAX_RECONNECT})`);
+          setTimeout(() => {
+            if (mountedRef.current) {
+              handleReconnect();
+            }
+          }, 2000);
+        } else {
+          setCallStatus("Connection failed");
+          handleCallEnd();
+        }
       });
 
       peerRef.current = peer;
       return peer;
     } catch (error) {
-      console.error("❌ Failed to create peer:", error);
+      console.error("❌ Peer creation error:", error);
       return null;
     }
-  }, [socket, authUser, callType, getTargetUserId, cleanupPeer, setCallActive, setCalling, clearIncomingCall, handleRemoteEnd, stopRingtone]);
+  }, [socket, authUser, callType, isCallActive, getTargetUserId, setCallActive, setCalling, clearIncomingCall, stopRingtone]);
 
-  // ==================== CALL FLOWS ====================
+  // ==================== CALL HANDLERS ====================
   const startOutgoingCall = useCallback(async () => {
-    if (callStartedRef.current || !componentMountedRef.current) {
-      console.log("🔄 Call already started or component unmounted, skipping");
+    if (processingCallRef.current) {
+      console.log("⏭️ Call already processing");
       return;
     }
 
-    callStartedRef.current = true;
-    
-    const targetUserId = getTargetUserId();
-    if (!targetUserId) {
-      console.error("❌ No target user for outgoing call");
-      setCalling(false);
-      callStartedRef.current = false;
-      return;
-    }
-
-    console.log("📞 Starting outgoing call to:", targetUserId);
+    processingCallRef.current = true;
     setCallStatus("Calling...");
     
     const stream = await initializeLocalStream();
     if (!stream) {
-      setCalling(false);
-      callStartedRef.current = false;
+      processingCallRef.current = false;
       return;
     }
 
-    const peer = createPeer(true, stream);
+    const peer = createPeerConnection(true, stream);
     if (!peer) {
-      setCalling(false);
-      callStartedRef.current = false;
-      return;
+      processingCallRef.current = false;
+      cleanupStreams();
     }
-  }, [getTargetUserId, setCalling, initializeLocalStream, createPeer]);
+  }, [initializeLocalStream, createPeerConnection, cleanupStreams]);
 
   const acceptCall = useCallback(async () => {
-    if (!incomingCallFrom || !callOffer || !componentMountedRef.current) {
-      console.error("❌ Missing call data for acceptance or component unmounted");
+    if (processingCallRef.current || !callOffer) {
+      console.log("⏭️ Cannot accept call");
       return;
     }
 
-    if (callStartedRef.current) {
-      console.log("🔄 Call already accepted, skipping");
-      return;
-    }
-
-    callStartedRef.current = true;
-
-    console.log("📞 Accepting incoming call from:", incomingCallFrom);
+    processingCallRef.current = true;
+    setCallStatus("Accepting...");
     clearIncomingCall();
-    setCalling(true);
-    setCallStatus("Connecting...");
-
+    
     const stream = await initializeLocalStream();
     if (!stream) {
-      setCalling(false);
-      callStartedRef.current = false;
+      processingCallRef.current = false;
       return;
     }
 
-    const peer = createPeer(false, stream);
+    const peer = createPeerConnection(false, stream);
     if (!peer) {
-      setCalling(false);
-      callStartedRef.current = false;
+      processingCallRef.current = false;
+      cleanupStreams();
       return;
     }
 
-    // Apply the received offer
+    // Signal the offer
     try {
-      console.log("📡 Applying call offer");
       peer.signal(callOffer);
     } catch (error) {
-      console.error("❌ Failed to signal peer:", error);
-      setCallStatus("Connection Failed");
-      cleanupCall();
+      console.error("❌ Signal error:", error);
+      handleCallEnd();
     }
-  }, [incomingCallFrom, callOffer, clearIncomingCall, setCalling, initializeLocalStream, createPeer, cleanupCall]);
+  }, [callOffer, initializeLocalStream, createPeerConnection, clearIncomingCall, cleanupStreams]);
 
   const rejectCall = useCallback(() => {
-    console.log("📞 Rejecting call");
-    if (incomingCallFrom && socket) {
-      socket.emit("call-rejected", { callerId: incomingCallFrom });
+    console.log("❌ Rejecting call");
+    const callerId = incomingCallFrom;
+    if (callerId && socket) {
+      socket.emit("call-rejected", { callerId });
     }
-    resetCallState();
-  }, [incomingCallFrom, socket, resetCallState]);
+    cleanupCall();
+  }, [incomingCallFrom, socket]);
 
-  // ==================== VIDEO CONTROLS ====================
+  const endCall = useCallback(() => {
+    console.log("📞 Ending call");
+    const targetUserId = getTargetUserId();
+    if (targetUserId && socket) {
+      socket.emit("end-call", { targetUserId });
+    }
+    cleanupCall();
+  }, [socket, getTargetUserId]);
+
+  const handleCallEnd = useCallback(() => {
+    setCallStatus("Call ended");
+    setTimeout(() => cleanupCall(), 1000);
+  }, []);
+
+  const handleReconnect = useCallback(async () => {
+    console.log("🔄 Attempting reconnection...");
+    cleanupStreams();
+    if (peerRef.current) {
+      try {
+        peerRef.current.destroy();
+      } catch (e) {}
+      peerRef.current = null;
+    }
+    processingCallRef.current = false;
+    
+    if (isCallActive) {
+      await startOutgoingCall();
+    }
+  }, [isCallActive, startOutgoingCall, cleanupStreams]);
+
+  const cleanupCall = useCallback(() => {
+    console.log("🧹 Full cleanup");
+    
+    processingCallRef.current = false;
+    reconnectAttempts.current = 0;
+    
+    stopRingtone();
+    cleanupStreams();
+    
+    if (peerRef.current) {
+      try {
+        peerRef.current.destroy();
+      } catch (e) {}
+      peerRef.current = null;
+    }
+
+    setIsScreenSharing(false);
+    setIsVideoEnabled(true);
+    setIsAudioEnabled(true);
+    setCallStatus("");
+    setConnectionQuality("good");
+    
+    setTimeout(() => {
+      if (mountedRef.current) {
+        resetCallState();
+      }
+    }, 100);
+  }, [stopRingtone, cleanupStreams, resetCallState]);
+
+  // ==================== CONTROLS ====================
   const toggleVideo = useCallback(() => {
     if (callType !== "video") return;
     
     const newState = !isVideoEnabled;
-    console.log("📹 Toggling video:", newState);
     setIsVideoEnabled(newState);
     
-    if (originalStreamRef.current) {
-      const videoTracks = originalStreamRef.current.getVideoTracks();
-      if (videoTracks.length > 0) {
-        videoTracks.forEach(track => {
-          track.enabled = newState;
-          console.log("📹 Video track enabled:", track.enabled);
-        });
-      } else {
-        console.warn("❌ No video tracks found to toggle");
-      }
+    const stream = localStreamRef.current;
+    if (stream) {
+      stream.getVideoTracks().forEach(track => {
+        track.enabled = newState;
+      });
     }
   }, [isVideoEnabled, callType]);
 
   const toggleAudio = useCallback(() => {
     const newState = !isAudioEnabled;
-    console.log("🎤 Toggling audio:", newState);
     setIsAudioEnabled(newState);
     
-    if (originalStreamRef.current) {
-      const audioTracks = originalStreamRef.current.getAudioTracks();
-      if (audioTracks.length > 0) {
-        audioTracks.forEach(track => {
-          track.enabled = newState;
-        });
-      }
-    }
-    
-    if (screenStreamRef.current) {
-      const audioTracks = screenStreamRef.current.getAudioTracks();
-      if (audioTracks.length > 0) {
-        audioTracks.forEach(track => {
-          track.enabled = newState;
-        });
-      }
+    const stream = localStreamRef.current;
+    if (stream) {
+      stream.getAudioTracks().forEach(track => {
+        track.enabled = newState;
+      });
     }
   }, [isAudioEnabled]);
 
-  // ==================== SCREEN SHARING ====================
   const startScreenShare = useCallback(async () => {
-    if (callType !== "video" || !peerRef.current || !componentMountedRef.current) return;
+    if (callType !== "video" || !peerRef.current) return;
 
     try {
-      console.log("🖥️ Starting screen share");
       const screenStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { 
-          cursor: "always",
-          displaySurface: "window"
-        },
+        video: { cursor: "always" },
         audio: true,
       });
 
       screenStreamRef.current = screenStream;
       
-      // Update local preview
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = screenStream;
-        localVideoRef.current.play().catch(err => {
-          console.error("❌ Failed to play screen share:", err);
-        });
+        await localVideoRef.current.play();
       }
 
-      // Replace tracks in peer connection
-      const peer = peerRef.current;
-      const senders = peer._pc.getSenders();
-
-      const screenVideoTrack = screenStream.getVideoTracks()[0];
-      const screenAudioTrack = screenStream.getAudioTracks()[0];
-
-      // Replace video track
-      if (screenVideoTrack) {
-        const videoSender = senders.find(s => s.track?.kind === 'video');
-        if (videoSender) {
-          await videoSender.replaceTrack(screenVideoTrack);
-          console.log("✅ Screen video track replaced");
-        }
-      }
-
-      // Replace audio track if available
-      if (screenAudioTrack) {
-        const audioSender = senders.find(s => s.track?.kind === 'audio');
-        if (audioSender) {
-          await audioSender.replaceTrack(screenAudioTrack);
-          console.log("✅ Screen audio track replaced");
-        }
+      // Replace tracks
+      const videoTrack = screenStream.getVideoTracks()[0];
+      const sender = peerRef.current._pc.getSenders().find(s => s.track?.kind === 'video');
+      if (sender && videoTrack) {
+        await sender.replaceTrack(videoTrack);
       }
 
       setIsScreenSharing(true);
 
-      // Handle screen share end
-      screenVideoTrack.onended = () => {
-        console.log("🖥️ Screen share ended by user");
+      videoTrack.onended = () => {
         stopScreenShare();
       };
-
     } catch (error) {
-      console.error("❌ Screen share failed:", error);
+      console.error("❌ Screen share error:", error);
     }
   }, [callType]);
 
   const stopScreenShare = useCallback(async () => {
-    if (!peerRef.current || !originalStreamRef.current || !componentMountedRef.current) return;
+    if (!peerRef.current || !originalStreamRef.current) return;
 
     try {
-      console.log("🖥️ Stopping screen share");
-      
-      // Stop screen stream
       if (screenStreamRef.current) {
         screenStreamRef.current.getTracks().forEach(track => track.stop());
         screenStreamRef.current = null;
       }
 
-      // Restore original stream to local preview
-      if (localVideoRef.current && originalStreamRef.current) {
+      if (localVideoRef.current) {
         localVideoRef.current.srcObject = originalStreamRef.current;
-        localVideoRef.current.play().catch(err => {
-          console.error("❌ Failed to restore local video:", err);
-        });
+        await localVideoRef.current.play();
       }
 
-      // Restore original tracks in peer connection
-      const peer = peerRef.current;
-      const senders = peer._pc.getSenders();
-      const originalVideoTrack = originalStreamRef.current.getVideoTracks()[0];
-      const originalAudioTrack = originalStreamRef.current.getAudioTracks()[0];
-
-      // Restore video track
-      if (originalVideoTrack) {
-        const videoSender = senders.find(s => s.track?.kind === 'video');
-        if (videoSender) {
-          await videoSender.replaceTrack(originalVideoTrack);
-          console.log("✅ Original video track restored");
-        }
-      }
-
-      // Restore audio track
-      if (originalAudioTrack) {
-        const audioSender = senders.find(s => s.track?.kind === 'audio');
-        if (audioSender) {
-          await audioSender.replaceTrack(originalAudioTrack);
-          console.log("✅ Original audio track restored");
-        }
+      const videoTrack = originalStreamRef.current.getVideoTracks()[0];
+      const sender = peerRef.current._pc.getSenders().find(s => s.track?.kind === 'video');
+      if (sender && videoTrack) {
+        await sender.replaceTrack(videoTrack);
       }
 
       setIsScreenSharing(false);
     } catch (error) {
-      console.error("❌ Stop screen share failed:", error);
+      console.error("❌ Stop screen share error:", error);
     }
   }, []);
 
-  // ==================== SOCKET HANDLERS ====================
+  // ==================== SOCKET LISTENERS ====================
   useEffect(() => {
-    if (!socket || socketInitializedRef.current || !componentMountedRef.current) {
-      return;
-    }
+    if (!socket) return;
 
-    socketInitializedRef.current = true;
-    console.log("🔌 Setting up socket handlers for VideoCall");
+    const handleSignal = (data) => {
+      if (!data || data.to !== authUser?._id || !mountedRef.current) return;
 
-    const handleCallSignal = (data) => {
-      if (!data || data.to !== authUser?._id || !componentMountedRef.current) return;
+      console.log("📡 Received signal");
 
-      console.log("📡 Received call signal from:", data.from);
-
-      // If we have a peer and are calling, this is an answer
-      if (peerRef.current && isCalling) {
+      if (peerRef.current && !peerRef.current.destroyed) {
         try {
-          console.log("📡 Applying answer signal");
           peerRef.current.signal(data.data);
         } catch (error) {
-          console.error("❌ Failed to process signal:", error);
+          console.error("❌ Signal processing error:", error);
         }
-        return;
       }
-
-      // Otherwise, it's an incoming call
-      console.log("📞 Incoming call from:", data.from);
-      setIncomingCall(data.from, data.data, data.callType || "video");
     };
 
     const handleCallEnded = () => {
-      if (!componentMountedRef.current) return;
-      console.log("📞 Call ended by remote");
-      handleRemoteEnd();
+      if (!mountedRef.current) return;
+      console.log("📞 Remote ended call");
+      handleCallEnd();
     };
 
     const handleCallRejected = () => {
-      if (!componentMountedRef.current) return;
-      console.log("📞 Call rejected by remote");
-      setCallStatus("Call Rejected");
+      if (!mountedRef.current) return;
+      console.log("❌ Call rejected");
+      setCallStatus("Call rejected");
       cleanupCall();
     };
 
-    socket.on("call-signal", handleCallSignal);
+    socket.on("call-signal", handleSignal);
     socket.on("call-ended", handleCallEnded);
     socket.on("call-rejected", handleCallRejected);
 
     return () => {
-      console.log("🔌 Cleaning up VideoCall socket handlers");
-      socketInitializedRef.current = false;
-      socket.off("call-signal", handleCallSignal);
+      socket.off("call-signal", handleSignal);
       socket.off("call-ended", handleCallEnded);
       socket.off("call-rejected", handleCallRejected);
     };
-  }, [socket, authUser, isCalling, setIncomingCall, handleRemoteEnd, cleanupCall]);
+  }, [socket, authUser, handleCallEnd, cleanupCall]);
 
   // ==================== EFFECTS ====================
-  // Ringtone management
   useEffect(() => {
-    if (!componentMountedRef.current) return;
-
     if (isIncomingCall || (isCalling && !isCallActive)) {
-      console.log("🔊 Playing ringtone");
       playRingtone();
     } else {
-      console.log("🔇 Stopping ringtone");
       stopRingtone();
     }
   }, [isIncomingCall, isCalling, isCallActive, playRingtone, stopRingtone]);
 
-  // Auto-start outgoing call
   useEffect(() => {
-    if (!componentMountedRef.current) return;
-
-    if (isCalling && !isIncomingCall && !isCallActive && !callStartedRef.current) {
-      console.log("🚀 Auto-starting outgoing call");
+    if (isCalling && !isIncomingCall && !isCallActive && !processingCallRef.current) {
       startOutgoingCall();
     }
   }, [isCalling, isIncomingCall, isCallActive, startOutgoingCall]);
 
-  // Update local video when localStream changes
   useEffect(() => {
-    if (callType === "video" && localStream && localVideoRef.current) {
-      console.log("🔄 Updating local video element with stream");
-      localVideoRef.current.srcObject = localStream;
-      localVideoRef.current.play().catch(err => {
-        console.error("❌ Failed to play local video:", err);
-      });
-    }
-  }, [localStream, callType]);
-
-  // Component mount/unmount management
-  useEffect(() => {
-    componentMountedRef.current = true;
+    mountedRef.current = true;
     
     return () => {
-      console.log("🧹 VideoCall component unmounting");
-      componentMountedRef.current = false;
-      
-      // Only cleanup if there's an active call
-      const { isCalling, isCallActive, isIncomingCall } = useVideoCallStore.getState();
-      if (isCalling || isCallActive || isIncomingCall) {
-        cleanupCall();
-      }
+      mountedRef.current = false;
+      cleanupCall();
     };
   }, [cleanupCall]);
 
   // ==================== RENDER ====================
-  // Don't render if no call activity
   if (!isIncomingCall && !isCallActive && !isCalling) {
     return null;
   }
 
-  console.log("🎨 Rendering VideoCall component - Type:", callType);
-  console.log("📹 Local stream available:", !!localStream);
-  console.log("📹 Remote stream available:", !!remoteStream);
-
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[9999] bg-base-100/95 backdrop-blur-xl flex items-center justify-center"
+        className="fixed inset-0 z-[9999] bg-gradient-to-br from-gray-900 to-black flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        {/* MAIN VIDEO/AUDIO CONTAINER */}
-        <div className="relative w-full h-full flex">
-          {/* REMOTE STREAM */}
-          <div className="flex-1 relative bg-black">
-            {remoteStream ? (
-              callType === "video" ? (
-                <video
-                  ref={remoteVideoRef}
-                  autoPlay
-                  playsInline
-                  muted={false}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-              ) : (
-                // Audio call UI
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                  <div className="text-center">
-                    <Phone size={80} className="mx-auto mb-6 opacity-60" />
-                    <p className="text-2xl font-semibold">{callStatus || "Connected"}</p>
-                    <p className="text-lg opacity-70 mt-4">
-                      {selectedUser?.fullName || "Unknown User"}
-                    </p>
-                    <p className="text-sm opacity-50 mt-2">Audio Call</p>
-                  </div>
-                </div>
-              )
-            ) : (
-              // Connecting/No stream UI
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                {callType === "video" ? (
-                  <div className="text-center">
-                    <Video size={80} className="mx-auto mb-6 opacity-60" />
-                    <p className="text-2xl font-semibold">{callStatus || "Connecting..."}</p>
-                    <p className="text-lg opacity-70 mt-4">
-                      {selectedUser?.fullName || "Connecting..."}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Phone size={80} className="mx-auto mb-6 opacity-60" />
-                    <p className="text-2xl font-semibold">{callStatus || "Connecting..."}</p>
-                    <p className="text-lg opacity-70 mt-4">
-                      {selectedUser?.fullName || "Connecting..."}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+        {/* Remote Stream */}
+        <div className="relative w-full h-full">
+          {callType === "video" ? (
+            <video
+              ref={remoteVideoRef}
+              autoPlay
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+              <Phone size={80} className="mb-6 opacity-60" />
+              <p className="text-3xl font-bold">{selectedUser?.fullName || "Audio Call"}</p>
+              <p className="text-lg opacity-70 mt-2">{callStatus}</p>
+            </div>
+          )}
 
-          {/* LOCAL VIDEO PIP - Only for video calls */}
+          {/* Local Video PIP */}
           {callType === "video" && (
-            <div className="absolute top-6 right-6 w-64 h-48 bg-black/90 border-2 border-white/30 rounded-xl overflow-hidden shadow-2xl">
-              {localStream ? (
-                <video
-                  ref={localVideoRef}
-                  autoPlay
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                  <VideoOff size={40} className="text-white/50" />
-                </div>
-              )}
+            <motion.div
+              className="absolute top-6 right-6 w-64 h-48 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+              />
               {!isVideoEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/70">
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                   <VideoOff size={40} className="text-white/70" />
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {/* Status Badge */}
+          {callStatus && (
+            <div className="absolute top-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white text-sm">
+              <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                connectionQuality === "good" ? "bg-green-500" : 
+                connectionQuality === "poor" ? "bg-yellow-500" : "bg-red-500"
+              }`} />
+              {callStatus}
             </div>
           )}
         </div>
 
-        {/* HIDDEN AUDIO FOR AUDIO CALLS */}
-        <audio 
-          ref={remoteAudioRef} 
-          autoPlay 
-          playsInline 
-          style={{ display: "none" }} 
-        />
+        {/* Hidden Audio Element */}
+        <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
 
-        {/* CONTROLS */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-4 items-center">
+        {/* Controls */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-4">
           {isIncomingCall ? (
             <>
-              <button
-                className="btn btn-error w-16 h-16 rounded-full shadow-lg hover:scale-110 transition-transform"
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-lg"
                 onClick={rejectCall}
               >
-                <PhoneOff size={30} />
-              </button>
-              <button
-                className="btn btn-success w-16 h-16 rounded-full shadow-lg hover:scale-110 transition-transform"
+                <PhoneOff size={28} className="text-white" />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="w-16 h-16 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center shadow-lg"
                 onClick={acceptCall}
               >
-                <Phone size={30} />
-              </button>
+                <Phone size={28} className="text-white" />
+              </motion.button>
             </>
           ) : (
             <>
-              <button
-                className={`btn w-14 h-14 rounded-full border-2 shadow-lg hover:scale-110 transition-transform ${
-                  isAudioEnabled ? "btn-ghost border-white/20" : "btn-error border-error"
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
+                  isAudioEnabled ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-700"
                 }`}
                 onClick={toggleAudio}
               >
-                {isAudioEnabled ? <Mic size={24} /> : <MicOff size={24} />}
-              </button>
+                {isAudioEnabled ? <Mic size={24} className="text-white" /> : <MicOff size={24} className="text-white" />}
+              </motion.button>
 
               {callType === "video" && (
                 <>
-                  <button
-                    className={`btn w-14 h-14 rounded-full border-2 shadow-lg hover:scale-110 transition-transform ${
-                      isVideoEnabled ? "btn-ghost border-white/20" : "btn-error border-error"
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
+                      isVideoEnabled ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-700"
                     }`}
                     onClick={toggleVideo}
                   >
-                    {isVideoEnabled ? <Video size={24} /> : <VideoOff size={24} />}
-                  </button>
+                    {isVideoEnabled ? <Video size={24} className="text-white" /> : <VideoOff size={24} className="text-white" />}
+                  </motion.button>
 
-                  <button
-                    onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-                    className={`btn w-14 h-14 rounded-full border-2 shadow-lg hover:scale-110 transition-transform ${
-                      isScreenSharing ? "btn-warning border-warning" : "btn-ghost border-white/20"
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
+                      isScreenSharing ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
                     }`}
+                    onClick={isScreenSharing ? stopScreenShare : startScreenShare}
                   >
-                    {isScreenSharing ? <MonitorOff size={22} /> : <Monitor size={22} />}
-                  </button>
+                    {isScreenSharing ? <MonitorOff size={24} className="text-white" /> : <Monitor size={24} className="text-white" />}
+                  </motion.button>
                 </>
               )}
 
-              <button
-                className="btn btn-error w-14 h-14 rounded-full shadow-lg hover:scale-110 transition-transform"
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-14 h-14 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-lg"
                 onClick={endCall}
               >
-                <PhoneOff size={24} />
-              </button>
+                <PhoneOff size={24} className="text-white" />
+              </motion.button>
             </>
           )}
         </div>
 
-        {/* CALL STATUS */}
-        {callStatus && (
-          <div className="absolute top-6 left-6 text-white bg-black/70 px-4 py-2 rounded-full backdrop-blur-sm">
-            {callStatus}
-          </div>
-        )}
-
-        {/* CLOSE BUTTON */}
+        {/* Close Button */}
         <button
-          className="absolute top-6 right-6 text-white hover:bg-white/20 w-12 h-12 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm"
+          className="absolute top-6 right-6 w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center transition-colors"
           onClick={endCall}
         >
-          <X size={28} />
+          <X size={24} className="text-white" />
         </button>
       </motion.div>
     </AnimatePresence>

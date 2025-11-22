@@ -1,49 +1,56 @@
-// src/store/useVideoCallStore.js
 import { create } from "zustand";
 
 export const useVideoCallStore = create((set, get) => ({
-  // Core states
   isIncomingCall: false,
   isCalling: false,
   isCallActive: false,
   callType: "video",
-  
-  // Signaling
   incomingCallFrom: null,
   callOffer: null,
   peerId: null,
-  
-  // Media streams
-  localStream: null,
-  remoteStream: null,
-  
-  // Call timer
   callStartTime: null,
   callDuration: 0,
 
-  // Actions
   setIncomingCall: (from, offer, type = "video") => {
-    // Prevent unnecessary updates
     const current = get();
-    if (current.isIncomingCall && current.incomingCallFrom === from) return;
     
+    if (current.isIncomingCall && current.incomingCallFrom === from) {
+      if (offer && !current.callOffer) {
+        console.log("📞 Updating call with offer data");
+        set({ callOffer: offer });
+        return;
+      }
+      console.log("⏭️ Same incoming call, already have offer");
+      return;
+    }
+
+    if (current.isCallActive || current.isCalling) {
+      console.log("⚠️ Already in a call, cannot accept new call");
+      return;
+    }
+    
+    console.log("📞 Setting incoming call from:", from, "hasOffer:", !!offer);
     set({
       isIncomingCall: true,
       isCalling: false,
       isCallActive: false,
       incomingCallFrom: from,
-      callOffer: offer,
+      callOffer: offer || null,
       callType: type,
       peerId: from,
       callStartTime: null,
+      callDuration: 0,
     });
   },
 
-  clearIncomingCall: () => set({
-    isIncomingCall: false,
-    incomingCallFrom: null,
-    callOffer: null,
-  }),
+  clearIncomingCall: () => {
+    console.log("🧹 Clearing incoming call");
+    set({
+      isIncomingCall: false,
+      incomingCallFrom: null,
+      callOffer: null,
+    });
+  },
 
   startCall: (type = "video", receiverId) => {
     if (!receiverId) {
@@ -51,10 +58,19 @@ export const useVideoCallStore = create((set, get) => ({
       return;
     }
 
-    // Prevent duplicate calls
     const current = get();
-    if (current.isCalling && current.peerId === receiverId) return;
+    
+    if (current.isCalling && current.peerId === receiverId) {
+      console.log("⏭️ Already calling this user");
+      return;
+    }
 
+    if (current.isCallActive) {
+      console.log("⚠️ Already in an active call");
+      return;
+    }
+
+    console.log("📞 Starting call to:", receiverId);
     set({
       callType: type,
       isCalling: true,
@@ -71,33 +87,23 @@ export const useVideoCallStore = create((set, get) => ({
   setCalling: (value) => {
     const current = get();
     if (current.isCalling === value) return;
+    console.log("📞 Setting isCalling:", value);
     set({ isCalling: value });
   },
 
   setCallActive: (value) => {
     const current = get();
     if (current.isCallActive === value) return;
-    
-    const start = value ? Date.now() : null;
+    console.log("✅ Setting call active:", value);
+    const startTime = value ? Date.now() : null;
     set({
       isCallActive: value,
+      isCalling: false,
       isIncomingCall: false,
       incomingCallFrom: null,
       callOffer: null,
-      callStartTime: start,
+      callStartTime: startTime,
     });
-  },
-
-  setLocalStream: (stream) => {
-    const current = get();
-    if (current.localStream === stream) return;
-    set({ localStream: stream });
-  },
-
-  setRemoteStream: (stream) => {
-    const current = get();
-    if (current.remoteStream === stream) return;
-    set({ remoteStream: stream });
   },
 
   setPeerId: (id) => {
@@ -116,17 +122,18 @@ export const useVideoCallStore = create((set, get) => ({
     }
   },
 
-  resetCallState: () => set({
-    isIncomingCall: false,
-    isCalling: false,
-    isCallActive: false,
-    callType: "video",
-    incomingCallFrom: null,
-    callOffer: null,
-    peerId: null,
-    localStream: null,
-    remoteStream: null,
-    callStartTime: null,
-    callDuration: 0,
-  }),
+  resetCallState: () => {
+    console.log("🔄 Resetting call state");
+    set({
+      isIncomingCall: false,
+      isCalling: false,
+      isCallActive: false,
+      callType: "video",
+      incomingCallFrom: null,
+      callOffer: null,
+      peerId: null,
+      callStartTime: null,
+      callDuration: 0,
+    });
+  },
 }));

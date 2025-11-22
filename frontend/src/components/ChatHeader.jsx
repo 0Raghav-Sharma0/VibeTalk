@@ -1,7 +1,9 @@
+// src/components/ChatHeader.jsx
 import React from "react";
 import { Phone, Video, Music2, Pencil, X } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
+import { useAuthStore } from "../store/useAuthStore"; // ⭐ ADD THIS
 import { useMusicStore } from "../store/musicStore";
 
 /* Shared Icon Button */
@@ -23,7 +25,49 @@ const IconBtn = ({ onClick, children, title }) => (
 const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { startCall } = useVideoCallStore();
+  const { socket, authUser } = useAuthStore(); // ⭐ ADD THIS
   const { toggleMusicPlayer, isMusicPlayerOpen } = useMusicStore();
+
+  // ⭐ ADD THESE HANDLERS
+  const handleAudioCall = () => {
+    if (!selectedUser || !socket || !authUser) {
+      console.error("❌ Cannot start audio call - missing data");
+      return;
+    }
+
+    console.log("📞 Initiating audio call to:", selectedUser._id);
+    
+    // Notify the other user
+    socket.emit("call-initiated", {
+      from: authUser._id,
+      to: selectedUser._id,
+      callType: "audio",
+      callerName: authUser.fullName,
+    });
+
+    // Start local call
+    startCall("audio", selectedUser._id);
+  };
+
+  const handleVideoCall = () => {
+    if (!selectedUser || !socket || !authUser) {
+      console.error("❌ Cannot start video call - missing data");
+      return;
+    }
+
+    console.log("📹 Initiating video call to:", selectedUser._id);
+    
+    // Notify the other user
+    socket.emit("call-initiated", {
+      from: authUser._id,
+      to: selectedUser._id,
+      callType: "video",
+      callerName: authUser.fullName,
+    });
+
+    // Start local call
+    startCall("video", selectedUser._id);
+  };
 
   if (!selectedUser) return null;
 
@@ -65,18 +109,18 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
       {/* ACTION BUTTONS */}
       <div className="flex items-center gap-2">
 
-        {/* Voice Call */}
+        {/* Voice Call - ⭐ UPDATED */}
         <IconBtn
           title="Voice Call"
-          onClick={() => startCall("audio", selectedUser._id)}
+          onClick={handleAudioCall}
         >
           <Phone size={16} className="text-success" />
         </IconBtn>
 
-        {/* Video Call */}
+        {/* Video Call - ⭐ UPDATED */}
         <IconBtn
           title="Video Call"
-          onClick={() => startCall("video", selectedUser._id)}
+          onClick={handleVideoCall}
         >
           <Video size={16} className="text-info" />
         </IconBtn>

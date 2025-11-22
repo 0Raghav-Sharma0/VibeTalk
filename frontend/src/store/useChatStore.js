@@ -68,33 +68,57 @@ export const useChatStore = create((set, get) => ({
   },
 
   /* ============================================================
-        SEND MESSAGE
+        SEND MESSAGE - FIXED
   ============================================================ */
   sendMessage: async (msgData) => {
-  const { authUser, socket } = useAuthStore.getState();
-  const { selectedUser } = get();
+    const { authUser, socket } = useAuthStore.getState();
+    const { selectedUser, messages } = get();
 
-  if (!selectedUser) {
-    console.warn("❌ No selectedUser in sendMessage");
-    return;
-  }
+    if (!selectedUser) {
+      console.warn("❌ No selectedUser in sendMessage");
+      return;
+    }
 
-  const payload = {
-    senderId: authUser._id,
-    receiverId: selectedUser._id,
-    ...msgData,
-  };
+    if (!socket) {
+      console.error("❌ No socket connection");
+      toast.error("Not connected to server");
+      return;
+    }
 
-  socket.emit("sendMessage", payload);
-},
+    // Create optimistic message for immediate UI update
+    const optimisticMessage = {
+      _id: `temp-${Date.now()}`,
+      senderId: authUser._id,
+      receiverId: selectedUser._id,
+      ...msgData,
+      createdAt: new Date().toISOString(),
+      delivered: false,
+      seen: false,
+    };
 
+    // Add to messages immediately for better UX
+    set({ messages: [...messages, optimisticMessage] });
 
+    // Send via socket
+    const payload = {
+      senderId: authUser._id,
+      receiverId: selectedUser._id,
+      ...msgData,
+    };
+
+    socket.emit("sendMessage", payload);
+  },
 
   /* ============================================================
         SOCKET LISTENER: NEW MESSAGES + TYPING
   ============================================================ */
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
+    
+    if (!socket) {
+      console.error("❌ No socket available for subscription");
+      return;
+    }
 
     /* ---- NEW MESSAGE ---- */
     socket.off("newMessage");
@@ -102,15 +126,26 @@ export const useChatStore = create((set, get) => ({
       const { selectedUser, messages, unreadMessages } = get();
       const { authUser } = useAuthStore.getState();
 
+      // Remove optimistic message if it exists
+      const filteredMessages = messages.filter(m => !m._id.toString().startsWith('temp-'));
+
       // You sent it
       if (msg.senderId === authUser._id) {
-        set({ messages: [...messages, msg] });
+        set({ messages: [...filteredMessages, msg] });
         return;
       }
 
       // Chat is open with this user → append normally
       if (selectedUser && selectedUser._id === msg.senderId) {
-        set({ messages: [...messages, msg] });
+        set({ messages: [...filteredMessages, msg] });
+        
+        // Mark as seen automatically if chat is open
+        if (socket) {
+          socket.emit("msg-seen", {
+            myId: authUser._id,
+            friendId: msg.senderId,
+          });
+        }
       } else {
         // Add unread
         const updatedUnread = {
@@ -119,11 +154,11 @@ export const useChatStore = create((set, get) => ({
         };
         set({ unreadMessages: updatedUnread });
 
-        // ⭐ ALWAYS show notification if message is from another user
+        // Show notification
         showSystemNotification({
           title: msg.senderName || "New Message",
-          body: msg.text || "Sent you a message",
-          icon: "/message_icon.png",
+          body: msg.text || msg.image ? "📷 Photo" : msg.video ? "🎥 Video" : msg.file ? "📎 File" : "Sent you a message",
+          icon: msg.senderAvatar || "/message_icon.png",
           onClick: () => window.focus(),
         });
       }
@@ -136,18 +171,49 @@ export const useChatStore = create((set, get) => ({
       typingMap[senderId] = isTyping;
       set({ typing: typingMap });
     });
+
+    /* ---- MESSAGE DELIVERED ---- */
+    socket.off("msg-delivered-update");
+    socket.on("msg-delivered-update", ({ messageId }) => {
+      const { messages } = get();
+      const updatedMessages = messages.map(msg => 
+        msg._id === messageId ? { ...msg, delivered: true } : msg
+      );
+      set({ messages: updatedMessages });
+    });
+
+    /* ---- MESSAGE SEEN ---- */
+    socket.off("msg-seen-update");
+    socket.on("msg-seen-update", ({ by }) => {
+      const { messages } = get();
+      const { authUser } = useAuthStore.getState();
+      
+      // Mark all messages sent by me to this user as seen
+      const updatedMessages = messages.map(msg => 
+        msg.senderId === authUser._id && msg.receiverId === by 
+          ? { ...msg, seen: true, delivered: true } 
+          : msg
+      );
+      set({ messages: updatedMessages });
+    });
   },
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
-    socket.off("newMessage");
-    socket.off("typing");
+    if (socket) {
+      socket.off("newMessage");
+      socket.off("typing");
+      socket.off("msg-delivered-update");
+      socket.off("msg-seen-update");
+    }
   },
 
   /* ============================================================
         SELECT USER + RESET UNREAD
   ============================================================ */
   setSelectedUser: (selectedUser) => {
+    const { authUser, socket } = useAuthStore.getState();
+    
     if (!selectedUser) {
       set({ selectedUser: null, messages: [] });
       return;
@@ -168,6 +234,30 @@ export const useChatStore = create((set, get) => ({
       messages: [],
       isMessagesLoading: false,
     });
+
+    // Mark all messages from this user as seen
+    if (socket && authUser) {
+      socket.emit("msg-seen", {
+        myId: authUser._id,
+        friendId: selectedUser._id,
+      });
+    }
+  },
+
+  /* ============================================================
+        EMIT TYPING STATUS
+  ============================================================ */
+  emitTyping: (isTyping) => {
+    const { selectedUser } = get();
+    const { authUser, socket } = useAuthStore.getState();
+    
+    if (socket && selectedUser && authUser) {
+      socket.emit("typing", {
+        senderId: authUser._id,
+        receiverId: selectedUser._id,
+        isTyping,
+      });
+    }
   },
 }));
 
