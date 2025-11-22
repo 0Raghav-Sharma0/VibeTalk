@@ -8,7 +8,7 @@ import MessageInput from "./MessageInput";
 import MusicPlayer from "./MusicPlayer";
 import Whiteboard from "./Whiteboard";
 import MessageBubble from "./MessageBubble";
-import { X } from "lucide-react";
+import { X, Menu } from "lucide-react";
 
 export default function ChatContainer() {
   const {
@@ -25,6 +25,7 @@ export default function ChatContainer() {
 
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const endRef = useRef(null);
 
   const sharedRoomId =
@@ -32,21 +33,27 @@ export default function ChatContainer() {
       ? [authUser._id, selectedUser._id].sort().join("_")
       : null;
 
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Load messages when user changes
   useEffect(() => {
-    console.log(
-      "🎯 ChatContainer useEffect - selectedUser:",
-      selectedUser?._id
-    );
+    console.log("🎯 ChatContainer useEffect - selectedUser:", selectedUser?._id);
 
     if (!selectedUser?._id) {
       console.log("⏸️ No user selected, skipping message load");
       return;
     }
 
-    // 🟢 FIX: use fullName instead of name
     console.log("🚀 Loading messages for:", selectedUser.fullName);
-
     getMessages(selectedUser._id);
     subscribeToMessages();
 
@@ -82,7 +89,7 @@ export default function ChatContainer() {
         />
 
         {/* MESSAGES AREA */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
           {!selectedUser ? (
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-gray-500">
@@ -95,8 +102,6 @@ export default function ChatContainer() {
               <div className="text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-3"></div>
                 <div className="text-gray-600">Loading messages...</div>
-
-                {/* 🟢 FIX: use fullName instead of name */}
                 <div className="text-xs text-gray-400 mt-1">
                   with {selectedUser.fullName}
                 </div>
@@ -124,7 +129,7 @@ export default function ChatContainer() {
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {messages.map((msg) => (
                 <MessageBubble
                   key={msg._id}
@@ -141,7 +146,7 @@ export default function ChatContainer() {
 
         {/* MESSAGE INPUT */}
         {selectedUser && (
-          <div className="border-t border-base-300 bg-base-100 px-3 py-2">
+          <div className="border-t border-base-300 bg-base-100 px-3 py-3">
             <MessageInput />
           </div>
         )}
@@ -150,14 +155,14 @@ export default function ChatContainer() {
       {/* ===================== WHITEBOARD SLIDE ===================== */}
       <div
         className={`
-          fixed top-0 right-0 h-full w-[85%] max-w-sm bg-base-100
+          fixed top-0 right-0 h-full w-full sm:w-[85%] sm:max-w-sm bg-base-100
           border-l border-base-300 z-50
           transform transition-transform duration-300
           ${showWhiteboard ? "translate-x-0" : "translate-x-full"}
         `}
       >
         <button
-          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full z-10"
+          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full z-10 hover:bg-base-400 transition-colors"
           onClick={() => setShowWhiteboard(false)}
         >
           <X size={18} />
@@ -170,7 +175,7 @@ export default function ChatContainer() {
 
       {showWhiteboard && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 z-40"
           onClick={() => setShowWhiteboard(false)}
         />
       )}
@@ -178,14 +183,14 @@ export default function ChatContainer() {
       {/* ===================== MUSIC PLAYER SLIDE ===================== */}
       <div
         className={`
-          fixed top-0 right-0 h-full w-[85%] max-w-sm bg-base-100
+          fixed top-0 right-0 h-full w-full sm:w-[85%] sm:max-w-sm bg-base-100
           border-l border-base-300 z-50
           transform transition-transform duration-300
           ${isMusicPlayerOpen ? "translate-x-0" : "translate-x-full"}
         `}
       >
         <button
-          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full z-10"
+          className="absolute top-3 right-3 bg-base-300 p-2 rounded-full z-10 hover:bg-base-400 transition-colors"
           onClick={() => toggleMusicPlayer(false)}
         >
           <X size={18} />
@@ -198,7 +203,7 @@ export default function ChatContainer() {
 
       {isMusicPlayerOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 z-40"
           onClick={() => toggleMusicPlayer(false)}
         />
       )}

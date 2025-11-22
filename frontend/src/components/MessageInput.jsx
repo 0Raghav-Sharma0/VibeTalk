@@ -1,14 +1,13 @@
 // src/components/MessageInput.jsx
-import React, { useRef, useState } from "react";
-import { Image, Send, X, FileVideo, Smile, Paperclip } from "lucide-react";
+import React, { useRef, useState, useEffect } from "react";
+import { Image, Send, X, FileVideo, Smile, Paperclip, Mic } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
-import { axiosInstance } from "../lib/axios";       // 🔥 AUTHENTICATED AXIOS
+import { axiosInstance } from "../lib/axios";
 import messageSentSound from "/sent_message.mp3";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 
-const messageSentAudio =
-  typeof Audio !== "undefined" ? new Audio(messageSentSound) : null;
+const messageSentAudio = typeof Audio !== "undefined" ? new Audio(messageSentSound) : null;
 
 const MessageInput = () => {
   const [text, setText] = useState("");
@@ -16,6 +15,7 @@ const MessageInput = () => {
   const [videoPreview, setVideoPreview] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -24,7 +24,17 @@ const MessageInput = () => {
   const { sendMessage, selectedUser } = useChatStore();
   const { authUser, socket } = useAuthStore();
 
-  /* 🔥 TYPING EVENT */
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleTyping = (value) => {
     setText(value);
     if (!selectedUser) return;
@@ -38,7 +48,6 @@ const MessageInput = () => {
 
   const handleEmojiClick = (emoji) => handleTyping(text + emoji.emoji);
 
-  /* 📎 FILE UPLOAD HANDLER (FIXED WITH TOKEN) */
   const handleFileUpload = async (e) => {
     try {
       const file = e.target.files?.[0];
@@ -49,17 +58,15 @@ const MessageInput = () => {
       const form = new FormData();
       form.append("file", file);
 
-      // 🔥 TOKEN SAFE UPLOAD USING axiosInstance
       const res = await axiosInstance.post(
         "/messages/upload-file",
         form,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      // Send message with file included
       await sendMessage({
         text: "",
-        file: res.data, // { url, name, size, type }
+        file: res.data,
       });
 
       setFilePreview(null);
@@ -68,7 +75,6 @@ const MessageInput = () => {
     }
   };
 
-  /* SEND MESSAGE */
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!selectedUser) return;
@@ -79,7 +85,6 @@ const MessageInput = () => {
       let imageUrl = null;
       let videoUrl = null;
 
-      // IMAGE UPLOAD
       if (imagePreview && imageInputRef.current?.files?.[0]) {
         const form = new FormData();
         form.append("file", imageInputRef.current.files[0]);
@@ -93,7 +98,6 @@ const MessageInput = () => {
         imageUrl = res.secure_url;
       }
 
-      // VIDEO UPLOAD
       if (videoPreview && videoInputRef.current?.files?.[0]) {
         const form = new FormData();
         form.append("file", videoInputRef.current.files[0]);
@@ -107,7 +111,6 @@ const MessageInput = () => {
         videoUrl = res.secure_url;
       }
 
-      // SEND MESSAGE
       await sendMessage({
         text: text.trim(),
         image: imageUrl,
@@ -119,7 +122,6 @@ const MessageInput = () => {
         messageSentAudio.play();
       }
 
-      // STOP TYPING
       socket.emit("typing", {
         senderId: authUser._id,
         receiverId: selectedUser._id,
@@ -161,7 +163,7 @@ const MessageInput = () => {
               setVideoPreview(null);
               setFilePreview(null);
             }}
-            className="w-7 h-7 rounded-full bg-base-300 border flex items-center justify-center"
+            className="w-7 h-7 rounded-full bg-base-300 border flex items-center justify-center hover:bg-base-400 transition-colors"
           >
             <X size={14} />
           </button>
@@ -170,8 +172,15 @@ const MessageInput = () => {
 
       {/* EMOJI PICKER */}
       {showEmojiPicker && (
-        <div className="absolute bottom-14 left-0 z-30 border rounded-xl bg-base-200 shadow-lg p-2">
-          <EmojiPicker onEmojiClick={handleEmojiClick} theme="auto" />
+        <div className={`absolute bottom-14 left-0 z-30 border rounded-xl bg-base-200 shadow-lg p-2 ${
+          isMobile ? 'w-full' : ''
+        }`}>
+          <EmojiPicker 
+            onEmojiClick={handleEmojiClick} 
+            theme="auto" 
+            width={isMobile ? '100%' : '350px'}
+            height={isMobile ? '400px' : '400px'}
+          />
         </div>
       )}
 
@@ -179,73 +188,106 @@ const MessageInput = () => {
         onSubmit={handleSendMessage}
         className="flex items-center w-full gap-2 bg-base-200 border border-base-300 rounded-xl px-3 py-2"
       >
-        <button
-          type="button"
-          onClick={() => setShowEmojiPicker((s) => !s)}
-          className="text-base-content/60 shrink-0"
-        >
-          <Smile size={20} />
-        </button>
+        {/* Emoji Button - Hidden on mobile when keyboard is active */}
+        {!isMobile && (
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((s) => !s)}
+            className="text-base-content/60 shrink-0 hover:text-base-content transition-colors"
+          >
+            <Smile size={20} />
+          </button>
+        )}
 
         <input
           type="text"
           placeholder="Type a message..."
-          className="flex-1 bg-transparent outline-none text-sm"
+          className="flex-1 bg-transparent outline-none text-sm min-w-0"
           value={text}
           onChange={(e) => handleTyping(e.target.value)}
         />
 
-        {/* IMAGE */}
-        <input
-          type="file"
-          accept="image/*"
-          ref={imageInputRef}
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => setImagePreview(reader.result);
-            reader.readAsDataURL(file);
-          }}
-        />
-        <button onClick={() => imageInputRef.current?.click()} type="button" className="text-base-content/60">
-          <Image size={18} />
-        </button>
+        {/* Action Buttons - Conditional rendering for mobile */}
+        <div className="flex items-center gap-1">
+          {/* Show emoji button on mobile in a different position */}
+          {isMobile && (
+            <button 
+              type="button"
+              onClick={() => setShowEmojiPicker((s) => !s)}
+              className="text-base-content/60 p-2 hover:text-base-content transition-colors"
+            >
+              <Smile size={18} />
+            </button>
+          )}
 
-        {/* VIDEO */}
-        <input
-          type="file"
-          accept="video/*"
-          ref={videoInputRef}
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onloadend = () => setVideoPreview(reader.result);
-            reader.readAsDataURL(file);
-          }}
-        />
-        <button onClick={() => videoInputRef.current?.click()} type="button" className="text-base-content/60">
-          <FileVideo size={18} />
-        </button>
+          {/* Image Upload */}
+          <input
+            type="file"
+            accept="image/*"
+            ref={imageInputRef}
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onloadend = () => setImagePreview(reader.result);
+              reader.readAsDataURL(file);
+            }}
+          />
+          <button 
+            onClick={() => imageInputRef.current?.click()} 
+            type="button" 
+            className="text-base-content/60 p-2 hover:text-base-content transition-colors"
+          >
+            <Image size={18} />
+          </button>
 
-        {/* FILE */}
-        <input
-          type="file"
-          ref={fileInputRef}
-          className="hidden"
-          onChange={handleFileUpload}
-        />
-        <button onClick={() => fileInputRef.current?.click()} type="button" className="text-base-content/60">
-          <Paperclip size={18} />
-        </button>
+          {/* Video Upload - Hidden on mobile to save space */}
+          {!isMobile && (
+            <>
+              <input
+                type="file"
+                accept="video/*"
+                ref={videoInputRef}
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onloadend = () => setVideoPreview(reader.result);
+                  reader.readAsDataURL(file);
+                }}
+              />
+              <button 
+                onClick={() => videoInputRef.current?.click()} 
+                type="button" 
+                className="text-base-content/60 p-2 hover:text-base-content transition-colors"
+              >
+                <FileVideo size={18} />
+              </button>
+            </>
+          )}
+
+          {/* File Upload */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            onChange={handleFileUpload}
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()} 
+            type="button" 
+            className="text-base-content/60 p-2 hover:text-base-content transition-colors"
+          >
+            <Paperclip size={18} />
+          </button>
+        </div>
 
         <button
           type="submit"
           disabled={!text.trim() && !imagePreview && !videoPreview}
-          className="w-9 h-9 rounded-full bg-primary text-primary-content flex items-center justify-center disabled:opacity-50 active:scale-95"
+          className="w-9 h-9 rounded-full bg-primary text-primary-content flex items-center justify-center disabled:opacity-50 active:scale-95 transition-transform hover:bg-primary/90"
         >
           <Send size={16} />
         </button>
