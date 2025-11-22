@@ -1,3 +1,4 @@
+// src/App.jsx
 import React, { useEffect } from "react";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
@@ -10,7 +11,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore.js";
 import { useVideoCallStore } from "./store/useVideoCallStore";
 import { useThemeStore } from "./store/useThemeStore.js";
-import { useChatStore } from "./store/useChatStore.js";   // ⭐ MUST IMPORT THIS
+import { useChatStore } from "./store/useChatStore.js";
 import { Toaster } from "react-hot-toast";
 import "ldrs/grid";
 
@@ -34,20 +35,7 @@ const App = () => {
     setTheme(savedTheme);
   }, [setTheme]);
 
-  // Incoming call listener
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleIncomingCall = (data) => {
-      const { from, offer, callType } = data;
-      useVideoCallStore.getState().setIncomingCall(from, offer, callType);
-    };
-
-    socket.on("incoming-call", handleIncomingCall);
-    return () => socket.off("incoming-call", handleIncomingCall);
-  }, [socket]);
-
-  // ⭐⭐⭐ GLOBAL CHAT NOTIFICATION LISTENER — FIXES YOUR PROBLEM ⭐⭐⭐
+  // ⭐⭐⭐ GLOBAL CHAT NOTIFICATION LISTENER ⭐⭐⭐
   useEffect(() => {
     if (!socket) return;
 
