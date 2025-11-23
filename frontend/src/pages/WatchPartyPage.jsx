@@ -10,20 +10,55 @@ const WatchPartyPage = () => {
   const [joinRoomId, setJoinRoomId] = useState('');
   const [videoType, setVideoType] = useState('youtube');
 
-  const handleCreateRoom = () => {
+  const [statusMessage, setStatusMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [isJoining, setIsJoining] = useState(false);
+
+  const handleCreateRoom = async () => {
+    setErrorMessage('');
+    console.log('📺 Create button clicked on lobby');
+
     if (!videoUrl.trim()) {
-      alert('Please enter a video URL');
+      setErrorMessage('Please enter a video URL first.');
       return;
     }
-    createRoom(videoUrl, videoType);
+
+    try {
+      setIsCreating(true);
+      setStatusMessage('Creating room…');
+      console.log('🎬 Calling createRoom with:', { videoUrl, videoType });
+      await createRoom(videoUrl.trim(), videoType);
+      setStatusMessage('Room created! Joining…');
+    } catch (err) {
+      console.error('❌ Error creating room:', err);
+      setErrorMessage('Failed to create room. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleJoinRoom = () => {
+  const handleJoinRoom = async () => {
+    setErrorMessage('');
+    console.log('👥 Join button clicked on lobby');
+
     if (!joinRoomId.trim()) {
-      alert('Please enter a room ID');
+      setErrorMessage('Please enter a room ID first.');
       return;
     }
-    joinRoom(joinRoomId);
+
+    try {
+      setIsJoining(true);
+      setStatusMessage('Joining room…');
+      console.log('🎬 Calling joinRoom with:', { joinRoomId });
+      await joinRoom(joinRoomId.trim());
+      setStatusMessage('Joined room!');
+    } catch (err) {
+      console.error('❌ Error joining room:', err);
+      setErrorMessage('Failed to join room. Please check the Room ID.');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -32,8 +67,11 @@ const WatchPartyPage = () => {
       const url = URL.createObjectURL(file);
       setVideoUrl(url);
       setVideoType('local');
+      setErrorMessage('');
+      setStatusMessage('Local video selected.');
+      console.log('📁 Selected local video file:', file.name);
     } else {
-      alert('Please select a valid video file');
+      setErrorMessage('Please select a valid video file.');
     }
   };
 
@@ -47,21 +85,48 @@ const WatchPartyPage = () => {
     <div className="watchparty-lobby">
       <div className="lobby-container">
         <h1 className="lobby-title">🎬 Watch Party</h1>
-        <p className="lobby-subtitle">Watch videos together in sync with your friends!</p>
+        <p className="lobby-subtitle">
+          Watch videos together in sync with your friends!
+        </p>
+
+        {/* Simple debug / feedback for mobile */}
+        {(statusMessage || errorMessage) && (
+          <div
+            className="lobby-status-banner"
+            style={{
+              marginBottom: '1rem',
+              padding: '0.75rem 1rem',
+              borderRadius: '0.75rem',
+              fontSize: '0.9rem',
+              fontWeight: 500,
+              background: errorMessage
+                ? 'rgba(239, 68, 68, 0.1)'
+                : 'rgba(59, 130, 246, 0.12)',
+              border: `1px solid ${
+                errorMessage ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.4)'
+              }`,
+              color: errorMessage ? '#fca5a5' : '#bfdbfe',
+            }}
+          >
+            {errorMessage || statusMessage}
+          </div>
+        )}
 
         <div className="lobby-content">
           {/* Create Room Section */}
           <div className="lobby-section">
             <h2>Create a Watch Party</h2>
-            
+
             <div className="video-type-selector">
               <button
+                type="button"
                 className={`type-btn ${videoType === 'youtube' ? 'active' : ''}`}
                 onClick={() => setVideoType('youtube')}
               >
                 📺 YouTube
               </button>
               <button
+                type="button"
                 className={`type-btn ${videoType === 'local' ? 'active' : ''}`}
                 onClick={() => setVideoType('local')}
               >
@@ -90,12 +155,19 @@ const WatchPartyPage = () => {
                     style={{ display: 'none' }}
                   />
                 </label>
-                {videoUrl && <span className="file-selected">✓ File selected</span>}
+                {videoUrl && (
+                  <span className="file-selected">✓ File selected</span>
+                )}
               </div>
             )}
 
-            <button onClick={handleCreateRoom} className="primary-btn">
-              Create Room
+            <button
+              type="button"
+              onClick={handleCreateRoom}
+              className="primary-btn"
+              disabled={isCreating}
+            >
+              {isCreating ? 'Creating…' : 'Create Room'}
             </button>
           </div>
 
@@ -115,8 +187,13 @@ const WatchPartyPage = () => {
                 className="lobby-input"
               />
             </div>
-            <button onClick={handleJoinRoom} className="secondary-btn">
-              Join Room
+            <button
+              type="button"
+              onClick={handleJoinRoom}
+              className="secondary-btn"
+              disabled={isJoining}
+            >
+              {isJoining ? 'Joining…' : 'Join Room'}
             </button>
           </div>
         </div>
