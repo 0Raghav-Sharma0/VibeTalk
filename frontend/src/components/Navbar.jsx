@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, User, MessageSquare, Users } from "lucide-react";
+import { LogOut, Settings, User, MessageSquare, Users, Film } from "lucide-react";
 
 const Navbar = ({ onOpenSidebar }) => {
   const { logout, authUser } = useAuthStore();
@@ -32,6 +32,23 @@ const Navbar = ({ onOpenSidebar }) => {
 
         {/* RIGHT SECTION */}
         <div className="flex items-center gap-3">
+
+          {/* WATCH PARTY BUTTON - ADD THIS */}
+          <Link
+            to="/watch-party"
+            className="
+              px-3 py-1.5 rounded-md text-sm font-medium
+              bg-gradient-to-r from-purple-500 to-pink-500 
+              text-white border border-purple-600
+              hover:from-purple-600 hover:to-pink-600
+              hover:shadow-lg hover:scale-105
+              transition-all duration-200
+              flex items-center gap-2
+            "
+          >
+            <Film className="w-4 h-4" />
+            <span className="hidden sm:inline">Watch Party</span>
+          </Link>
 
           {/* SETTINGS */}
           <Link
@@ -68,7 +85,7 @@ const Navbar = ({ onOpenSidebar }) => {
                 </div>
               </Link>
 
-              {/* 🔥 FIXED LOGOUT BUTTON (LIGHT MODE SAFE) */}
+              {/* LOGOUT BUTTON */}
               <button
                 onClick={logout}
                 className="

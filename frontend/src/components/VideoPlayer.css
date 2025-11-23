@@ -1,0 +1,44 @@
+/* src/components/VideoPlayer.css */
+.video-player-container {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.youtube-player {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.local-video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+/* Ensure YouTube player fills container */
+#youtube-player {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Mobile video player styles */
+@media (max-width: 768px) {
+  .video-player-container {
+    aspect-ratio: 16/9;
+    height: auto;
+    max-height: 50vh;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-player-container {
+    max-height: 40vh;
+  }
+}

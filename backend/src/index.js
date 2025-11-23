@@ -1,3 +1,4 @@
+// src/index.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
@@ -11,7 +12,6 @@ import messageRoutes from "./routes/message.route.js";
 import cloudinary from "./lib/cloudinary.js";
 
 import { createSocketServer } from "./lib/socket.js";
-
 
 dotenv.config();
 
@@ -55,13 +55,23 @@ app.use(
 /* =====================================================
    SOCKET.IO INIT
 ===================================================== */
-createSocketServer(server);
+const io = createSocketServer(server);
+
+// Optional: Log socket stats periodically (useful for monitoring)
+if (process.env.NODE_ENV === 'production') {
+  setInterval(() => {
+    const connectedClients = io.engine.clientsCount;
+    console.log(`📊 Connected clients: ${connectedClients}`);
+  }, 300000); // Every 5 minutes
+}
 
 /* =====================================================
    START SERVER
 ===================================================== */
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 Socket.IO initialized`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
   connectDB();
 });
 
@@ -76,3 +86,34 @@ server.listen(PORT, () => {
     console.error("❌ Cloudinary Error:", err);
   }
 })();
+
+/* =====================================================
+   GRACEFUL SHUTDOWN
+===================================================== */
+process.on('SIGTERM', () => {
+  console.log('⚠️  SIGTERM signal received: closing HTTP server');
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('⚠️  SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    console.log('✅ HTTP server closed');
+    process.exit(0);
+  });
+});
+
+/* =====================================================
+   ERROR HANDLING
+===================================================== */
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});

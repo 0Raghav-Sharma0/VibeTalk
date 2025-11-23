@@ -1,3 +1,4 @@
+// src/store/useAuthStore.js
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
@@ -121,7 +122,15 @@ export const useAuthStore = create((set, get) => ({
 
     const sock = io(BASE_URL, {
       query: { userId: authUser._id },
-      transports: ["websocket"],
+      auth: {
+        token: localStorage.getItem("token"),
+        userId: authUser._id,
+        username: authUser.username || authUser.fullName || "User"
+      },
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
     });
 
     sock.on("connect", () => {
@@ -138,6 +147,9 @@ export const useAuthStore = create((set, get) => ({
       set({ onlineUsers: [] });
     });
 
+    // ============================================
+    // EXISTING SOCKET LISTENERS
+    // ============================================
     sock.off("getOnlineUsers");
     sock.on("getOnlineUsers", (ids) => {
       const safe = Array.isArray(ids) ? ids : [];
@@ -191,6 +203,31 @@ export const useAuthStore = create((set, get) => ({
         const { resetCallState } = useVideoCallStore.getState();
         resetCallState();
       });
+    });
+
+    // ============================================
+    // WATCH PARTY SOCKET LISTENERS (NEW)
+    // ============================================
+    
+    // Note: These are handled in WatchPartyContext, but we ensure
+    // the socket is properly configured to support them
+    
+    sock.off("watchparty:room-created");
+    sock.off("watchparty:room-joined");
+    sock.off("watchparty:participants-updated");
+    sock.off("watchparty:state-synced");
+    sock.off("watchparty:reaction-received");
+    sock.off("watchparty:chat-received");
+    sock.off("watchparty:error");
+
+    // Watch party notification handlers (optional)
+    sock.on("watchparty:room-created", (data) => {
+      console.log("🎬 Watch party room created:", data.roomId);
+    });
+
+    sock.on("watchparty:error", (error) => {
+      console.error("🎬 Watch party error:", error);
+      toast.error(error.message || "Watch party error occurred");
     });
 
     set({ socket: sock });

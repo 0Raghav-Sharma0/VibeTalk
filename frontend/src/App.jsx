@@ -6,13 +6,16 @@ import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
+import WatchPartyPage from "./pages/WatchPartyPage";
 import VideoCall from "./components/VideoCall";
-import CallListener from "./components/CallListener"; // ⭐ ADD THIS
+import CallListener from "./components/CallListener";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore.js";
 import { useVideoCallStore } from "./store/useVideoCallStore";
 import { useThemeStore } from "./store/useThemeStore.js";
 import { useChatStore } from "./store/useChatStore.js";
+import { SocketProvider } from "./contexts/SocketContext"; // ADD THIS IMPORT
+import { WatchPartyProvider } from "./contexts/WatchPartyContext";
 import { Toaster } from "react-hot-toast";
 import "ldrs/grid";
 
@@ -23,26 +26,24 @@ const App = () => {
   // Check authentication on mount
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   // Apply theme
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
-  // Load theme from localStorage
+  // Load theme from localStorage on initial load
   useEffect(() => {
     const savedTheme = localStorage.getItem("chat-theme") || "vibetalk";
     setTheme(savedTheme);
   }, [setTheme]);
 
-  // ⭐⭐⭐ GLOBAL CHAT NOTIFICATION LISTENER ⭐⭐⭐
+  // Global chat notification listener
   useEffect(() => {
     if (!socket) return;
 
     const chatStore = useChatStore.getState();
-
-    // Attach the "newMessage" listener globally
     chatStore.subscribeToMessages();
 
     return () => {
@@ -60,61 +61,82 @@ const App = () => {
   }
 
   return (
-    <div
-      data-theme={theme || "vibetalk"}
-      className="min-h-screen bg-base-100 text-base-content transition-colors duration-500"
-    >
-      <Navbar />
+    <SocketProvider> {/* SOCKET PROVIDER MUST WRAP EVERYTHING */}
+      <WatchPartyProvider> {/* THEN WATCH PARTY PROVIDER */}
+        <div
+          data-theme={theme || "vibetalk"}
+          className="min-h-screen bg-base-100 text-base-content transition-colors duration-500"
+        >
+          {/* Only show Navbar when user is authenticated */}
+          {authUser && <Navbar />}
 
-      {/* ⭐ GLOBAL CALL LISTENER - ADD THIS ⭐ */}
-      <CallListener />
+          {/* Global call listener */}
+          <CallListener />
 
-      {/* ROUTES */}
-      <Routes>
-        <Route
-          path="/"
-          element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
-        />
+          {/* Routes */}
+          <Routes>
+            {/* Redirect root to home or login */}
+            <Route
+              path="/"
+              element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
+            />
 
-        <Route
-          path="/home"
-          element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
-        />
+            {/* Home route */}
+            <Route
+              path="/home"
+              element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
+            />
 
-        <Route
-          path="/signup"
-          element={!authUser ? <SignUpPage /> : <Navigate to="/signup" replace />}
-        />
+            {/* Watch Party route */}
+            <Route
+              path="/watch-party"
+              element={authUser ? <WatchPartyPage /> : <Navigate to="/login" replace />}
+            />
 
-        <Route
-          path="/login"
-          element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
-        />
+            {/* Auth routes - only accessible when NOT logged in */}
+            <Route
+              path="/signup"
+              element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
+            />
 
-        <Route
-          path="/settings"
-          element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />}
-        />
+            <Route
+              path="/login"
+              element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
+            />
 
-        <Route
-          path="/profile"
-          element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />}
-        />
-      </Routes>
+            {/* Protected routes - only accessible when logged in */}
+            <Route
+              path="/settings"
+              element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />}
+            />
 
-      {/* Always loaded video call UI */}
-      <VideoCall />
+            <Route
+              path="/profile"
+              element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />}
+            />
 
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          style: {
-            background: "var(--b2)",
-            color: "var(--bc)",
-          },
-        }}
-      />
-    </div>
+            {/* 404 fallback */}
+            <Route
+              path="*"
+              element={<Navigate to={authUser ? "/" : "/login"} replace />}
+            />
+          </Routes>
+
+          {/* Video call UI - always loaded but might be hidden */}
+          <VideoCall />
+
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: {
+                background: "var(--b2)",
+                color: "var(--bc)",
+              },
+            }}
+          />
+        </div>
+      </WatchPartyProvider>
+    </SocketProvider> //{/* CLOSE SOCKET PROVIDER */}
   );
 };
 

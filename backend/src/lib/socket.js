@@ -3,31 +3,47 @@ import { Server } from "socket.io";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
 
+// Import Watch Party Controllers
+import {
+  createRoom,
+  joinRoom,
+  leaveRoom,
+  syncPlayback,
+  sendReaction,
+  sendChatMessage,
+  handleDisconnect as handleWatchPartyDisconnect
+} from "../controllers/watchPartyController.js";
+
 /* ============================================================
-   ALLOWED ORIGINS
+   ALLOWED ORIGINS - UPDATED FOR WATCH PARTY
 ============================================================ */
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5174",
+  "http://localhost:5174", 
   "http://localhost:4173",
-  /^https:\/\/.*\.vercel\.app$/,
+  "http://localhost:3000",
   "https://blah-blah-jvc4.vercel.app",
   "https://blah-blah-hky1.vercel.app",
+  "https://blah-blah-2.onrender.com",
   "https://blah-blah-3.onrender.com",
   "https://visionary-hotteok-e390a5.netlify.app",
+  /^https:\/\/.*\.vercel\.app$/,
+  /^https:\/\/.*\.netlify\.app$/,
+  /^https:\/\/.*\.onrender\.com$/,
 ];
 
 function isOriginAllowed(origin) {
-  if (!origin) return false;
+  if (!origin) return true; // Allow mobile apps or non-browser clients
   if (allowedOrigins.includes(origin)) return true;
   return allowedOrigins.some((o) => o instanceof RegExp && o.test(origin));
 }
 
 /* ============================================================
-   SOCKET SERVER
+   SOCKET SERVER - FIXED CORS CONFIG
 ============================================================ */
 let io = null;
 const userSocketMap = {}; // { userId: socketId }
+const watchPartyRooms = new Map(); // Track watch party rooms
 
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
@@ -36,41 +52,67 @@ export function getReceiverSocketId(userId) {
 export function createSocketServer(server) {
   io = new Server(server, {
     cors: {
-      origin: (origin, callback) => {
-        if (!origin || isOriginAllowed(origin)) callback(null, true);
-        else callback(new Error("CORS Not Allowed"));
+      origin: function (origin, callback) {
+        console.log(`🌐 CORS check for origin: ${origin}`);
+        if (isOriginAllowed(origin)) {
+          callback(null, true);
+        } else {
+          console.warn(`❌ CORS blocked: ${origin}`);
+          callback(new Error("CORS Not Allowed"));
+        }
       },
       credentials: true,
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
     },
-    pingTimeout: 60000, // Increase timeout for video calls
+    transports: ['websocket', 'polling'], // Add polling as fallback
+    pingTimeout: 60000,
     pingInterval: 25000,
+    connectTimeout: 45000,
   });
 
-  console.log("🔥 Socket.IO Initialized");
+  console.log("🔥 Socket.IO Initialized with enhanced CORS");
+
+  // FIXED: Remove the problematic raw connection handler that was causing the error
+  // io.engine.on("connection", (rawSocket) => {
+  //   console.log(`🔗 Raw connection from: ${rawSocket._req.headers.origin}`);
+  // });
 
   io.on("connection", (socket) => {
     console.log("🟢 Socket connected:", socket.id);
+    console.log("📧 Handshake query:", socket.handshake.query);
+    console.log("🔐 Handshake auth:", socket.handshake.auth);
 
-    const userId = socket.handshake.query?.userId;
+    const userId = socket.handshake.query?.userId || socket.handshake.auth?.userId;
+    const username = socket.handshake.auth?.username || `User_${socket.id.substring(0, 6)}`;
+
+    // Store user info on socket
+    socket.userId = userId;
+    socket.username = username;
+
+    console.log(`👤 Socket user: ${username} (${userId})`);
 
     if (userId) {
-      // Clean up old mappings
-      for (const uid in userSocketMap) {
-        if (userSocketMap[uid] === socket.id) delete userSocketMap[uid];
-      }
-
-      // Remove previous connection for this user
-      const oldSocketId = userSocketMap[userId];
-      if (oldSocketId && oldSocketId !== socket.id) {
+      // Clean up old mappings for this user
+      if (userSocketMap[userId]) {
         console.log(`🔄 Replacing old connection for user ${userId}`);
+        const oldSocket = io.sockets.sockets.get(userSocketMap[userId]);
+        if (oldSocket) {
+          oldSocket.disconnect(true);
+        }
         delete userSocketMap[userId];
       }
 
       // Set new mapping
       userSocketMap[userId] = socket.id;
-      console.log(`👤 User Online: ${userId} -> ${socket.id}`);
+      console.log(`✅ User Online: ${userId} -> ${socket.id}`);
     }
+
+    // Emit connection success
+    socket.emit("connection-success", { 
+      socketId: socket.id, 
+      message: "Connected to server successfully" 
+    });
 
     // Emit online users
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
@@ -80,10 +122,12 @@ export function createSocketServer(server) {
     ============================================================ */
     socket.on("sendMessage", async (data) => {
       try {
+        console.log("💬 Received sendMessage:", data);
         const { senderId, receiverId, text, image, video, file } = data;
 
         if (!senderId || !receiverId) {
           console.error("❌ Missing senderId or receiverId");
+          socket.emit("message-error", { error: "Missing sender or receiver ID" });
           return;
         }
 
@@ -109,12 +153,13 @@ export function createSocketServer(server) {
         // Send to receiver if online
         if (targetSocket) {
           io.to(targetSocket).emit("newMessage", enrichedMessage);
+          console.log(`📤 Message sent to receiver: ${receiverId}`);
         }
 
         // Send back to sender for confirmation
-        io.to(socket.id).emit("newMessage", enrichedMessage);
+        socket.emit("newMessage", enrichedMessage);
         
-        console.log(`💬 Message sent: ${senderId} -> ${receiverId}`);
+        console.log(`✅ Message sent: ${senderId} -> ${receiverId}`);
       } catch (err) {
         console.error("❌ sendMessage error:", err);
         socket.emit("message-error", { error: "Failed to send message" });
@@ -126,6 +171,8 @@ export function createSocketServer(server) {
     ============================================================ */
     socket.on("typing", ({ senderId, receiverId, isTyping }) => {
       if (!senderId || !receiverId) return;
+      
+      console.log(`⌨️ Typing: ${senderId} -> ${receiverId} (${isTyping})`);
       
       const target = getReceiverSocketId(receiverId);
       if (target) {
@@ -142,7 +189,9 @@ export function createSocketServer(server) {
         
         const target = getReceiverSocketId(receiverId);
         if (target) io.to(target).emit("msg-delivered-update", { messageId });
-        io.to(socket.id).emit("msg-delivered-update", { messageId });
+        socket.emit("msg-delivered-update", { messageId });
+        
+        console.log(`✅ Message delivered: ${messageId}`);
       } catch (err) {
         console.error("❌ msg-delivered error:", err);
       }
@@ -159,6 +208,8 @@ export function createSocketServer(server) {
         if (target) {
           io.to(target).emit("msg-seen-update", { by: myId });
         }
+        
+        console.log(`👀 Messages seen by: ${myId}`);
       } catch (err) {
         console.error("❌ msg-seen error:", err);
       }
@@ -187,133 +238,164 @@ export function createSocketServer(server) {
       if (!payload?.roomId) return;
       socket.to(payload.roomId).emit("music-sync", payload);
     });
- /* ============================================================
-   VIDEO CALLING - CLEAN VERSION
-   Replace your entire video calling section with this
-============================================================ */
 
-// Step 1: Call initiation notification (no offer yet)
-socket.on("call-initiated", (data) => {
-  const { from, to, callType, callerName } = data;
-  
-  if (!to || !from || !callType) {
-    console.error("❌ Invalid call-initiated data");
-    return;
-  }
-
-  const target = getReceiverSocketId(to);
-  
-  if (!target) {
-    console.log(`❌ User ${to} is offline`);
-    socket.emit("call-failed", { 
-      reason: "User is offline",
-      userId: to 
-    });
-    return;
-  }
-
-  console.log(`📞 Call initiated: ${from} -> ${to} (${callType})`);
-  
-  // Just a simple notification - NO incoming-call event yet
-  // The actual call setup happens via call-signal
-});
-
-// Step 2: Handle ALL WebRTC signaling (offers, answers, ICE)
-socket.on("call-signal", (data) => {
-  const { to, from, data: signalData, callType } = data;
-  
-  if (!to || !from || !signalData) {
-    console.error("❌ Invalid call-signal data");
-    return;
-  }
-
-  const target = getReceiverSocketId(to);
-  
-  if (!target) {
-    console.log(`❌ User ${to} is offline`);
-    socket.emit("call-failed", { 
-      reason: "User is offline",
-      userId: to 
-    });
-    return;
-  }
-
-  const signalType = signalData.type || 'ice';
-  console.log(`📡 Forwarding ${signalType}: ${from} -> ${to}`);
-  
-  // ⭐ KEY FIX: Send incoming-call ONLY for offers
-  if (signalType === 'offer') {
-    console.log(`📞 Sending incoming call with offer to ${to}`);
-    io.to(target).emit("incoming-call", {
-      from,
-      callType: callType || "video",
-      callerName: "Caller",
-      offer: signalData,
-    });
-  } else {
-    // For answers and ICE candidates, forward via call-signal
-    io.to(target).emit("call-signal", {
-      to,
-      from,
-      data: signalData,
-      callType: callType || "video",
-    });
-  }
-});
-
-// End call
-socket.on("end-call", ({ targetUserId }) => {
-  if (!targetUserId) return;
-  
-  console.log(`📞 Call ended: ${userId} <-> ${targetUserId}`);
-  
-  const target = getReceiverSocketId(targetUserId);
-  if (target) {
-    io.to(target).emit("call-ended", { by: userId });
-  }
-  socket.emit("call-ended", { by: userId });
-});
-
-// Reject call
-socket.on("call-rejected", ({ callerId }) => {
-  if (!callerId) return;
-  
-  console.log(`❌ Call rejected by ${userId}, caller: ${callerId}`);
-  
-  const target = getReceiverSocketId(callerId);
-  if (target) {
-    io.to(target).emit("call-rejected", { by: userId });
-  }
-});
-
-// Call failed
-socket.on("call-failed", ({ targetUserId, reason }) => {
-  if (!targetUserId) return;
-  
-  const target = getReceiverSocketId(targetUserId);
-  if (target) {
-    io.to(target).emit("call-failed", { 
-      reason: reason || "Call failed",
-      from: userId 
-    });
-  }
-});
     /* ============================================================
-       DISCONNECT
+       VIDEO CALLING
     ============================================================ */
-    socket.on("disconnect", () => {
-      console.log("🔴 Socket disconnected:", socket.id);
+    socket.on("call-initiated", (data) => {
+      const { from, to, callType, callerName } = data;
+      
+      if (!to || !from || !callType) {
+        console.error("❌ Invalid call-initiated data");
+        return;
+      }
+
+      const target = getReceiverSocketId(to);
+      
+      if (!target) {
+        console.log(`❌ User ${to} is offline`);
+        socket.emit("call-failed", { 
+          reason: "User is offline",
+          userId: to 
+        });
+        return;
+      }
+
+      console.log(`📞 Call initiated: ${from} -> ${to} (${callType})`);
+      
+      // Forward the call initiation
+      io.to(target).emit("incoming-call", {
+        from,
+        callType,
+        callerName: callerName || "Caller",
+        socketId: socket.id
+      });
+    });
+
+    socket.on("call-signal", (data) => {
+      const { to, signal, callType } = data;
+      
+      if (!to || !signal) {
+        console.error("❌ Invalid call-signal data");
+        return;
+      }
+
+      const target = getReceiverSocketId(to);
+      
+      if (!target) {
+        console.log(`❌ User ${to} is offline`);
+        socket.emit("call-failed", { 
+          reason: "User is offline",
+          userId: to 
+        });
+        return;
+      }
+
+      console.log(`📡 Forwarding signal to: ${to}`);
+      
+      io.to(target).emit("call-signal", {
+        from: socket.userId,
+        signal,
+        callType: callType || "video"
+      });
+    });
+
+    socket.on("end-call", ({ targetUserId }) => {
+      if (!targetUserId) return;
+      
+      console.log(`📞 Call ended: ${socket.userId} -> ${targetUserId}`);
+      
+      const target = getReceiverSocketId(targetUserId);
+      if (target) {
+        io.to(target).emit("call-ended", { by: socket.userId });
+      }
+    });
+
+    socket.on("call-rejected", ({ callerId }) => {
+      if (!callerId) return;
+      
+      console.log(`❌ Call rejected by ${socket.userId}, caller: ${callerId}`);
+      
+      const target = getReceiverSocketId(callerId);
+      if (target) {
+        io.to(target).emit("call-rejected", { by: socket.userId });
+      }
+    });
+
+    /* ============================================================
+       WATCH PARTY EVENTS - ENHANCED
+    ============================================================ */
+    
+    // Create watch party room
+    socket.on("watchparty:create", (data) => {
+      console.log(`🎬 Creating watch party room:`, data);
+      createRoom(socket, data);
+    });
+
+    // Join watch party room
+    socket.on("watchparty:join", (data) => {
+      console.log(`🎬 User joining watch party:`, data);
+      joinRoom(socket, data);
+    });
+
+    // Leave watch party room
+    socket.on("watchparty:leave", (data) => {
+      console.log(`🎬 User leaving watch party:`, data);
+      leaveRoom(socket, data);
+    });
+
+    // Sync playback state
+    socket.on("watchparty:sync", (data) => {
+      console.log(`⏯️ Playback sync:`, data);
+      syncPlayback(socket, data);
+    });
+
+    // Send reaction
+    socket.on("watchparty:reaction", (data) => {
+      console.log(`❤️ Reaction:`, data);
+      sendReaction(socket, data);
+    });
+
+    // Send chat message
+    socket.on("watchparty:chat", (data) => {
+      console.log(`💬 Watch party chat:`, data);
+      sendChatMessage(socket, data);
+    });
+
+    // Watch party heartbeat/ping
+    socket.on("watchparty:ping", () => {
+      socket.emit("watchparty:pong", { timestamp: Date.now() });
+    });
+
+    /* ============================================================
+       DISCONNECT - ENHANCED CLEANUP
+    ============================================================ */
+    socket.on("disconnect", (reason) => {
+      console.log("🔴 Socket disconnected:", socket.id, "Reason:", reason);
       
       // Remove from userSocketMap
-      for (const uid in userSocketMap) {
-        if (userSocketMap[uid] === socket.id) {
-          console.log(`👤 User Offline: ${uid}`);
-          delete userSocketMap[uid];
-        }
+      if (socket.userId && userSocketMap[socket.userId] === socket.id) {
+        console.log(`👤 User Offline: ${socket.userId}`);
+        delete userSocketMap[socket.userId];
       }
+
+      // Handle watch party cleanup
+      handleWatchPartyDisconnect(socket);
 
       // Emit updated online users
       io.emit("getOnlineUsers", Object.keys(userSocketMap));
+      
+      console.log(`📊 Remaining online users: ${Object.keys(userSocketMap).length}`);
+    });
+
+    // Handle connection errors
+    socket.on("connect_error", (error) => {
+      console.error("❌ Socket connection error:", error.message);
+    });
+
+    // Handle ping/pong for connection health
+    socket.on("ping", () => {
+      socket.emit("pong", { timestamp: Date.now() });
     });
   });
 
@@ -324,3 +406,6 @@ export function getIO() {
   if (!io) throw new Error("Socket not initialized");
   return io;
 }
+
+// Export for watch party room management
+export { watchPartyRooms };
