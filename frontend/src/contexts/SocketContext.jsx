@@ -25,30 +25,50 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Get user info from localStorage if you have authentication
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const token = localStorage.getItem('token');
-    
-    // Initialize socket connection
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-    
+
+    // Prefer explicit socket envs, otherwise derive from backend
+    const backend = import.meta.env.VITE_BACKEND_URL;
+    const envSocket =
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_SOCKET_URI ||
+      backend;
+
+    let socketUrl = envSocket;
+
+    // Strip /api if you passed the full API URL
+    if (socketUrl && socketUrl.endsWith('/api')) {
+      socketUrl = socketUrl.slice(0, -4);
+    }
+
+    // Fallback for dev only
+    if (!socketUrl && import.meta.env.DEV) {
+      socketUrl = 'http://localhost:5000';
+    }
+
+    if (!socketUrl) {
+      console.error('❌ No socket URL configured');
+      return;
+    }
+
     console.log('🔌 Initializing socket connection to:', socketUrl);
-    
+
     const newSocket = io(socketUrl, {
       auth: {
         token: token,
         userId: user._id || null,
-        username: user.username || `Guest_${Math.random().toString(36).substr(2, 5)}`
+        username:
+          user.username || `Guest_${Math.random().toString(36).substr(2, 5)}`,
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       reconnectionAttempts: Infinity,
-      timeout: 20000
+      timeout: 20000,
     });
 
-    // Connection event listeners
     newSocket.on('connect', () => {
       console.log('✅ Socket connected:', newSocket.id);
       setIsConnected(true);
@@ -57,8 +77,6 @@ export const SocketProvider = ({ children }) => {
     newSocket.on('disconnect', (reason) => {
       console.log('❌ Socket disconnected:', reason);
       setIsConnected(false);
-      
-      // Auto-reconnect on certain disconnect reasons
       if (reason === 'io server disconnect') {
         newSocket.connect();
       }
@@ -92,7 +110,6 @@ export const SocketProvider = ({ children }) => {
 
     setSocket(newSocket);
 
-    // Cleanup on unmount
     return () => {
       if (newSocket) {
         console.log('🧹 Cleaning up socket connection');
@@ -102,13 +119,8 @@ export const SocketProvider = ({ children }) => {
     };
   }, []);
 
-  const value = {
-    socket,
-    isConnected
-  };
-
   return (
-    <SocketContext.Provider value={value}>
+    <SocketContext.Provider value={{ socket, isConnected }}>
       {children}
     </SocketContext.Provider>
   );
