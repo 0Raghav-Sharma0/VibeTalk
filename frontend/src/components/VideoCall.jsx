@@ -1,4 +1,4 @@
-// src/components/VideoCall.jsx
+// src/components/VideoCall.jsx - FIXED VERSION
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import Peer from "simple-peer";
 import { useVideoCallStore } from "../store/useVideoCallStore";
@@ -139,7 +139,10 @@ const VideoCall = () => {
         }
       }
 
-      console.log("✅ Local stream initialized");
+      console.log("✅ Local stream initialized", {
+        hasVideo: stream.getVideoTracks().length > 0,
+        hasAudio: stream.getAudioTracks().length > 0
+      });
       return stream;
     } catch (error) {
       console.error("❌ Media access error:", error);
@@ -190,13 +193,24 @@ const VideoCall = () => {
       return null;
     }
 
-    console.log(`🔗 Creating ${initiator ? 'initiator' : 'receiver'} peer`);
+    // ⭐ KEY FIX: Ensure stream exists before creating peer
+    if (!stream) {
+      console.error("❌ No stream available for peer connection");
+      return null;
+    }
+
+    console.log(`🔗 Creating ${initiator ? 'initiator' : 'receiver'} peer`, {
+      hasStream: !!stream,
+      streamTracks: stream.getTracks().length,
+      audioTracks: stream.getAudioTracks().length,
+      videoTracks: stream.getVideoTracks().length
+    });
 
     try {
       const peer = new Peer({
         initiator,
         trickle: true,
-        stream: stream || null,
+        stream, // ⭐ CRITICAL: Always pass the stream
         config: {
           iceServers: [
             { urls: "stun:stun.l.google.com:19302" },
@@ -209,7 +223,7 @@ const VideoCall = () => {
       peer.on("signal", (data) => {
         if (!socket || !mountedRef.current) return;
         
-        console.log("📡 Sending signal:", data.type);
+        console.log("📡 Sending signal:", data.type, "to:", targetUserId);
         socket.emit("call-signal", {
           to: targetUserId,
           from: authUser?._id,
@@ -218,17 +232,16 @@ const VideoCall = () => {
         });
       });
 
-      // ⭐ FIXED: Proper remote stream handling
       peer.on("stream", (remoteStream) => {
         if (!mountedRef.current) return;
         
         console.log("📹 Received remote stream", {
           hasVideo: remoteStream.getVideoTracks().length > 0,
           hasAudio: remoteStream.getAudioTracks().length > 0,
-          isVideo: callType === "video",
+          isVideoCall: callType === "video",
         });
         
-        // ⭐ KEY FIX: Attach to REMOTE elements only
+        // ⭐ Attach remote stream to appropriate element
         if (callType === "video") {
           if (remoteVideoRef.current) {
             console.log("🎥 Attaching remote VIDEO stream");
@@ -299,14 +312,18 @@ const VideoCall = () => {
     processingCallRef.current = true;
     setCallStatus("Calling...");
     
+    // ⭐ KEY FIX: Get stream FIRST, then create peer
     const stream = await initializeLocalStream();
     if (!stream) {
+      console.error("❌ Failed to get local stream");
       processingCallRef.current = false;
       return;
     }
 
+    console.log("📞 Creating initiator peer with stream");
     const peer = createPeerConnection(true, stream);
     if (!peer) {
+      console.error("❌ Failed to create peer");
       processingCallRef.current = false;
       cleanupStreams();
     }
@@ -314,7 +331,10 @@ const VideoCall = () => {
 
   const acceptCall = useCallback(async () => {
     if (processingCallRef.current || !callOffer) {
-      console.log("⏭️ Cannot accept call");
+      console.log("⏭️ Cannot accept call", { 
+        processing: processingCallRef.current, 
+        hasOffer: !!callOffer 
+      });
       return;
     }
 
@@ -322,20 +342,25 @@ const VideoCall = () => {
     setCallStatus("Accepting...");
     clearIncomingCall();
     
+    // ⭐ KEY FIX: Get stream FIRST, then create peer
     const stream = await initializeLocalStream();
     if (!stream) {
+      console.error("❌ Failed to get local stream");
       processingCallRef.current = false;
       return;
     }
 
+    console.log("📞 Creating receiver peer with stream");
     const peer = createPeerConnection(false, stream);
     if (!peer) {
+      console.error("❌ Failed to create peer");
       processingCallRef.current = false;
       cleanupStreams();
       return;
     }
 
     try {
+      console.log("📡 Signaling with offer");
       peer.signal(callOffer);
     } catch (error) {
       console.error("❌ Signal error:", error);
@@ -501,7 +526,7 @@ const VideoCall = () => {
     const handleSignal = (data) => {
       if (!data || data.to !== authUser?._id || !mountedRef.current) return;
 
-      console.log("📡 Received signal");
+      console.log("📡 Received signal:", data.data?.type);
 
       if (peerRef.current && !peerRef.current.destroyed) {
         try {
@@ -700,7 +725,7 @@ const VideoCall = () => {
 
         {/* Close Button */}
         <button
-          className="absolute top-6 right-6 w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center transition-colors"
+          className="absolute top-6 right-6 w-12 h-12 bg-black/40 hover:bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center transition-colors z-10"
           onClick={endCall}
         >
           <X size={24} className="text-white" />
