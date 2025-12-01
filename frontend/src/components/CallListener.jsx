@@ -15,15 +15,15 @@ const CallListener = () => {
     const handleIncomingCall = (data) => {
       console.log("📞 INCOMING CALL EVENT RECEIVED:", data);
       
-      const { from, callType, callerName } = data;
+      const { from, callType, callerName, offer } = data; // ⭐ Get offer data
       
       if (!from || !callType) {
         console.error("❌ Invalid incoming call data");
         return;
       }
 
-      // Set incoming call in store
-      setIncomingCall(from, null, callType);
+      // ⭐ KEY FIX: Pass the offer data to the store
+      setIncomingCall(from, offer, callType);
 
       // Show browser notification
       if ("Notification" in window) {

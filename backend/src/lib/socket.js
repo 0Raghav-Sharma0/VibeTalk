@@ -15,7 +15,7 @@ import {
 } from "../controllers/watchPartyController.js";
 
 /* ============================================================
-   ALLOWED ORIGINS - UPDATED FOR WATCH PARTY
+   ALLOWED ORIGINS
 ============================================================ */
 const allowedOrigins = [
   "http://localhost:5173",
@@ -33,17 +33,18 @@ const allowedOrigins = [
 ];
 
 function isOriginAllowed(origin) {
-  if (!origin) return true; // Allow mobile apps or non-browser clients
+  if (!origin) return true;
   if (allowedOrigins.includes(origin)) return true;
   return allowedOrigins.some((o) => o instanceof RegExp && o.test(origin));
 }
 
 /* ============================================================
-   SOCKET SERVER - FIXED CORS CONFIG
+   SOCKET SERVER
 ============================================================ */
 let io = null;
 const userSocketMap = {}; // { userId: socketId }
-const watchPartyRooms = new Map(); // Track watch party rooms
+const watchPartyRooms = new Map();
+const callOffers = new Map(); // ⭐ Store call offers temporarily
 
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
@@ -65,18 +66,13 @@ export function createSocketServer(server) {
       methods: ["GET", "POST", "PUT", "DELETE"],
       allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
     },
-    transports: ['websocket', 'polling'], // Add polling as fallback
+    transports: ['websocket', 'polling'],
     pingTimeout: 60000,
     pingInterval: 25000,
     connectTimeout: 45000,
   });
 
   console.log("🔥 Socket.IO Initialized with enhanced CORS");
-
-  // FIXED: Remove the problematic raw connection handler that was causing the error
-  // io.engine.on("connection", (rawSocket) => {
-  //   console.log(`🔗 Raw connection from: ${rawSocket._req.headers.origin}`);
-  // });
 
   io.on("connection", (socket) => {
     console.log("🟢 Socket connected:", socket.id);
@@ -86,14 +82,12 @@ export function createSocketServer(server) {
     const userId = socket.handshake.query?.userId || socket.handshake.auth?.userId;
     const username = socket.handshake.auth?.username || `User_${socket.id.substring(0, 6)}`;
 
-    // Store user info on socket
     socket.userId = userId;
     socket.username = username;
 
     console.log(`👤 Socket user: ${username} (${userId})`);
 
     if (userId) {
-      // Clean up old mappings for this user
       if (userSocketMap[userId]) {
         console.log(`🔄 Replacing old connection for user ${userId}`);
         const oldSocket = io.sockets.sockets.get(userSocketMap[userId]);
@@ -103,18 +97,15 @@ export function createSocketServer(server) {
         delete userSocketMap[userId];
       }
 
-      // Set new mapping
       userSocketMap[userId] = socket.id;
       console.log(`✅ User Online: ${userId} -> ${socket.id}`);
     }
 
-    // Emit connection success
     socket.emit("connection-success", { 
       socketId: socket.id, 
       message: "Connected to server successfully" 
     });
 
-    // Emit online users
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
     /* ============================================================
@@ -150,13 +141,11 @@ export function createSocketServer(server) {
 
         const targetSocket = getReceiverSocketId(receiverId);
 
-        // Send to receiver if online
         if (targetSocket) {
           io.to(targetSocket).emit("newMessage", enrichedMessage);
           console.log(`📤 Message sent to receiver: ${receiverId}`);
         }
 
-        // Send back to sender for confirmation
         socket.emit("newMessage", enrichedMessage);
         
         console.log(`✅ Message sent: ${senderId} -> ${receiverId}`);
@@ -240,9 +229,9 @@ export function createSocketServer(server) {
     });
 
     /* ============================================================
-       VIDEO CALLING
+       VIDEO CALLING - FIXED VERSION ⭐
     ============================================================ */
-    socket.on("call-initiated", (data) => {
+    socket.on("call-initiated", async (data) => {
       const { from, to, callType, callerName } = data;
       
       if (!to || !from || !callType) {
@@ -263,20 +252,35 @@ export function createSocketServer(server) {
 
       console.log(`📞 Call initiated: ${from} -> ${to} (${callType})`);
       
-      // Forward the call initiation
-      io.to(target).emit("incoming-call", {
-        from,
-        callType,
-        callerName: callerName || "Caller",
-        socketId: socket.id
-      });
+      try {
+        const caller = await User.findById(from).select("fullName profilePic");
+        
+        io.to(target).emit("incoming-call", {
+          from,
+          callType,
+          callerName: caller?.fullName || callerName || "Caller",
+          callerPic: caller?.profilePic,
+          socketId: socket.id
+        });
+      } catch (error) {
+        console.error("❌ Error fetching caller info:", error);
+        io.to(target).emit("incoming-call", {
+          from,
+          callType,
+          callerName: callerName || "Caller",
+          socketId: socket.id
+        });
+      }
     });
 
-    socket.on("call-signal", (data) => {
-      const { to, signal, callType } = data;
+    socket.on("call-signal", async (data) => {
+      const { to, from, signal, callType, data: signalData } = data;
       
-      if (!to || !signal) {
-        console.error("❌ Invalid call-signal data");
+      const actualSignal = signal || signalData;
+      const actualFrom = from || socket.userId;
+      
+      if (!to || !actualSignal) {
+        console.error("❌ Invalid call-signal data", { to, hasSignal: !!actualSignal });
         return;
       }
 
@@ -291,11 +295,48 @@ export function createSocketServer(server) {
         return;
       }
 
-      console.log(`📡 Forwarding signal to: ${to}`);
+      console.log(`📡 Signal type: ${actualSignal.type} from ${actualFrom} to ${to}`);
       
+      // ⭐ KEY FIX: If this is an OFFER, update incoming call with offer data
+      if (actualSignal.type === "offer") {
+        console.log("📞 Received OFFER - Updating incoming call with offer data");
+        
+        const callKey = `${actualFrom}-${to}`;
+        callOffers.set(callKey, {
+          offer: actualSignal,
+          timestamp: Date.now(),
+          callType: callType || "video"
+        });
+        
+        // Clean up old offers (older than 2 minutes)
+        for (const [key, value] of callOffers.entries()) {
+          if (Date.now() - value.timestamp > 120000) {
+            callOffers.delete(key);
+          }
+        }
+        
+        try {
+          const caller = await User.findById(actualFrom).select("fullName profilePic");
+          
+          // ⭐ Re-emit incoming-call WITH the offer
+          io.to(target).emit("incoming-call", {
+            from: actualFrom,
+            callType: callType || "video",
+            callerName: caller?.fullName || "Caller",
+            callerPic: caller?.profilePic,
+            offer: actualSignal, // ⭐ CRITICAL: Include the offer
+            socketId: socket.id
+          });
+        } catch (error) {
+          console.error("❌ Error fetching caller info:", error);
+        }
+      }
+      
+      // Forward signal to target
       io.to(target).emit("call-signal", {
-        from: socket.userId,
-        signal,
+        to,
+        from: actualFrom,
+        data: actualSignal,
         callType: callType || "video"
       });
     });
@@ -304,6 +345,9 @@ export function createSocketServer(server) {
       if (!targetUserId) return;
       
       console.log(`📞 Call ended: ${socket.userId} -> ${targetUserId}`);
+      
+      callOffers.delete(`${socket.userId}-${targetUserId}`);
+      callOffers.delete(`${targetUserId}-${socket.userId}`);
       
       const target = getReceiverSocketId(targetUserId);
       if (target) {
@@ -316,6 +360,8 @@ export function createSocketServer(server) {
       
       console.log(`❌ Call rejected by ${socket.userId}, caller: ${callerId}`);
       
+      callOffers.delete(`${callerId}-${socket.userId}`);
+      
       const target = getReceiverSocketId(callerId);
       if (target) {
         io.to(target).emit("call-rejected", { by: socket.userId });
@@ -323,46 +369,39 @@ export function createSocketServer(server) {
     });
 
     /* ============================================================
-       WATCH PARTY EVENTS - ENHANCED
+       WATCH PARTY EVENTS
     ============================================================ */
     
-    // Create watch party room
     socket.on("watchparty:create", (data) => {
       console.log(`🎬 Creating watch party room:`, data);
       createRoom(socket, data);
     });
 
-    // Join watch party room
     socket.on("watchparty:join", (data) => {
       console.log(`🎬 User joining watch party:`, data);
       joinRoom(socket, data);
     });
 
-    // Leave watch party room
     socket.on("watchparty:leave", (data) => {
       console.log(`🎬 User leaving watch party:`, data);
       leaveRoom(socket, data);
     });
 
-    // Sync playback state
     socket.on("watchparty:sync", (data) => {
       console.log(`⏯️ Playback sync:`, data);
       syncPlayback(socket, data);
     });
 
-    // Send reaction
     socket.on("watchparty:reaction", (data) => {
       console.log(`❤️ Reaction:`, data);
       sendReaction(socket, data);
     });
 
-    // Send chat message
     socket.on("watchparty:chat", (data) => {
       console.log(`💬 Watch party chat:`, data);
       sendChatMessage(socket, data);
     });
 
-    // Watch party heartbeat/ping
     socket.on("watchparty:ping", () => {
       socket.emit("watchparty:pong", { timestamp: Date.now() });
     });
@@ -373,27 +412,29 @@ export function createSocketServer(server) {
     socket.on("disconnect", (reason) => {
       console.log("🔴 Socket disconnected:", socket.id, "Reason:", reason);
       
-      // Remove from userSocketMap
       if (socket.userId && userSocketMap[socket.userId] === socket.id) {
         console.log(`👤 User Offline: ${socket.userId}`);
         delete userSocketMap[socket.userId];
+        
+        // ⭐ Clean up call offers
+        for (const [key] of callOffers.entries()) {
+          if (key.includes(socket.userId)) {
+            callOffers.delete(key);
+          }
+        }
       }
 
-      // Handle watch party cleanup
       handleWatchPartyDisconnect(socket);
 
-      // Emit updated online users
       io.emit("getOnlineUsers", Object.keys(userSocketMap));
       
       console.log(`📊 Remaining online users: ${Object.keys(userSocketMap).length}`);
     });
 
-    // Handle connection errors
     socket.on("connect_error", (error) => {
       console.error("❌ Socket connection error:", error.message);
     });
 
-    // Handle ping/pong for connection health
     socket.on("ping", () => {
       socket.emit("pong", { timestamp: Date.now() });
     });
@@ -407,5 +448,4 @@ export function getIO() {
   return io;
 }
 
-// Export for watch party room management
 export { watchPartyRooms };
