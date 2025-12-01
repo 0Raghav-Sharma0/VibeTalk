@@ -140,15 +140,20 @@ export default function Whiteboard({ roomId }) {
       let endX = data.endX;
       let endY = data.endY;
 
-      const looksNormalized = (v) =>
-        typeof v === "number" && v >= 0 && v <= 1;
+      // Better normalization detection:
+      // Check if the maximum absolute value is small (likely normalized)
+      // and the canvas is reasonably large (to avoid false positives)
+      const maxValue = Math.max(
+        Math.abs(startX),
+        Math.abs(startY),
+        Math.abs(endX),
+        Math.abs(endY)
+      );
 
-      if (
-        looksNormalized(startX) &&
-        looksNormalized(startY) &&
-        looksNormalized(endX) &&
-        looksNormalized(endY)
-      ) {
+      // If all values are small and canvas is large, they're likely normalized
+      const isNormalized = maxValue <= 1.5 && canvas.width > 50 && canvas.height > 50;
+
+      if (isNormalized) {
         startX = startX * canvas.width;
         startY = startY * canvas.height;
         endX = endX * canvas.width;
