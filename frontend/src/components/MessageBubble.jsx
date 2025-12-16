@@ -1,102 +1,268 @@
-import React from "react";
+import React, { useState } from "react";
+import {
+  File,
+  Download,
+  Copy,
+  Image as ImageIcon,
+  Video as VideoIcon,
+  Music,
+  FileText,
+  Archive,
+  Check,
+  CheckCheck,
+} from "lucide-react";
 import { formatMessageTime } from "../lib/utils";
-import { File, Download } from "lucide-react";
 
 export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
-  const getTick = () => (
-    <span className="text-[12px] font-semibold opacity-70">✓✓</span>
-  );
+  const [copied, setCopied] = useState(false);
+
+  // Safe defaults for props
+  const safeMsg = msg || {};
+  const safeAuthUser = authUser || {};
+  const safeSelectedUser = selectedUser || {};
+
+  const copyText = () => {
+    if (!safeMsg.text) return;
+    navigator.clipboard.writeText(safeMsg.text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1000);
+  };
+
+  const getFileIcon = (name) => {
+    if (!name) return <File size={20} />;
+    const ext = name.split(".").pop()?.toLowerCase();
+    if (!ext) return <File size={20} />;
+    
+    if (["jpg", "jpeg", "png", "gif", "webp", "svg", "bmp"].includes(ext)) 
+      return <ImageIcon size={20} />;
+    if (["mp4", "mov", "avi", "webm", "mkv", "flv"].includes(ext)) 
+      return <VideoIcon size={20} />;
+    if (["mp3", "wav", "ogg", "flac", "m4a"].includes(ext)) 
+      return <Music size={20} />;
+    if (["pdf", "doc", "docx", "txt", "rtf", "md"].includes(ext)) 
+      return <FileText size={20} />;
+    if (["zip", "rar", "7z", "tar", "gz"].includes(ext)) 
+      return <Archive size={20} />;
+    return <File size={20} />;
+  };
+
+  const isEmojiOnly =
+    safeMsg.text &&
+    safeMsg.text.length <= 6 &&
+    /^[\p{Emoji}\s]+$/u.test(safeMsg.text);
+
+  const getMessageStatus = () => {
+    if (!isMine) return null;
+    
+    if (safeMsg.read) {
+      return (
+        <span className="flex items-center gap-1 text-xs text-primary">
+          <CheckCheck size={12} />
+          Read
+        </span>
+      );
+    } else if (safeMsg.delivered) {
+      return (
+        <span className="flex items-center gap-1 text-xs text-base-content/60">
+          <CheckCheck size={12} />
+          Delivered
+        </span>
+      );
+    } else if (safeMsg.sent) {
+      return (
+        <span className="flex items-center gap-1 text-xs text-base-content/40">
+          <Check size={12} />
+          Sent
+        </span>
+      );
+    }
+    return null;
+  };
+
+  const handleImageClick = (imageUrl) => {
+    if (!imageUrl) return;
+    
+    // Create a modal for better image viewing
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/90 z-[9999] flex items-center justify-center';
+    modal.onclick = () => document.body.removeChild(modal);
+    
+    const img = document.createElement('img');
+    img.src = imageUrl;
+    img.className = 'max-w-[90vw] max-h-[90vh] object-contain rounded-lg';
+    img.onclick = (e) => e.stopPropagation();
+    
+    modal.appendChild(img);
+    document.body.appendChild(modal);
+  };
+
+  const formatFileSize = (size) => {
+    if (!size) return '';
+    if (size < 1024) return `${size} B`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   return (
-    <div
-      className={`flex items-end gap-2 mb-4 ${
-        isMine ? "justify-end" : "justify-start"
-      }`}
-    >
-      {/* Avatar (left) */}
+    <div className={`flex gap-2 mb-4 ${isMine ? "justify-end" : "justify-start"}`}>
+      {/* Sender avatar (left side) */}
       {!isMine && (
         <img
-          src={selectedUser?.profilePic || "/boy.png"}
-          className="w-7 h-7 rounded-full object-cover"
+          src={safeSelectedUser.profilePic || "/boy.png"}
+          className="w-8 h-8 rounded-full mt-5 flex-shrink-0"
+          alt={safeSelectedUser.fullName || "User"}
+          onError={(e) => {
+            e.target.src = "/boy.png";
+          }}
         />
       )}
 
-      {/* Bubble wrapper */}
-      <div className={`max-w-[70%] flex flex-col ${isMine && "items-end"}`}>
-        {/* Time */}
-        <span className="text-[11px] opacity-50 mb-1 px-1">
-          {formatMessageTime(msg.createdAt)}
-        </span>
+      <div className={`flex flex-col max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
+        {/* Message metadata */}
+        <div className={`flex items-center gap-2 mb-1 px-1 ${isMine ? 'flex-row-reverse' : ''}`}>
+          <span className="text-xs text-base-content/40">
+            {formatMessageTime(safeMsg.createdAt || safeMsg.timestamp)}
+          </span>
+          
+          {/* Message status (for my messages only) */}
+          {isMine && getMessageStatus()}
+        </div>
 
-        {/* Bubble */}
-        <div
-          className={`px-3 py-2 rounded-2xl text-sm shadow-sm ${
-            isMine
-              ? "bg-primary text-primary-content rounded-br-none"
-              : "bg-base-200 text-base-content rounded-bl-none"
-          }`}
-        >
-          {/* TEXT */}
-          {msg.text && <p className="leading-relaxed">{msg.text}</p>}
-
-          {/* IMAGE */}
-          {msg.image && (
-            <img
-              src={msg.image}
-              className="mt-2 rounded-xl max-w-[240px] shadow-sm cursor-pointer"
-              onClick={() => window.open(msg.image, "_blank")}
-            />
-          )}
-
-          {/* VIDEO */}
-          {msg.video && (
-            <video
-              controls
-              className="mt-2 rounded-xl max-w-[260px] shadow-sm"
+        {/* Message content container */}
+        <div className="relative group">
+          {/* Copy button for text messages */}
+          {safeMsg.text && !isEmojiOnly && (
+            <button
+              onClick={copyText}
+              className={`absolute -top-1 ${
+                isMine ? "-left-8" : "-right-8"
+              } opacity-0 group-hover:opacity-100 transition-all duration-200`}
+              aria-label="Copy message"
+              title="Copy message"
             >
-              <source src={msg.video} />
-            </video>
-          )}
-
-          {/* FILE BUBBLE (pdf, mp3, zip, pptx, docx, rar, etc.) */}
-          {msg.file?.url && (
-            <div
-              className="mt-2 flex items-center gap-3 p-2 rounded-xl 
-                         bg-black/5 dark:bg-white/10 shadow-sm cursor-pointer"
-            >
-              <File size={20} className="opacity-80" />
-
-              <div className="flex flex-col min-w-0">
-                <span className="font-medium text-[13px] truncate max-w-[160px]">
-                  {msg.file.name}
-                </span>
-                <span className="text-[11px] opacity-60">
-                  {(msg.file.size / 1024).toFixed(1)} KB
-                </span>
+              <div className="p-1.5 rounded-full bg-base-200 hover:bg-base-300 shadow-sm">
+                <Copy size={12} className="text-base-content/60" />
               </div>
+            </button>
+          )}
 
-              <a
-                href={msg.file.url}
-                download={msg.file.name}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-auto"
-              >
-                <Download size={18} className="opacity-80 hover:opacity-100" />
-              </a>
+          {/* Copied feedback */}
+          {copied && (
+            <div
+              className={`absolute -top-8 ${
+                isMine ? "left-0" : "right-0"
+              } text-xs bg-base-300 text-base-content px-2 py-1 rounded shadow z-10`}
+            >
+              Copied!
             </div>
           )}
 
-          {/* TICKS */}
-          {isMine && <div className="mt-1 text-[11px]">{getTick()}</div>}
+          {/* Message content */}
+          <div
+            className={`px-4 py-3 rounded-2xl shadow-sm min-w-[60px] ${
+              isEmojiOnly
+                ? "bg-transparent p-0 shadow-none"
+                : isMine
+                ? "bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/10"
+                : "bg-base-200 border border-base-300"
+            }`}
+          >
+            {/* Text content */}
+            {safeMsg.text && (
+              <p
+                className={`whitespace-pre-wrap break-words ${
+                  isEmojiOnly
+                    ? "text-4xl leading-none"
+                    : "text-sm leading-relaxed text-base-content"
+                }`}
+              >
+                {safeMsg.text}
+              </p>
+            )}
+
+            {/* Image content */}
+            {safeMsg.image && (
+              <div className="mt-2">
+                <img
+                  src={safeMsg.image}
+                  onClick={() => handleImageClick(safeMsg.image)}
+                  className="
+                    rounded-xl max-w-[240px] max-h-[240px]
+                    cursor-pointer hover:opacity-95 transition-opacity
+                    shadow-sm object-cover
+                  "
+                  alt="Shared image"
+                  onError={(e) => {
+                    console.error("Failed to load image:", safeMsg.image);
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Video content */}
+            {safeMsg.video && (
+              <div className="mt-2">
+                <video 
+                  controls 
+                  className="rounded-xl max-w-[260px]"
+                  onError={(e) => {
+                    console.error("Failed to load video:", safeMsg.video);
+                    e.target.innerHTML = '<div class="p-4 bg-base-200 rounded-xl text-sm text-base-content/60">Failed to load video</div>';
+                  }}
+                >
+                  <source src={safeMsg.video} type="video/mp4" />
+                  <source src={safeMsg.video} type="video/webm" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
+
+            {/* File attachment */}
+            {safeMsg.file?.url && (
+              <a
+                href={safeMsg.file.url}
+                target="_blank"
+                rel="noreferrer noopener"
+                download={safeMsg.file.name || "download"}
+                className="
+                  mt-2 flex items-center gap-3 p-3 rounded-xl
+                  bg-base-100 hover:bg-base-200 transition-all duration-200
+                  border border-base-300 hover:border-base-400
+                  no-underline text-inherit
+                "
+                onClick={(e) => {
+                  // Track download if needed
+                  console.log("Downloading file:", safeMsg.file.name);
+                }}
+              >
+                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                  {getFileIcon(safeMsg.file.name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate text-base-content">
+                    {safeMsg.file.name || "Download"}
+                  </p>
+                  <p className="text-xs text-base-content/60">
+                    {formatFileSize(safeMsg.file.size)}
+                  </p>
+                </div>
+                <Download size={16} className="text-base-content/60" />
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Avatar (right) */}
+      {/* My avatar (right side) */}
       {isMine && (
         <img
-          src={authUser.profilePic || "/boy.png"}
-          className="w-7 h-7 rounded-full object-cover"
+          src={safeAuthUser.profilePic || "/boy.png"}
+          className="w-8 h-8 rounded-full mt-5 flex-shrink-0"
+          alt={safeAuthUser.fullName || "You"}
+          onError={(e) => {
+            e.target.src = "/boy.png";
+          }}
         />
       )}
     </div>

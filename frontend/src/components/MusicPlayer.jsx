@@ -9,73 +9,66 @@ import { defineElement } from "@lordicon/element";
 
 defineElement(lottie.loadAnimation);
 
-// SOCKET
+/* ================= SOCKET ================= */
 const socket = io(
   import.meta.env.MODE === "development"
     ? "http://localhost:5001"
     : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com"
 );
 
-// UTILS
-const formatTime = (seconds) => {
-  if (!seconds && seconds !== 0) return "0:00";
-  const minutes = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${minutes}:${secs < 10 ? "0" : ""}${secs}`;
+/* ================= UTILS ================= */
+const formatTime = (seconds = 0) => {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s < 10 ? "0" : ""}${s}`;
 };
 
-const truncateText = (text, maxLength = 30) =>
-  typeof text === "string" && text.length > maxLength
-    ? text.slice(0, maxLength) + "..."
+const truncateText = (text, max = 30) =>
+  typeof text === "string" && text.length > max
+    ? text.slice(0, max) + "..."
     : text;
 
-// COMPONENT
+/* ================= COMPONENT ================= */
 const MusicPlayer = ({ roomId }) => {
   const {
     setCurrentSong,
     setIsPlaying,
     currentSong,
     songName,
-    isPlaying
+    isPlaying,
   } = useMusicStore();
 
-  const [uploadedSong, setUploadedSong] = useState(null);
-  const [uploadedSongName, setUploadedSongName] = useState(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [currentGif, setCurrentGif] = useState("/select_a_song.gif");
-  const [volume, setVolume] = useState(1);
-  const [showVisualizer, setShowVisualizer] = useState(false);
   const audioRef = useRef(null);
 
-  // GIF AUTO CHANGE
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [currentGif, setCurrentGif] = useState("/select_a_song.gif");
+  const [showVisualizer, setShowVisualizer] = useState(false);
+
+  /* ================= GIF ================= */
   useEffect(() => {
     setCurrentGif(isPlaying ? "/aesthetic.gif" : "/select_a_song.gif");
   }, [isPlaying]);
 
-  // JOIN ROOM
+  /* ================= JOIN ROOM ================= */
   useEffect(() => {
     if (roomId) socket.emit("join-room", roomId);
   }, [roomId]);
 
-  // ================================
-  // 🔥 HANDLE SYNC EVENT FROM SERVER
-  // ================================
+  /* ================= SOCKET SYNC ================= */
   useEffect(() => {
-    const handler = async ({ action, songUrl, songName: sName, currentTime: syncTime }) => {
-      if (!songUrl && action !== "pause") return;
-
+    const handler = ({ action, songUrl, songName, currentTime }) => {
       const audio = audioRef.current;
       if (!audio) return;
 
       if (action === "play") {
-        setCurrentSong(songUrl, sName);
+        setCurrentSong(songUrl, songName);
         setIsPlaying(true);
-
         audio.src = songUrl;
         audio.onloadedmetadata = () => {
           setDuration(audio.duration || 0);
-          if (syncTime) audio.currentTime = syncTime;
+          audio.currentTime = currentTime || 0;
           audio.play().catch(() => {});
         };
       }
@@ -83,29 +76,19 @@ const MusicPlayer = ({ roomId }) => {
       if (action === "pause") {
         setIsPlaying(false);
         audio.pause();
-        if (typeof syncTime === "number") audio.currentTime = syncTime;
       }
 
       if (action === "seek") {
-        audio.currentTime = syncTime;
-        setCurrentTime(syncTime);
+        audio.currentTime = currentTime;
+        setCurrentTime(currentTime);
       }
     };
 
     socket.on("music-sync", handler);
     return () => socket.off("music-sync", handler);
-  }, []);
+  }, [setCurrentSong, setIsPlaying]);
 
-  // LOCAL PLAY/PAUSE LISTENER
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isPlaying) audio.play().catch(() => {});
-    else audio.pause();
-  }, [isPlaying]);
-
-  // TIME + DURATION TRACKING
+  /* ================= AUDIO EVENTS ================= */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -122,62 +105,28 @@ const MusicPlayer = ({ roomId }) => {
     };
   }, []);
 
-  // VOLUME UPDATE
+  /* ================= VOLUME ================= */
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
-  // ================================
-  // 🔥 PLAY NEW SONG (LOCAL + SYNC)
-  // ================================
-  const playSong = (songUrl, name) => {
-    const truncated = truncateText(name, 40);
-
-    setCurrentSong(songUrl, truncated);
-    setIsPlaying(true);
-
-    const audio = audioRef.current;
-    if (audio) {
-      audio.src = songUrl;
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-    }
-
-    socket.emit("music-sync", {
-      roomId,
-      action: "play",
-      songUrl,
-      songName: truncated,
-      currentTime: 0
-    });
-  };
-
-  // ================================
-  // 🔥 PLAY / PAUSE SYNC
-  // ================================
+  /* ================= PLAY / PAUSE ================= */
   const togglePlayPause = () => {
-    const newState = !isPlaying;
     const audio = audioRef.current;
+    if (!audio || !currentSong) return;
 
-    setIsPlaying(newState);
-
-    if (audio) {
-      if (newState) audio.play().catch(() => {});
-      else audio.pause();
-    }
+    setIsPlaying(!isPlaying);
 
     socket.emit("music-sync", {
       roomId,
-      action: newState ? "play" : "pause",
+      action: isPlaying ? "pause" : "play",
       songUrl: currentSong,
       songName,
-      currentTime: audio?.currentTime || 0
+      currentTime: audio.currentTime,
     });
   };
 
-  // ================================
-  // 🔥 SEEK SYNC
-  // ================================
+  /* ================= SEEK ================= */
   const seek = (time) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -190,192 +139,172 @@ const MusicPlayer = ({ roomId }) => {
       action: "seek",
       songUrl: currentSong,
       songName,
-      currentTime: time
+      currentTime: time,
     });
   };
 
-  // ================================
-  // 🔥 SKIP SYNC
-  // ================================
-  const skip = (delta) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const newTime = Math.max(0, Math.min(audio.duration, audio.currentTime + delta));
-    audio.currentTime = newTime;
-    setCurrentTime(newTime);
-
-    socket.emit("music-sync", {
-      roomId,
-      action: "seek",
-      songUrl: currentSong,
-      songName,
-      currentTime: newTime
-    });
-  };
-
-  // ================================
-  // 🔥 FILE UPLOAD
-  // ================================
+  /* ================= MP3 UPLOAD (FIXED) ================= */
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const form = new FormData();
-    form.append("file", file);
-    form.append("upload_preset", "my_preset");
+    // ✅ MP3 ONLY
+    const isMp3 =
+      file.type === "audio/mpeg" ||
+      file.name.toLowerCase().endsWith(".mp3");
 
-    const res = await axios.post("https://api.cloudinary.com/v1_1/dbi3tuuli/upload", form);
-    const url = res.data.secure_url;
-    const name = file.name.replace(/\.[^/.]+$/, "");
-
-    setUploadedSong(url);
-    setUploadedSongName(name);
-    playSong(url, name);
-  };
-
-  // VISUALIZER
-  useEffect(() => {
-    if (!isPlaying) {
-      setShowVisualizer(false);
+    if (!isMp3) {
+      alert("❌ Only MP3 files are allowed");
+      e.target.value = "";
       return;
     }
+
+    // ✅ SIZE LIMIT (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert("❌ File too large (max 10MB)");
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("upload_preset", "my_preset");
+
+      const res = await axios.post(
+        "https://api.cloudinary.com/v1_1/dbi3tuuli/upload",
+        form
+      );
+
+      const name = truncateText(
+        file.name.replace(/\.[^/.]+$/, ""),
+        40
+      );
+
+      setCurrentSong(res.data.secure_url, name);
+      setIsPlaying(true);
+
+      const audio = audioRef.current;
+      audio.src = res.data.secure_url;
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+
+      socket.emit("music-sync", {
+        roomId,
+        action: "play",
+        songUrl: res.data.secure_url,
+        songName: name,
+        currentTime: 0,
+      });
+    } catch (err) {
+      console.error("Upload failed:", err);
+      alert("❌ Upload failed");
+    }
+  };
+
+  /* ================= VISUALIZER ================= */
+  useEffect(() => {
+    if (!isPlaying) return setShowVisualizer(false);
     const t = setTimeout(() => setShowVisualizer(true), 300);
     return () => clearTimeout(t);
   }, [isPlaying]);
 
-  // ==========================================
-  // UI RENDERING
-  // ==========================================
+  /* ================= UI ================= */
   return (
-    <div className="h-full flex flex-col bg-base-100 border-l border-base-300">
+    <div className="h-full flex flex-col bg-gradient-to-b from-base-100 via-base-200/60 to-base-300/40 border-l shadow-xl">
+
       {/* HEADER */}
-      <div className="px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden border bg-base-200">
-            <img src={currentGif} className="w-full h-full object-cover" />
-          </div>
-
-          <div className="min-w-0">
-            <h3 className="text-lg font-semibold truncate">{songName || "No song selected"}</h3>
-            <p className="text-xs opacity-60 truncate">{currentSong ? "Now playing" : "Idle"}</p>
+      <div className="px-6 py-4 flex justify-between items-center border-b">
+        <div className="flex items-center gap-4">
+          <img
+            src={currentGif}
+            className="w-14 h-14 rounded-xl object-cover"
+          />
+          <div>
+            <h3 className="font-semibold truncate">
+              {songName || "No song selected"}
+            </h3>
+            <p className="text-xs opacity-60">
+              {currentSong ? "🎶 Now Playing" : "Idle"}
+            </p>
           </div>
         </div>
 
-        {/* UPLOAD + PLAY */}
-        <div className="flex items-center gap-3">
-          <label htmlFor="upload" className="cursor-pointer">
-            <motion.div whileHover={{ scale: 1.1 }} className="p-2 rounded-md bg-base-200 border">
-              <lord-icon src="/wired-flat-1093-add-song-hover-pinch.json" trigger="hover" style={{ width: 32, height: 32 }} />
-            </motion.div>
-          </label>
-
-          <input id="upload" type="file" className="hidden" accept="audio/*" onChange={handleUpload} />
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            onClick={() => uploadedSong && playSong(uploadedSong, uploadedSongName)}
-            className="p-2 rounded-md bg-base-200 border"
-          >
-            <lord-icon src="/wired-flat-43-music-note-hover-bounce (1).json" trigger="hover" style={{ width: 32, height: 32 }} />
-          </motion.button>
-        </div>
+        <label className="cursor-pointer">
+          <motion.div whileHover={{ scale: 1.1 }} className="p-2 rounded-lg border">
+            <lord-icon
+              src="/wired-flat-1093-add-song-hover-pinch.json"
+              trigger="hover"
+              style={{ width: 32, height: 32 }}
+            />
+          </motion.div>
+          <input
+            type="file"
+            hidden
+            accept=".mp3,audio/mpeg"
+            onChange={handleUpload}
+          />
+        </label>
       </div>
 
-      {/* ARTWORK */}
-      <div className="px-6 pb-4">
-        <div className="w-full h-56 rounded-2xl overflow-hidden border bg-base-200">
-          <img src={currentGif} className="w-full h-full object-cover" />
-        </div>
+      {/* ART */}
+      <div className="p-6">
+        <img
+          src={currentGif}
+          className="w-full h-56 rounded-2xl object-cover"
+        />
       </div>
 
       {/* CONTROLS */}
-      <div className="px-6 pb-4">
-        <div className="flex items-center justify-center gap-6">
-          <SkipBack size={28} onClick={() => skip(-10)} className="cursor-pointer opacity-80 hover:text-primary" />
-
+      <div className="px-6">
+        <div className="flex justify-center gap-6 items-center">
+          <SkipBack onClick={() => seek(currentTime - 10)} />
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={togglePlayPause}
-            className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-xl"
+            className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center"
           >
-            {isPlaying ? <Pause size={26} className="text-primary-content" /> : <Play size={26} className="text-primary-content" />}
+            {isPlaying ? <Pause /> : <Play />}
           </motion.button>
-
-          <SkipForward size={28} onClick={() => skip(10)} className="cursor-pointer opacity-80 hover:text-primary" />
+          <SkipForward onClick={() => seek(currentTime + 10)} />
         </div>
 
-        {/* Seek */}
-        <div className="mt-4">
-          <div className="flex items-center gap-3">
-            <span className="text-xs w-10 opacity-60">{formatTime(currentTime)}</span>
-            <input
-              type="range"
-              min="0"
-              max={duration}
-              value={currentTime}
-              onChange={(e) => seek(Number(e.target.value))}
-              className="flex-1 accent-primary"
-            />
-            <span className="text-xs w-10 opacity-60">{formatTime(duration)}</span>
-          </div>
+        <div className="mt-4 flex items-center gap-3">
+          <span className="text-xs">{formatTime(currentTime)}</span>
+          <input
+            type="range"
+            min="0"
+            max={duration}
+            value={currentTime}
+            onChange={(e) => seek(Number(e.target.value))}
+            className="flex-1 accent-primary"
+          />
+          <span className="text-xs">{formatTime(duration)}</span>
+        </div>
 
-          {/* Visualizer */}
-          <div className="mt-3 flex justify-center gap-1">
-            {Array.from({ length: 16 }).map((_, i) => (
-              <motion.div
-                key={i}
-                animate={{
-                  scaleY: showVisualizer ? (0.4 + Math.abs(Math.sin((i + currentTime) * 0.5))) : 0.4,
-                }}
-                transition={{ duration: 0.45, repeat: Infinity }}
-                className="w-1 rounded bg-gradient-to-b from-primary to-secondary"
-                style={{ height: `${10 + (i % 6)}px` }}
-              />
-            ))}
-          </div>
+        {/* VISUALIZER */}
+        <div className="mt-4 flex justify-center gap-1">
+          {Array.from({ length: 20 }).map((_, i) => (
+            <motion.div
+              key={i}
+              animate={{ scaleY: showVisualizer ? 0.3 + Math.random() : 0.3 }}
+              transition={{ repeat: Infinity, duration: 0.5 }}
+              className="w-1 h-6 bg-primary rounded"
+            />
+          ))}
         </div>
       </div>
 
-      {/* VOLUME + STOP */}
-      <div className="mt-auto px-6 py-4 border-t bg-base-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-sm opacity-70">Volume</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              className="w-40 accent-primary"
-            />
-          </div>
-
-          <button
-            onClick={() => {
-              const audio = audioRef.current;
-              setIsPlaying(false);
-              setCurrentSong("", "");
-              if (audio) {
-                audio.pause();
-                audio.src = "";
-                setCurrentTime(0);
-              }
-              socket.emit("music-sync", {
-                roomId,
-                action: "pause",
-                songUrl: "",
-                songName: "",
-                currentTime: 0
-              });
-            }}
-            className="px-3 py-1 rounded-md bg-error/10 border border-error/30 text-error text-sm"
-          >
-            Stop
-          </button>
-        </div>
+      {/* FOOTER */}
+      <div className="mt-auto px-6 py-4 border-t flex justify-between items-center">
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          value={volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+        />
       </div>
 
       <audio ref={audioRef} />

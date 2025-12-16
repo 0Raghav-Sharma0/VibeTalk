@@ -1,214 +1,211 @@
-// src/pages/WatchPartyPage.jsx
-import React, { useState } from 'react';
-import { useWatchParty } from '../contexts/WatchPartyContext';
-import WatchParty from '../components/WatchParty';
-import './WatchPartyPage.css';
+import React, { useState } from "react";
+import { useWatchParty } from "../contexts/WatchPartyContext";
+import WatchParty from "../components/WatchParty";
+import { Youtube, Upload, Users, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 const WatchPartyPage = () => {
   const { roomId, createRoom, joinRoom } = useWatchParty();
-  const [videoUrl, setVideoUrl] = useState('');
-  const [joinRoomId, setJoinRoomId] = useState('');
-  const [videoType, setVideoType] = useState('youtube');
 
-  const [statusMessage, setStatusMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isCreating, setIsCreating] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [joinRoomId, setJoinRoomId] = useState("");
+  const [videoType, setVideoType] = useState("youtube");
+
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (roomId) return <WatchParty />;
 
   const handleCreateRoom = async () => {
-    setErrorMessage('');
-    console.log('📺 Create button clicked on lobby');
-
+    setError("");
     if (!videoUrl.trim()) {
-      setErrorMessage('Please enter a video URL first.');
+      setError("Please provide a video source.");
       return;
     }
-
     try {
-      setIsCreating(true);
-      setStatusMessage('Creating room…');
-      console.log('🎬 Calling createRoom with:', { videoUrl, videoType });
+      setLoading(true);
+      setStatus("Creating room…");
       await createRoom(videoUrl.trim(), videoType);
-      setStatusMessage('Room created! Joining…');
-    } catch (err) {
-      console.error('❌ Error creating room:', err);
-      setErrorMessage('Failed to create room. Please try again.');
+    } catch {
+      setError("Failed to create room.");
     } finally {
-      setIsCreating(false);
+      setLoading(false);
     }
   };
 
   const handleJoinRoom = async () => {
-    setErrorMessage('');
-    console.log('👥 Join button clicked on lobby');
-
+    setError("");
     if (!joinRoomId.trim()) {
-      setErrorMessage('Please enter a room ID first.');
+      setError("Enter a valid Room ID.");
       return;
     }
-
     try {
-      setIsJoining(true);
-      setStatusMessage('Joining room…');
-      console.log('🎬 Calling joinRoom with:', { joinRoomId });
+      setLoading(true);
+      setStatus("Joining room…");
       await joinRoom(joinRoomId.trim());
-      setStatusMessage('Joined room!');
-    } catch (err) {
-      console.error('❌ Error joining room:', err);
-      setErrorMessage('Failed to join room. Please check the Room ID.');
+    } catch {
+      setError("Invalid Room ID.");
     } finally {
-      setIsJoining(false);
+      setLoading(false);
     }
   };
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('video/')) {
-      const url = URL.createObjectURL(file);
-      setVideoUrl(url);
-      setVideoType('local');
-      setErrorMessage('');
-      setStatusMessage('Local video selected.');
-      console.log('📁 Selected local video file:', file.name);
-    } else {
-      setErrorMessage('Please select a valid video file.');
+  const handleFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith("video/")) {
+      setError("Please select a valid video file.");
+      return;
     }
+    setVideoUrl(URL.createObjectURL(file));
+    setVideoType("local");
+    setStatus(`Selected: ${file.name}`);
   };
 
-  // If already in a room, show the watch party
-  if (roomId) {
-    return <WatchParty />;
-  }
-
-  // Otherwise, show the lobby
   return (
-    <div className="watchparty-lobby">
-      <div className="lobby-container">
-        <h1 className="lobby-title">🎬 Watch Party</h1>
-        <p className="lobby-subtitle">
-          Watch videos together in sync with your friends!
-        </p>
+    <div className="relative min-h-screen bg-base-200 text-base-content flex items-center justify-center px-4 overflow-hidden">
 
-        {/* Simple debug / feedback for mobile */}
-        {(statusMessage || errorMessage) && (
-          <div
-            className="lobby-status-banner"
-            style={{
-              marginBottom: '1rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '0.75rem',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              background: errorMessage
-                ? 'rgba(239, 68, 68, 0.1)'
-                : 'rgba(59, 130, 246, 0.12)',
-              border: `1px solid ${
-                errorMessage ? 'rgba(239, 68, 68, 0.3)' : 'rgba(59, 130, 246, 0.4)'
-              }`,
-              color: errorMessage ? '#fca5a5' : '#bfdbfe',
-            }}
+      {/* 🌿 Ambient green background */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-1/4 left-1/4 w-[420px] h-[420px] bg-primary/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-[420px] h-[420px] bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-vignette" />
+      </div>
+
+      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8">
+
+        {/* ================= CREATE PARTY ================= */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-base-100 border border-base-300 rounded-2xl p-7 shadow-xl"
+        >
+          <h1 className="text-2xl font-semibold mb-1">
+            🎬 Watch Party
+          </h1>
+          <p className="text-sm text-base-content/60 mb-5">
+            Watch videos together in perfect sync.
+          </p>
+
+          {(status || error) && (
+            <div
+              className={`mb-4 px-4 py-3 rounded-xl text-sm border
+                ${
+                  error
+                    ? "bg-error/10 border-error/30 text-error"
+                    : "bg-primary/10 border-primary/30 text-primary"
+                }`}
+            >
+              {error || status}
+            </div>
+          )}
+
+          {/* SOURCE TOGGLE */}
+          <div className="flex gap-2 mb-4">
+            {[
+              { id: "youtube", icon: Youtube, label: "YouTube" },
+              { id: "local", icon: Upload, label: "Local File" },
+            ].map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                onClick={() => setVideoType(id)}
+                className={`flex-1 py-2 rounded-lg font-medium transition
+                  ${
+                    videoType === id
+                      ? "bg-primary text-primary-content shadow"
+                      : "bg-base-200 border border-base-300 hover:bg-base-300"
+                  }`}
+              >
+                <Icon size={16} className="inline mr-2" />
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {videoType === "youtube" ? (
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="Paste YouTube link…"
+              className="w-full px-4 py-2 mb-4 rounded-lg
+                         bg-base-200 border border-base-300
+                         focus:ring-2 focus:ring-primary/40 outline-none"
+            />
+          ) : (
+            <label className="block mb-4">
+              <div className="px-4 py-3 rounded-lg border border-dashed border-base-300
+                              text-center cursor-pointer text-base-content/70
+                              hover:bg-base-200">
+                Choose video file
+              </div>
+              <input type="file" accept="video/*" hidden onChange={handleFile} />
+            </label>
+          )}
+
+          <button
+            onClick={handleCreateRoom}
+            disabled={loading}
+            className="w-full py-3 rounded-xl font-medium
+                       bg-primary text-primary-content
+                       hover:opacity-90 transition"
           >
-            {errorMessage || statusMessage}
-          </div>
-        )}
+            {loading ? "Creating…" : "Create Watch Party"}
+          </button>
+        </motion.div>
 
-        <div className="lobby-content">
-          {/* Create Room Section */}
-          <div className="lobby-section">
-            <h2>Create a Watch Party</h2>
+        {/* ================= JOIN PARTY ================= */}
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="bg-base-100 border border-base-300 rounded-2xl p-7 shadow-xl"
+        >
+          <h2 className="text-lg font-semibold mb-4">
+            Join Existing Party
+          </h2>
 
-            <div className="video-type-selector">
-              <button
-                type="button"
-                className={`type-btn ${videoType === 'youtube' ? 'active' : ''}`}
-                onClick={() => setVideoType('youtube')}
+          <input
+            value={joinRoomId}
+            onChange={(e) => setJoinRoomId(e.target.value)}
+            placeholder="Enter Room ID"
+            className="w-full px-4 py-2 mb-4 rounded-lg
+                       bg-base-200 border border-base-300
+                       focus:ring-2 focus:ring-primary/40 outline-none"
+          />
+
+          <button
+            onClick={handleJoinRoom}
+            disabled={loading}
+            className="w-full py-3 rounded-xl font-medium
+                       bg-base-200 border border-base-300
+                       hover:border-primary hover:bg-base-300
+                       flex items-center justify-center gap-2 transition"
+          >
+            <Users size={18} />
+            Join Party
+            <ArrowRight size={16} />
+          </button>
+
+          {/* FEATURES */}
+          <div className="mt-6 flex flex-wrap gap-2 text-xs">
+            {[
+              "🎥 Synced playback",
+              "💬 Live chat",
+              "❤️ Reactions",
+              "👑 Host controls",
+              "📱 Mobile friendly",
+            ].map((f) => (
+              <span
+                key={f}
+                className="px-3 py-1 rounded-full
+                           bg-base-200 border border-base-300
+                           text-base-content/70"
               >
-                📺 YouTube
-              </button>
-              <button
-                type="button"
-                className={`type-btn ${videoType === 'local' ? 'active' : ''}`}
-                onClick={() => setVideoType('local')}
-              >
-                📁 Local File
-              </button>
-            </div>
-
-            {videoType === 'youtube' ? (
-              <div className="input-group">
-                <input
-                  type="text"
-                  placeholder="Paste YouTube URL here..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="lobby-input"
-                />
-              </div>
-            ) : (
-              <div className="input-group">
-                <label className="file-upload-btn">
-                  Choose Video File
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleFileSelect}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-                {videoUrl && (
-                  <span className="file-selected">✓ File selected</span>
-                )}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleCreateRoom}
-              className="primary-btn"
-              disabled={isCreating}
-            >
-              {isCreating ? 'Creating…' : 'Create Room'}
-            </button>
+                {f}
+              </span>
+            ))}
           </div>
-
-          <div className="lobby-divider">
-            <span>OR</span>
-          </div>
-
-          {/* Join Room Section */}
-          <div className="lobby-section">
-            <h2>Join a Watch Party</h2>
-            <div className="input-group">
-              <input
-                type="text"
-                placeholder="Enter Room ID..."
-                value={joinRoomId}
-                onChange={(e) => setJoinRoomId(e.target.value)}
-                className="lobby-input"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleJoinRoom}
-              className="secondary-btn"
-              disabled={isJoining}
-            >
-              {isJoining ? 'Joining…' : 'Join Room'}
-            </button>
-          </div>
-        </div>
-
-        {/* Features List */}
-        <div className="features-list">
-          <h3>Features:</h3>
-          <ul>
-            <li>🎥 Synchronized playback across all devices</li>
-            <li>💬 Real-time chat with participants</li>
-            <li>❤️ Send reactions during the video</li>
-            <li>👥 See who's watching with you</li>
-            <li>🎯 Host controls for play/pause/seek</li>
-          </ul>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -2,43 +2,147 @@
 .video-player-container {
   width: 100%;
   height: 100%;
-  background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.youtube-player {
-  width: 100%;
-  height: 100%;
-  background: #000;
-}
-
+.youtube-player,
 .local-video-player {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  background: #000;
+  display: block;
 }
 
-/* Ensure YouTube player fills container */
+/* YouTube player full container */
 #youtube-player {
   width: 100% !important;
   height: 100% !important;
 }
 
-/* Mobile video player styles */
-@media (max-width: 768px) {
-  .video-player-container {
-    aspect-ratio: 16/9;
-    height: auto;
-    max-height: 50vh;
+/* Local video player */
+.local-video-player {
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+/* Viewer mode styles */
+.video-player-container.viewer-mode .youtube-player,
+.video-player-container.viewer-mode .local-video-player {
+  pointer-events: none;
+}
+
+.video-player-container.viewer-mode::before {
+  content: "Viewer Mode - Playback controlled by host";
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  z-index: 20;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.theme-light .video-player-container.viewer-mode::before {
+  background: rgba(255, 255, 255, 0.9);
+  color: #374151;
+}
+
+/* Loading state */
+.video-player-container.loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+.theme-dark .video-player-container.loading {
+  background: linear-gradient(90deg, #2d2d2d 25%, #3a3a3a 50%, #2d2d2d 75%);
+  background-size: 200% 100%;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 
-@media (max-width: 480px) {
+/* Error state */
+.video-player-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+  gap: 1rem;
+}
+
+.video-player-error-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.theme-light .video-player-error {
+  background: rgba(0, 0, 0, 0.05);
+  color: #374151;
+}
+
+.theme-dark .video-player-error {
+  background: rgba(255, 255, 255, 0.05);
+  color: #d1d5db;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
   .video-player-container {
-    max-height: 40vh;
+    border-radius: 1.5rem;
   }
+  
+  .video-player-container.viewer-mode::before {
+    font-size: 0.7rem;
+    padding: 0.375rem 0.75rem;
+    top: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .video-player-container.viewer-mode::before {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Custom video controls */
+.local-video-player::-webkit-media-controls-panel {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+}
+
+.theme-light .local-video-player::-webkit-media-controls-panel {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.9), transparent);
+}
+
+.local-video-player::-webkit-media-controls-play-button,
+.local-video-player::-webkit-media-controls-volume-slider,
+.local-video-player::-webkit-media-controls-mute-button {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Smooth video transitions */
+.local-video-player {
+  transition: opacity 0.5s ease;
+}
+
+.local-video-player.loading {
+  opacity: 0.5;
 }

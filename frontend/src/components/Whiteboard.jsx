@@ -104,7 +104,7 @@ export default function Whiteboard({ roomId }) {
         historyIndex.current--;
       }
     } catch (err) {
-      // ignore tainted canvas or invalid sizes
+      console.log(123, err);
     }
   }, []);
 

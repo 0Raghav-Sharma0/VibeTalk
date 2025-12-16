@@ -1,113 +1,160 @@
-// LoginPage.jsx
 import React, { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useAuthStore } from "../store/useAuthStore";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { useAuthStore } from "../store/useAuthStore";
 
-import AuthSlideshow from "../components/AuthSlideshow";
+const rise = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
 
-// IMAGES
-import img1 from "../images/image1.jpeg";
-import img2 from "../images/image2.jpeg";
-import img3 from "../images/image3.jpeg";
-import img4 from "../images/image4.jpeg";
-import img5 from "../images/image5.jpeg";
-import img6 from "../images/image6.jpeg";
-import img7 from "../images/image7.jpeg";
-import img8 from "../images/image8.jpeg";
-import img9 from "../images/image9.jpeg";
-
-const LoginPage = () => {
+export default function LoginPage() {
   const { login, isLoggingIn } = useAuthStore();
   const [show, setShow] = useState(false);
+  const [form, setForm] = useState({ email: "", password: "" });
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const submit = async (e) => {
+  const submit = (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) return toast.error("Fill all fields");
+    if (!form.email || !form.password) {
+      toast.error("Fill all fields");
+      return;
+    }
     login(form);
   };
 
   return (
-    <div className="h-screen w-full grid lg:grid-cols-2 bg-base-200 overflow-hidden">
+    <div className="min-h-screen bg-base-200 text-base-content flex overflow-hidden">
 
       {/* LEFT */}
-      <div className="flex items-center justify-center p-10">
-        <div className="w-full max-w-md bg-base-100 border border-base-300 rounded-2xl shadow-2xl p-8 space-y-8">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-6">
+        <motion.div
+          variants={rise}
+          initial="hidden"
+          animate="show"
+          className="
+            relative
+            w-full max-w-md
+            bg-base-100
+            border border-base-300
+            rounded-2xl
+            p-8
+            shadow-xl
+            overflow-hidden
+          "
+        >
+          {/* green glow */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/20 blur-3xl rounded-full" />
 
-          <h1 className="text-3xl font-bold text-center">Welcome Back</h1>
-          <p className="text-center text-base-content/60">
-            Log in to continue your conversations.
-          </p>
-
-          {/* FORM */}
-          <form className="space-y-6" onSubmit={submit}>
-
-            {/* Email */}
-            <div>
-              <label>Email</label>
-              <div className="relative mt-2">
-                <Mail className="absolute left-3 top-3 w-5 h-5 text-base-content/40" />
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) =>
-                    setForm({ ...form, email: e.target.value })
-                  }
-                  className="input input-bordered w-full pl-12 bg-base-200"
-                />
-              </div>
+          <div className="relative z-10 space-y-8">
+            <div className="text-center">
+              <h1 className="text-2xl font-semibold">Welcome Back</h1>
+              <p className="text-sm text-base-content/60">
+                Sign in to continue
+              </p>
             </div>
 
-            {/* Password */}
-            <div>
-              <label>Password</label>
-              <div className="relative mt-2">
-                <Lock className="absolute left-3 top-3 w-5 h-5 text-base-content/40" />
-                <input
-                  type={show ? "text" : "password"}
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  className="input input-bordered w-full pl-12 pr-12 bg-base-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShow(!show)}
-                  className="absolute right-3 top-3 text-base-content/40"
-                >
-                  {show ? <EyeOff /> : <Eye />}
-                </button>
+            <form onSubmit={submit} className="space-y-5">
+
+              {/* EMAIL */}
+              <div>
+                <label className="text-xs text-base-content/60">
+                  Email
+                </label>
+                <div className="relative mt-2">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 opacity-60" />
+                  <input
+                    type="email"
+                    value={form.email}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
+                    className="
+                      w-full h-11
+                      pl-10 pr-3
+                      rounded-lg
+                      bg-base-200
+                      border border-base-300
+                      focus:outline-none
+                      focus:ring-2 focus:ring-primary/40
+                    "
+                  />
+                </div>
               </div>
-            </div>
 
-            <button className="btn btn-primary w-full" disabled={isLoggingIn}>
-              {isLoggingIn ? <Loader2 className="animate-spin" /> : "Log In"}
-            </button>
-          </form>
+              {/* PASSWORD */}
+              <div>
+                <label className="text-xs text-base-content/60">
+                  Password
+                </label>
+                <div className="relative mt-2">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 opacity-60" />
+                  <input
+                    type={show ? "text" : "password"}
+                    value={form.password}
+                    onChange={(e) =>
+                      setForm({ ...form, password: e.target.value })
+                    }
+                    className="
+                      w-full h-11
+                      pl-10 pr-10
+                      rounded-lg
+                      bg-base-200
+                      border border-base-300
+                      focus:outline-none
+                      focus:ring-2 focus:ring-primary/40
+                    "
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShow(p => !p)}
+                    aria-label={show ? "Hide password" : "Show password"}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+                  >
+                    {show ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
 
-          <p className="text-center text-base-content/60">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary">Sign Up</Link>
-          </p>
-        </div>
+              <button
+                disabled={isLoggingIn}
+                className="
+                  w-full h-11
+                  bg-primary text-primary-content
+                  rounded-lg
+                  flex items-center justify-center
+                  hover:opacity-90
+                  transition
+                "
+              >
+                {isLoggingIn ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  "Log In"
+                )}
+              </button>
+            </form>
+
+            <p className="text-sm text-center text-base-content/60">
+              Don’t have an account?{" "}
+              <Link to="/signup" className="text-primary font-medium">
+                Sign up
+              </Link>
+            </p>
+          </div>
+        </motion.div>
       </div>
 
-      {/* RIGHT PANEL → FIXED HEIGHT + FULL IMAGE FROM TOP */}
-      <div className="hidden lg:flex h-full w-full p-10">
-        <AuthSlideshow
-          images={[img1, img2, img3, img4, img5, img6, img7, img8, img9]}
+      {/* RIGHT : SAME LOTTIE */}
+      <div className="hidden lg:flex w-1/2 items-center justify-center">
+        <dotlottie-wc
+          src="https://lottie.host/5a4c9f68-0a91-4373-83ba-809e7d1ced57/rlqClPNnCc.lottie"
+          autoplay
+          loop
+          style={{ width: 420, height: 420 }}
         />
       </div>
-
     </div>
   );
-};
-
-export default LoginPage;
+}

@@ -1,23 +1,13 @@
 /* src/components/WatchParty.css */
-
 .watchparty {
-  min-height: 100vh;
-  background: #0f0f0f;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Segoe UI Emoji', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Header */
 .watchparty-header {
-  background: rgba(26, 26, 26, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid #2a2a2a;
   padding: 1rem 2rem;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  transition: all 0.3s ease;
 }
 
 .header-content {
@@ -26,22 +16,24 @@
   align-items: center;
   max-width: 1400px;
   margin: 0 auto;
+  gap: 1.5rem;
 }
 
 .header-main {
   display: flex;
   align-items: center;
   gap: 2rem;
+  flex-wrap: wrap;
 }
 
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .logo {
-  font-size: 2rem;
+  font-size: 2.5rem;
   animation: float 3s ease-in-out infinite;
 }
 
@@ -50,55 +42,33 @@
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-5px);
+    transform: translateY(-8px);
   }
 }
 
-.logo-section h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
 .room-info {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .room-id {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.room-label {
-  color: #a0a0a0;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.room-code {
-  font-family: 'Monaco', 'Menlo', monospace;
-  font-weight: 600;
-  color: #ffffff;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
 .copy-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #a0a0a0;
-  cursor: pointer;
-  padding: 0.375rem;
-  border-radius: 6px;
+  padding: 0.5rem;
+  border-radius: 0.75rem;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -106,65 +76,16 @@
 }
 
 .copy-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  transform: scale(1.05);
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .user-role {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 12px;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.user-role.host {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.user-role.viewer {
-  background: linear-gradient(135deg, rgba(107, 114, 128, 0.2), rgba(75, 85, 99, 0.1));
-  color: #9ca3af;
-  border: 1px solid rgba(107, 114, 128, 0.3);
-}
-
-.role-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #10b981;
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.role-dot.viewer {
-  background: #9ca3af;
-  animation: none;
-}
-
-.leave-btn {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 600;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-}
-
-.leave-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  backdrop-filter: blur(10px);
 }
 
 /* Main Content */
@@ -172,85 +93,71 @@
   flex: 1;
   display: grid;
   grid-template-columns: 1fr 400px;
-  height: calc(100vh - 80px);
+  height: calc(100vh - 88px);
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  transition: background-color 0.3s ease;
 }
 
 /* Video Section */
 .video-section {
-  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  position: relative;
 }
 
 .video-container {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px;
   height: 100%;
   position: relative;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
 }
 
 /* Sidebar */
 .watchparty-sidebar {
-  background: rgba(26, 26, 26, 0.85);
-  backdrop-filter: blur(20px);
-  border-left: 1px solid #2a2a2a;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  border-left-width: 1px;
+  transition: all 0.3s ease;
 }
 
 /* Sidebar tabs */
 .sidebar-tabs {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem 0.5rem;
-  border-bottom: 1px solid #2a2a2a;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom-width: 1px;
 }
 
 .sidebar-tab {
   flex: 1;
-  padding: 0.45rem 0.75rem;
-  border-radius: 999px;
-  border: 1px solid #343434;
-  background: transparent;
-  color: #b3b3b3;
-  font-size: 0.85rem;
-  font-weight: 500;
+  border-width: 1px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
 }
 
 .sidebar-tab:hover {
-  border-color: #4f46e5;
-  color: #e5e5e5;
+  transform: translateY(-2px);
 }
 
 .sidebar-tab.active {
-  background: linear-gradient(135deg, #6366f1, #a855f7);
-  border-color: transparent;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
 /* Sidebar body */
 .sidebar-body {
   flex: 1;
   min-height: 0;
-  padding: 1rem 1.5rem 1.5rem;
+  padding: 1.5rem;
   display: flex;
 }
 
@@ -262,64 +169,56 @@
 }
 
 /* make inner components stretch */
-.participants-panel > .participants-list {
-  height: 100%;
-}
-
+.participants-panel > .participants-list,
 .chat-panel-wrapper > .chat-panel {
   height: 100%;
 }
 
-/* Viewer message for non-hosts (optional overlay) */
-.viewer-message {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(147, 51, 234, 0.9));
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-weight: 600;
-  text-align: center;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-  position: absolute;
-  top: 1rem;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  font-size: 0.9rem;
+/* Theme-specific overrides */
+.theme-light .copy-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
 }
 
-/* Disable interactions for viewers */
-.video-player-container.viewer-mode .youtube-player,
-.video-player-container.viewer-mode .local-video-player {
-  pointer-events: none;
+.theme-light .video-container {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-.video-player-container.viewer-mode {
-  position: relative;
+.theme-dark .video-container {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.video-player-container.viewer-mode::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: transparent;
-  z-index: 5;
-  cursor: not-allowed;
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .watchparty-main {
+    grid-template-columns: 1fr 350px;
+  }
 }
 
-/* Desktop tweaks */
 @media (max-width: 1024px) {
   .watchparty-main {
-    grid-template-columns: 1fr 360px;
+    grid-template-columns: 1fr 320px;
+    height: calc(100vh - 80px);
   }
-
+  
   .video-section {
     padding: 1.5rem;
   }
 }
 
-/* Tablet / Mobile */
+@media (max-width: 900px) {
+  .header-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .room-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
+
 @media (max-width: 768px) {
   .watchparty-main {
     grid-template-columns: 1fr;
@@ -330,28 +229,32 @@
   .watchparty-sidebar {
     grid-row: 2;
     border-left: none;
-    border-top: 1px solid #2a2a2a;
-    max-height: 430px;
-  }
-
-  .sidebar-body {
-    padding: 0.75rem 1rem 1rem;
+    border-top-width: 1px;
+    max-height: 500px;
+    border-radius: 2rem 2rem 0 0;
+    margin-top: -2rem;
   }
 
   .video-section {
     padding: 1rem;
+    padding-bottom: 2rem;
   }
 
-  .header-main {
+  .video-container {
+    aspect-ratio: 16/9;
+    height: auto;
+    max-height: 60vh;
+  }
+
+  .header-content {
     flex-direction: column;
+    align-items: stretch;
     gap: 1rem;
-    align-items: flex-start;
   }
 
-  .room-info {
-    flex-direction: column;
-    gap: 0.75rem;
-    align-items: flex-start;
+  .leave-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
@@ -360,37 +263,69 @@
     padding: 1rem;
   }
 
-  .header-content {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
+  .logo-section h1 {
+    font-size: 1.5rem;
   }
 
-  .leave-btn {
-    align-self: stretch;
-    justify-content: center;
+  .room-id {
+    padding: 0.5rem 1rem;
   }
 
   .video-section {
     padding: 0.5rem;
   }
+
+  .video-container {
+    border-radius: 1.5rem;
+  }
 }
 
 /* Scrollbar Styling */
 .watchparty ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .watchparty ::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 .watchparty ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+  border-radius: 4px;
+  transition: background 0.3s ease;
 }
 
 .watchparty ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+.theme-light ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.theme-light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.theme-light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* Animation Classes */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.watchparty-header,
+.video-container,
+.watchparty-sidebar {
+  animation: slideIn 0.5s ease-out;
 }

@@ -1,43 +1,22 @@
-// src/components/ChatHeader.jsx
+// src/components/ChatHeader.jsx - CLEAN WITH CALL BUTTONS
 import React from "react";
-import { Phone, Video, Music2, Pencil, X } from "lucide-react";
+import { Phone, Video, Music2, Pencil, X, MoreVertical } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
-import { useAuthStore } from "../store/useAuthStore"; // ⭐ ADD THIS
+import { useAuthStore } from "../store/useAuthStore";
 import { useMusicStore } from "../store/musicStore";
-
-/* Shared Icon Button */
-const IconBtn = ({ onClick, children, title }) => (
-  <button
-    onClick={onClick}
-    title={title}
-    className="
-      w-9 h-9 flex items-center justify-center 
-      rounded-md bg-base-200 border border-base-300 
-      text-base-content/70 hover:bg-base-300 hover:text-base-content
-      active:scale-95 transition
-    "
-  >
-    {children}
-  </button>
-);
 
 const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
   const { selectedUser, setSelectedUser } = useChatStore();
   const { startCall } = useVideoCallStore();
-  const { socket, authUser } = useAuthStore(); // ⭐ ADD THIS
+  const { socket, authUser } = useAuthStore();
   const { toggleMusicPlayer, isMusicPlayerOpen } = useMusicStore();
 
-  // ⭐ ADD THESE HANDLERS
   const handleAudioCall = () => {
-    if (!selectedUser || !socket || !authUser) {
-      console.error("❌ Cannot start audio call - missing data");
-      return;
-    }
+    if (!selectedUser || !socket || !authUser) return;
 
     console.log("📞 Initiating audio call to:", selectedUser._id);
     
-    // Notify the other user
     socket.emit("call-initiated", {
       from: authUser._id,
       to: selectedUser._id,
@@ -45,19 +24,14 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
       callerName: authUser.fullName,
     });
 
-    // Start local call
     startCall("audio", selectedUser._id);
   };
 
   const handleVideoCall = () => {
-    if (!selectedUser || !socket || !authUser) {
-      console.error("❌ Cannot start video call - missing data");
-      return;
-    }
+    if (!selectedUser || !socket || !authUser) return;
 
     console.log("📹 Initiating video call to:", selectedUser._id);
     
-    // Notify the other user
     socket.emit("call-initiated", {
       from: authUser._id,
       to: selectedUser._id,
@@ -65,99 +39,104 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
       callerName: authUser.fullName,
     });
 
-    // Start local call
     startCall("video", selectedUser._id);
   };
 
   if (!selectedUser) return null;
 
   return (
-    <header
-      className="
-        h-14 px-5 flex items-center justify-between 
-        border-b border-base-300 bg-base-100
-      "
-    >
-      {/* LEFT: Avatar + Name */}
-      <div className="flex items-center gap-3">
+    <header className="h-16 px-6 flex items-center justify-between border-b border-base-300 bg-base-100">
+      
+      {/* LEFT: User Info */}
+      <div className="flex items-center gap-4">
+        {/* Avatar */}
         <div className="relative">
-          <img
-            src={selectedUser.profilePic || '/boy.png'}
-            className="w-10 h-10 rounded-full object-cover border border-base-300"
-            alt={selectedUser.fullName}
-          />
-
-          {/* ONLINE DOT */}
-          <span
-            className={`
-              absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-base-100
-              ${selectedUser.isOnline ? "bg-success" : "bg-neutral"}
-            `}
-          />
+          <div className="w-12 h-12 rounded-xl overflow-hidden border-2 border-primary/30">
+            <img
+              src={selectedUser.profilePic || '/boy.png'}
+              className="w-full h-full object-cover"
+              alt={selectedUser.fullName}
+            />
+          </div>
+          
+          {/* Online Status */}
+          <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-base-100 ${
+            selectedUser.isOnline ? "bg-emerald-500" : "bg-gray-400"
+          }`} />
         </div>
 
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-base-content truncate">
+        {/* User Details */}
+        <div>
+          <h2 className="font-bold text-base-content text-lg">
             {selectedUser.fullName}
-          </p>
-          <p className="text-xs text-base-content/50">
-            {selectedUser.isOnline ? "Online" : "Offline"}
+          </h2>
+          <p className={`text-sm ${selectedUser.isOnline ? "text-emerald-500" : "text-base-content/60"}`}>
+            {selectedUser.isOnline ? "🟢 Online" : "⚫ Offline"}
           </p>
         </div>
       </div>
 
-      {/* ACTION BUTTONS */}
+      {/* RIGHT: Action Buttons */}
       <div className="flex items-center gap-2">
-
-        {/* Voice Call - ⭐ UPDATED */}
-        <IconBtn
-          title="Voice Call"
+        
+        {/* Audio Call Button */}
+        <button
           onClick={handleAudioCall}
+          title="Audio Call"
+          className="p-3 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
         >
-          <Phone size={16} className="text-success" />
-        </IconBtn>
+          <Phone size={18} />
+        </button>
 
-        {/* Video Call - ⭐ UPDATED */}
-        <IconBtn
-          title="Video Call"
+        {/* Video Call Button */}
+        <button
           onClick={handleVideoCall}
+          title="Video Call"
+          className="p-3 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border border-blue-500/20 transition-colors"
         >
-          <Video size={16} className="text-info" />
-        </IconBtn>
+          <Video size={18} />
+        </button>
 
-        {/* Music Player */}
-        <IconBtn
-          title="Music Player"
+        {/* Music Player Button */}
+        <button
           onClick={() => {
             if (showWhiteboard) setShowWhiteboard(false);
             toggleMusicPlayer();
           }}
+          title="Music Player"
+          className={`p-3 rounded-xl transition-colors ${
+            isMusicPlayerOpen 
+              ? "bg-pink-500 text-white" 
+              : "bg-base-200 hover:bg-base-300 text-base-content/70"
+          }`}
         >
-          <Music2 size={16} className="text-secondary" />
-        </IconBtn>
+          <Music2 size={18} />
+        </button>
 
-        {/* Whiteboard */}
-        <IconBtn
-          title="Whiteboard"
+        {/* Whiteboard Button */}
+        <button
           onClick={() => {
             if (isMusicPlayerOpen) toggleMusicPlayer();
             setShowWhiteboard(!showWhiteboard);
           }}
+          title="Whiteboard"
+          className={`p-3 rounded-xl transition-colors ${
+            showWhiteboard 
+              ? "bg-purple-500 text-white" 
+              : "bg-base-200 hover:bg-base-300 text-base-content/70"
+          }`}
         >
-          <Pencil
-            size={16}
-            className={showWhiteboard ? "text-primary" : "text-base-content/70"}
-          />
-        </IconBtn>
+          <Pencil size={18} />
+        </button>
 
-        {/* Close Chat */}
-        <IconBtn
-          title="Close Chat"
+        {/* Close Chat Button */}
+        <button
           onClick={() => setSelectedUser(null)}
+          title="Close Chat"
+          className="p-3 rounded-xl bg-base-200 hover:bg-base-300 text-base-content/70 transition-colors"
         >
-          <X size={17} className="text-base-content/70" />
-        </IconBtn>
-
+          <X size={18} />
+        </button>
       </div>
     </header>
   );

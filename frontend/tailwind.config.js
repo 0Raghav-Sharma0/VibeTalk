@@ -7,17 +7,29 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", ...defaultTheme.fontFamily.sans],
-        display: ["Poppins", "Inter", ...defaultTheme.fontFamily.sans],
       },
-      boxShadow: {
-        "theme-glow": "0 10px 30px rgba(0,0,0,0.55), 0 6px 12px var(--theme-glow, rgba(0,0,0,0))",
+      colors: {
+        bg: "var(--bg)",
+        surface: "var(--surface)",
+        text: "var(--text)",
+        muted: "var(--muted)",
+        primary: "var(--primary)",
+        secondary: "var(--secondary)",
+        accent: "var(--accent)",
       },
       backgroundImage: {
-        "theme-gradient": "linear-gradient(135deg, var(--grad-1), var(--grad-2))",
+        "hero-gradient":
+          "linear-gradient(135deg, var(--grad-1), var(--grad-2))",
+      },
+      boxShadow: {
+        heroic:
+          "0 30px 80px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08)",
       },
     },
   },
-  plugins: [
-    daisyui   // <-- ADD THIS
-  ],
+  plugins: [daisyui],
+  daisyui: {
+    darkTheme: "dark",
+    themes: ["light", "dark"],
+  },
 };

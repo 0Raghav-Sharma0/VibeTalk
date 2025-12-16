@@ -1,49 +1,55 @@
 import React from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Link } from "react-router-dom";
-import { LogOut, Settings, User, MessageSquare, Users, Film } from "lucide-react";
+import {
+  LogOut,
+  Settings,
+  User,
+  MessageSquare,
+  Users,
+  Film,
+} from "lucide-react";
 
 const Navbar = ({ onOpenSidebar }) => {
   const { logout, authUser } = useAuthStore();
 
   return (
-    <header className="fixed top-0 w-full z-40 bg-base-100 border-b border-base-300/80">
-      <div className="flex items-center justify-between h-14 px-4 sm:px-6">
-        
-        {/* LEFT SECTION */}
+    <header className="fixed top-0 w-full z-40 bg-base-100 border-b border-base-300">
+      <div className="flex items-center justify-between h-14 px-3 sm:px-6">
+
+        {/* ================= LEFT ================= */}
         <div className="flex items-center gap-3">
-          
-          {/* MOBILE SIDEBAR BUTTON */}
+          {/* Mobile sidebar */}
           <button
-            className="md:hidden btn btn-ghost btn-square"
             onClick={onOpenSidebar}
+            className="md:hidden p-2 rounded-lg hover:bg-base-200 transition"
           >
             <Users className="w-5 h-5" />
           </button>
 
-          {/* LOGO */}
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-2 select-none">
-            <MessageSquare className="w-7 h-7 text-primary" />
-            <h1 className="text-xl font-semibold tracking-tight text-base-content">
+            <MessageSquare className="w-6 h-6 text-primary" />
+            <span className="text-lg font-semibold tracking-tight">
               VibeTalk
-            </h1>
+            </span>
           </Link>
         </div>
 
-        {/* RIGHT SECTION */}
-        <div className="flex items-center gap-3">
+        {/* ================= RIGHT ================= */}
+        <div className="flex items-center gap-1 sm:gap-2">
 
-          {/* WATCH PARTY BUTTON - ADD THIS */}
+          {/* WATCH PARTY — ALWAYS VISIBLE */}
           <Link
             to="/watch-party"
             className="
-              px-3 py-1.5 rounded-md text-sm font-medium
-              bg-gradient-to-r from-purple-500 to-pink-500 
-              text-white border border-purple-600
-              hover:from-purple-600 hover:to-pink-600
-              hover:shadow-lg hover:scale-105
-              transition-all duration-200
               flex items-center gap-2
+              px-2 sm:px-3 py-1.5
+              rounded-lg text-sm font-medium
+              bg-primary/10 text-primary
+              border border-primary/20
+              hover:bg-primary/15
+              transition
             "
           >
             <Film className="w-4 h-4" />
@@ -54,51 +60,53 @@ const Navbar = ({ onOpenSidebar }) => {
           <Link
             to="/settings"
             className="
-              px-3 py-1.5 rounded-md text-sm
+              flex items-center gap-2
+              px-2 sm:px-3 py-1.5
+              rounded-lg text-sm
               bg-base-200 border border-base-300
-              text-base-content/70 hover:text-primary hover:border-primary/50
+              text-base-content/70
+              hover:text-primary hover:border-primary/40
               transition
             "
           >
-            <div className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </div>
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline">Settings</span>
           </Link>
 
-          {/* PROFILE & LOGOUT */}
           {authUser && (
             <>
               {/* PROFILE */}
               <Link
                 to="/profile"
                 className="
-                  px-3 py-1.5 rounded-md text-sm
+                  flex items-center gap-2
+                  px-2 sm:px-3 py-1.5
+                  rounded-lg text-sm
                   bg-base-200 border border-base-300
-                  text-base-content/70 hover:text-secondary hover:border-secondary/50
+                  text-base-content/70
+                  hover:text-secondary hover:border-secondary/40
                   transition
                 "
               >
-                <div className="flex items-center gap-2">
-                  <User className="w-4 h-4" />
-                  <span className="hidden sm:inline">Profile</span>
-                </div>
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Profile</span>
               </Link>
 
-              {/* LOGOUT BUTTON */}
+              {/* LOGOUT */}
               <button
                 onClick={logout}
                 className="
-                  px-3 py-1.5 rounded-md text-sm font-medium
-                  bg-red-50 text-red-600 border border-red-200
-                  hover:bg-red-600 hover:text-white hover:border-red-600
+                  flex items-center gap-2
+                  px-2 sm:px-3 py-1.5
+                  rounded-lg text-sm font-medium
+                  bg-error/10 text-error
+                  border border-error/20
+                  hover:bg-error hover:text-white
                   transition
                 "
               >
-                <div className="flex items-center gap-2">
-                  <LogOut className="w-4 h-4" />
-                  <span className="hidden sm:inline">Logout</span>
-                </div>
+                <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </>
           )}

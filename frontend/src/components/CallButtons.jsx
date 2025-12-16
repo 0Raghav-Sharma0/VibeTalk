@@ -1,53 +1,63 @@
-// src/components/CallButtons.jsx
+// src/components/CallButtons.jsx - MODERN VERSION
 import React, { useCallback } from "react";
+import { motion } from "framer-motion";
 import { Phone, Video } from "lucide-react";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useChatStore } from "../store/useChatStore";
-
-/* DaisyUI theme-aware base button */
-const btnBase =
-  "w-10 h-10 rounded-full flex items-center justify-center \
-   border border-base-300 bg-base-200 text-base-content \
-   transition hover:bg-base-300 active:scale-95";
+import { useAuthStore } from "../store/useAuthStore";
 
 const CallButtons = () => {
   const { startCall } = useVideoCallStore();
   const { selectedUser } = useChatStore();
+  const { socket, authUser } = useAuthStore();
 
   const handleCall = useCallback(
     (type) => {
-      if (!selectedUser?._id) return;
+      if (!selectedUser?._id || !socket || !authUser) return;
 
-      // ⭐ Correct call trigger
+      console.log(`📞 Initiating ${type} call to:`, selectedUser._id);
+      
+      // Notify the other user
+      socket.emit("call-initiated", {
+        from: authUser._id,
+        to: selectedUser._id,
+        callType: type,
+        callerName: authUser.fullName,
+      });
+
+      // Start local call
       startCall(type, selectedUser._id);
     },
-    [selectedUser, startCall]
+    [selectedUser, startCall, socket, authUser]
   );
 
   if (!selectedUser) return null;
 
   return (
-    <div className="flex items-center gap-3">
-
-      {/* Audio Call */}
-      <button
+    <div className="flex items-center gap-2">
+      {/* Audio Call Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => handleCall("audio")}
         aria-label="Audio Call"
         title="Audio Call"
-        className={`${btnBase} hover:border-success/50`}
+        className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 text-emerald-600 hover:from-emerald-500/20 hover:to-emerald-600/20 border border-emerald-500/20 transition-all shadow-sm"
       >
-        <Phone size={16} className="text-success" />
-      </button>
+        <Phone size={18} />
+      </motion.button>
 
-      {/* Video Call */}
-      <button
+      {/* Video Call Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => handleCall("video")}
         aria-label="Video Call"
         title="Video Call"
-        className={`${btnBase} hover:border-info/50`}
+        className="p-2.5 rounded-xl bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 transition-all shadow-sm"
       >
-        <Video size={16} className="text-info" />
-      </button>
+        <Video size={18} />
+      </motion.button>
     </div>
   );
 };

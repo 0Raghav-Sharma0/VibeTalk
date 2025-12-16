@@ -17,7 +17,7 @@ const Sidebar = ({ onClose }) => {
     typing,
   } = useChatStore();
 
-  const { onlineUsers } = useAuthStore();
+  const { authUser, onlineUsers } = useAuthStore();
   const { isMusicPlayerOpen, toggleMusicPlayer } = useMusicStore();
 
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
@@ -28,73 +28,90 @@ const Sidebar = ({ onClose }) => {
 
   const handleUserSelect = (user) => {
     setSelectedUser(user);
-
     if (isMusicPlayerOpen) toggleMusicPlayer();
-
-    if (typeof onClose === "function") onClose();
+    onClose?.();
   };
 
-  /* ============================================================
-        SORT USERS → UNREAD FIRST → ONLINE → ALPHABETICAL
-  ============================================================ */
+  /* ================= SORT ================= */
   const sortedUsers = [...users].sort((a, b) => {
-    const unreadA = unreadMessages[a._id] || 0;
-    const unreadB = unreadMessages[b._id] || 0;
+    const ua = unreadMessages[a._id] || 0;
+    const ub = unreadMessages[b._id] || 0;
 
-    // 1️⃣ unread messages on top
-    if (unreadA > 0 && unreadB === 0) return -1;
-    if (unreadB > 0 && unreadA === 0) return 1;
+    if (ua && !ub) return -1;
+    if (ub && !ua) return 1;
 
-    // 2️⃣ online next
-    const onlineA = onlineUsers.includes(a._id);
-    const onlineB = onlineUsers.includes(b._id);
+    const oa = onlineUsers.includes(a._id);
+    const ob = onlineUsers.includes(b._id);
 
-    if (onlineA && !onlineB) return -1;
-    if (onlineB && !onlineA) return 1;
+    if (oa && !ob) return -1;
+    if (ob && !oa) return 1;
 
-    // 3️⃣ safe alphabetical sorting
-    const nameA = a.fullName || "";
-    const nameB = b.fullName || "";
-
-    return nameA.localeCompare(nameB);
+    return (a.fullName || "").localeCompare(b.fullName || "");
   });
 
   const filteredUsers = showOnlineOnly
     ? sortedUsers.filter(
-        (user) =>
-          onlineUsers.includes(user._id) ||
-          (unreadMessages[user._id] && unreadMessages[user._id] > 0)
+        (u) =>
+          onlineUsers.includes(u._id) ||
+          (unreadMessages[u._id] || 0) > 0
       )
     : sortedUsers;
+
+  const onlineCount = Math.max(
+    0,
+    onlineUsers.filter((id) => id !== authUser?._id).length
+  );
 
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-72 bg-base-200 border-r border-base-300 flex flex-col">
-      {/* Header */}
-      <div className="border-b border-base-300 px-5 py-4 flex items-center gap-2">
-        <Users className="w-5 h-5 text-primary" />
-        <span className="text-sm font-medium text-base-content">
-          Contacts
-        </span>
-      </div>
+    <aside className="h-full w-72 bg-base-100 border-r border-base-300 flex flex-col">
+      {/* ================= HEADER ================= */}
+      <div className="px-5 py-4 border-b border-base-300">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold">
+                Conversations
+              </h2>
+              <p className="text-xs text-base-content/60">
+                {filteredUsers.length} contacts
+              </p>
+            </div>
+          </div>
 
-      {/* Online Toggle */}
-      <div className="px-5 py-3 flex items-center justify-between text-xs text-base-content/60">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={showOnlineOnly}
-            onChange={(e) => setShowOnlineOnly(e.target.checked)}
-            className="accent-primary"
+          <span className="text-xs px-2 py-1 bg-success/10 text-success rounded-full font-medium">
+            {onlineCount} online
+          </span>
+        </div>
+
+        {/* Filter */}
+        <button
+          onClick={() => setShowOnlineOnly((p) => !p)}
+          className={`mt-3 text-xs px-3 py-1.5 rounded-md transition-all duration-200 flex items-center gap-2
+            ${
+              showOnlineOnly
+                ? "bg-primary/10 text-primary border border-primary/20"
+                : "text-base-content/60 hover:bg-base-200 border border-transparent"
+            }
+          `}
+        >
+          <div
+            className={`w-2 h-2 rounded-full ${
+              showOnlineOnly
+                ? "bg-primary"
+                : "bg-base-content/30"
+            }`}
           />
-          Online Only
-        </label>
-        <span>{Math.max(0, onlineUsers.length - 1)} online</span>
+          Online only
+        </button>
       </div>
 
-      {/* Users List */}
-      <div className="flex-1 overflow-y-auto px-2 py-1 space-y-1 scrollbar-thin scrollbar-thumb-base-300">
+      {/* ================= USER LIST ================= */}
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1 scrollbar-thin scrollbar-thumb-base-300">
         {filteredUsers.map((user) => {
           const isOnline = onlineUsers.includes(user._id);
           const isSelected = selectedUser?._id === user._id;
@@ -102,74 +119,125 @@ const Sidebar = ({ onClose }) => {
           const isTyping = typing[user._id];
 
           return (
-            <button
+            <div
               key={user._id}
-              onClick={() => handleUserSelect(user)}
-              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition
+              className={`relative rounded-lg transition-all duration-200
                 ${
                   isSelected
-                    ? "bg-primary/20 border border-primary/50"
-                    : unread > 0
-                    ? "bg-primary/10 border border-primary"
-                    : "hover:bg-base-300"
+                    ? "bg-primary/10 border border-primary/20"
+                    : unread
+                    ? "bg-primary/5 border border-primary/10"
+                    : "hover:bg-base-200 border border-transparent"
                 }
               `}
             >
-              {/* Avatar */}
-              <div className="relative">
-                <img
-                  src={user.profilePic || "/boy.png"}
-                  alt={user.fullName}
-                  className="w-10 h-10 rounded-full object-cover border border-base-300"
-                />
-                {isOnline && (
-                  <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-base-200" />
-                )}
-              </div>
+              {/* Selected indicator */}
+              {isSelected && (
+                <span className="absolute left-0 top-2 bottom-2 w-1 bg-primary rounded-r" />
+              )}
 
-              {/* User Info */}
-              <div className="flex-1 truncate">
-                <p
-                  className={`text-sm truncate ${
-                    unread > 0 && !isSelected
-                      ? "font-bold text-base-content"
-                      : "font-medium text-base-content"
-                  }`}
-                >
-                  {user.fullName || "Unknown User"}
-                </p>
+              <div
+                onClick={() => handleUserSelect(user)}
+                className="w-full flex items-center gap-3 px-3 py-2.5 cursor-pointer"
+              >
+                {/* Avatar */}
+                <div className="relative shrink-0">
+                  <img
+                    src={user.profilePic || "/boy.png"}
+                    alt={user.fullName}
+                    className="w-10 h-10 rounded-full object-cover border border-base-300"
+                  />
+                  {isOnline && (
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full ring-2 ring-base-100" />
+                  )}
+                </div>
 
-                {isTyping ? (
-                  <p className="text-xs text-purple-500 font-medium animate-pulse">
-                    typing…
-                  </p>
-                ) : (
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p
+                      className={`text-sm truncate ${
+                        unread && !isSelected
+                          ? "font-semibold"
+                          : "font-medium"
+                      }`}
+                    >
+                      {user.fullName || "Unknown User"}
+                    </p>
+
+                    {isTyping && (
+                      <span className="text-xs text-primary font-medium animate-pulse">
+                        typing
+                      </span>
+                    )}
+                  </div>
+
                   <p
                     className={`text-xs ${
-                      isOnline ? "text-success" : "text-base-content/60"
+                      isOnline
+                        ? "text-success"
+                        : "text-base-content/60"
                     }`}
                   >
                     {isOnline ? "Online" : "Offline"}
                   </p>
+                </div>
+
+                {/* Unread badge */}
+                {unread > 0 && !isSelected && (
+                  <span className="min-w-[22px] h-5 px-1.5 flex items-center justify-center text-xs rounded-full bg-primary text-white font-medium">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
                 )}
               </div>
-
-              {/* Unread Badge */}
-              {unread > 0 && !isSelected && (
-                <span className="bg-primary text-white text-xs px-2 py-1 rounded-full animate-ping">
-                  {unread}
-                </span>
-              )}
-            </button>
+            </div>
           );
         })}
 
         {filteredUsers.length === 0 && (
-          <p className="text-center text-base-content/60 py-5 text-sm">
-            No users found
-          </p>
+          <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+            <div className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center mb-3">
+              <Users className="w-6 h-6 text-base-content/30" />
+            </div>
+            <p className="text-sm font-medium mb-1">
+              {showOnlineOnly
+                ? "No online users"
+                : "No conversations"}
+            </p>
+            <p className="text-xs text-base-content/60">
+              {showOnlineOnly
+                ? "All contacts are offline"
+                : "Start a conversation with someone"}
+            </p>
+          </div>
         )}
       </div>
+
+      {/* ================= CURRENT USER ================= */}
+      {authUser && (
+        <div className="p-3 border-t border-base-300">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <img
+                src={authUser.profilePic || "/boy.png"}
+                alt="You"
+                className="w-9 h-9 rounded-full object-cover border border-primary/30"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full ring-2 ring-base-100" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">
+                {authUser.fullName || "You"}
+              </p>
+              <p className="text-xs text-success flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-success rounded-full" />
+                Online
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };
