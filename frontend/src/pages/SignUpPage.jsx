@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import { Link, useNavigate } from "react-router-dom";
@@ -15,6 +15,18 @@ export default function SignUpPage() {
     password: "",
   });
 
+  /* ✅ REGISTER dotLottie WEB COMPONENT */
+  useEffect(() => {
+    if (!document.getElementById("dotlottie-script")) {
+      const script = document.createElement("script");
+      script.id = "dotlottie-script";
+      script.type = "module";
+      script.src =
+        "https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs";
+      document.body.appendChild(script);
+    }
+  }, []);
+
   const submit = async (e) => {
     e.preventDefault();
     if (!form.fullName || !form.email || form.password.length < 6) {
@@ -28,22 +40,11 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen bg-base-200 text-base-content flex overflow-hidden">
 
-      {/* LEFT */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="
-            relative
-            w-full max-w-md
-            bg-base-100
-            border border-base-300
-            rounded-2xl
-            p-8
-            shadow-xl
-            overflow-hidden
-          "
+          className="relative w-full max-w-md bg-base-100 border border-base-300 rounded-2xl p-8 shadow-xl overflow-hidden"
         >
           <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/20 blur-3xl rounded-full" />
 
@@ -57,7 +58,6 @@ export default function SignUpPage() {
 
             <form onSubmit={submit} className="space-y-5">
 
-              {/* NAME */}
               <div>
                 <label className="text-xs text-base-content/60">
                   Full Name
@@ -69,23 +69,13 @@ export default function SignUpPage() {
                     onChange={(e) =>
                       setForm({ ...form, fullName: e.target.value })
                     }
-                    className="
-                      w-full h-11
-                      pl-10
-                      rounded-lg
-                      bg-base-200
-                      border border-base-300
-                      focus:ring-2 focus:ring-primary/40
-                    "
+                    className="w-full h-11 pl-10 rounded-lg bg-base-200 border border-base-300"
                   />
                 </div>
               </div>
 
-              {/* EMAIL */}
               <div>
-                <label className="text-xs text-base-content/60">
-                  Email
-                </label>
+                <label className="text-xs text-base-content/60">Email</label>
                 <div className="relative mt-2">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 opacity-60" />
                   <input
@@ -93,19 +83,11 @@ export default function SignUpPage() {
                     onChange={(e) =>
                       setForm({ ...form, email: e.target.value })
                     }
-                    className="
-                      w-full h-11
-                      pl-10
-                      rounded-lg
-                      bg-base-200
-                      border border-base-300
-                      focus:ring-2 focus:ring-primary/40
-                    "
+                    className="w-full h-11 pl-10 rounded-lg bg-base-200 border border-base-300"
                   />
                 </div>
               </div>
 
-              {/* PASSWORD */}
               <div>
                 <label className="text-xs text-base-content/60">
                   Password
@@ -118,19 +100,12 @@ export default function SignUpPage() {
                     onChange={(e) =>
                       setForm({ ...form, password: e.target.value })
                     }
-                    className="
-                      w-full h-11
-                      pl-10 pr-10
-                      rounded-lg
-                      bg-base-200
-                      border border-base-300
-                      focus:ring-2 focus:ring-primary/40
-                    "
+                    className="w-full h-11 pl-10 pr-10 rounded-lg bg-base-200 border border-base-300"
                   />
                   <button
                     type="button"
-                    onClick={() => setShow(p => !p)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60 hover:opacity-100"
+                    onClick={() => setShow((p) => !p)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 opacity-60"
                   >
                     {show ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -139,19 +114,9 @@ export default function SignUpPage() {
 
               <button
                 disabled={isSigningUp}
-                className="
-                  w-full h-11
-                  bg-primary text-primary-content
-                  rounded-lg
-                  flex items-center justify-center
-                  hover:opacity-90
-                "
+                className="w-full h-11 bg-primary text-primary-content rounded-lg flex items-center justify-center"
               >
-                {isSigningUp ? (
-                  <Loader2 className="animate-spin" />
-                ) : (
-                  "Sign Up"
-                )}
+                {isSigningUp ? <Loader2 className="animate-spin" /> : "Sign Up"}
               </button>
             </form>
 
@@ -165,12 +130,13 @@ export default function SignUpPage() {
         </motion.div>
       </div>
 
-      {/* RIGHT : SAME LOTTIE */}
       <div className="hidden lg:flex w-1/2 items-center justify-center">
-        <dotlottie-wc
+        <dotlottie-player
           src="https://lottie.host/5a4c9f68-0a91-4373-83ba-809e7d1ced57/rlqClPNnCc.lottie"
-          autoplay
+          background="transparent"
+          speed="1"
           loop
+          autoplay
           style={{ width: 420, height: 420 }}
         />
       </div>
