@@ -17,6 +17,7 @@ const VideoPlayer = () => {
 
   const playerRef = useRef(null);
   const ytPlayerRef = useRef(null);
+  const containerRef = useRef(null);
   const isSyncing = useRef(false);
   const [ytReady, setYtReady] = useState(false);
 
@@ -26,7 +27,7 @@ const VideoPlayer = () => {
       ? "bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300"
       : "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700";
 
-  /* ================= LOAD YOUTUBE API ONCE ================= */
+  /* ================= LOAD YOUTUBE API ================= */
   useEffect(() => {
     if (!window.YT) {
       const script = document.createElement("script");
@@ -45,7 +46,7 @@ const VideoPlayer = () => {
     return match && match[6]?.length === 11 ? match[6] : null;
   };
 
-  /* ================= INIT YOUTUBE PLAYER ================= */
+  /* ================= INIT YOUTUBE ================= */
   useEffect(() => {
     if (
       videoState.type !== "youtube" ||
@@ -61,10 +62,10 @@ const VideoPlayer = () => {
     ytPlayerRef.current = new window.YT.Player("youtube-player", {
       videoId,
       playerVars: {
-        controls: 1,        // ✅ REQUIRED for fullscreen
-        fs: 1,              // ✅ fullscreen enabled
-        modestbranding: 1,
+        controls: 1, // REQUIRED for fullscreen
+        fs: 1,
         rel: 0,
+        modestbranding: 1,
         playsinline: 1,
         disablekb: canControlVideo ? 0 : 1,
       },
@@ -116,12 +117,7 @@ const VideoPlayer = () => {
 
   /* ================= LOCAL VIDEO ================= */
   useEffect(() => {
-    if (
-      videoState.type !== "local" ||
-      !playerRef.current ||
-      isHost
-    )
-      return;
+    if (videoState.type !== "local" || !playerRef.current || isHost) return;
 
     isSyncing.current = true;
     const v = playerRef.current;
@@ -136,10 +132,16 @@ const VideoPlayer = () => {
 
   return (
     <div
+      ref={containerRef}
       className={`relative w-full h-full rounded-3xl overflow-hidden ${containerClass}`}
+      style={{ zIndex: 20 }}   // 🔥 ABOVE reactions
     >
       {videoState.type === "youtube" ? (
-        <div id="youtube-player" className="w-full h-full" />
+        <div
+          id="youtube-player"
+          className="w-full h-full"
+          style={{ pointerEvents: "auto" }} // 🔥 allow touch
+        />
       ) : (
         <video
           ref={playerRef}
@@ -147,6 +149,7 @@ const VideoPlayer = () => {
           controls
           playsInline
           className="w-full h-full object-contain"
+          style={{ pointerEvents: "auto" }}
           onPlay={() =>
             canControlVideo &&
             syncPlayback({
