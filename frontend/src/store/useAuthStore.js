@@ -1,3 +1,4 @@
+// src/store/useAuthStore.js
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
@@ -14,11 +15,13 @@ const BASE_URL =
       "https://blah-blah-3.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
+  /* ================= STATE ================= */
   authUser: null,
   isSigningUp: false,
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
+
   onlineUsers: [],
   socket: null,
 
@@ -42,6 +45,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /* ================= SIGNUP ================= */
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
@@ -59,6 +63,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /* ================= LOGIN ================= */
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
@@ -76,6 +81,7 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /* ================= LOGOUT ================= */
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -93,6 +99,7 @@ export const useAuthStore = create((set, get) => ({
     window.location.replace("/login");
   },
 
+  /* ================= UPDATE PROFILE ================= */
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
@@ -110,6 +117,23 @@ export const useAuthStore = create((set, get) => ({
   connectSocket: () => {
     const { authUser, socket } = get();
     if (!authUser) return;
+
+    /* 🔒 BLOCK reconnect only during ACTIVE call */
+    try {
+      const { useVideoCallStore } = require("./useVideoCallStore");
+      const { isCallActive, isCalling } =
+        useVideoCallStore.getState();
+
+      if (
+        socket &&
+        socket.connected &&
+        (isCallActive || isCalling)
+      ) {
+        console.log("⏸ Socket reconnect blocked (active call)");
+        return;
+      }
+    } catch {}
+
     if (socket && socket.connected) return;
 
     const sock = io(BASE_URL, {
@@ -120,6 +144,9 @@ export const useAuthStore = create((set, get) => ({
         username: authUser.username || authUser.fullName || "User",
       },
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
     });
 
     sock.on("connect", () => {
@@ -127,10 +154,37 @@ export const useAuthStore = create((set, get) => ({
       requestNotificationPermission();
     });
 
-    sock.on("getOnlineUsers", (ids) => {
-      set({ onlineUsers: Array.isArray(ids) ? ids : [] });
+    sock.on("connect_error", (err) => {
+      console.warn("Socket connect_error:", err?.message || err);
     });
 
+    /* 🔥 SAFE DISCONNECT */
+    sock.on("disconnect", (reason) => {
+      console.log("🔴 Socket disconnected:", reason);
+
+      try {
+        const { useVideoCallStore } = require("./useVideoCallStore");
+        const { isIncomingCall } =
+          useVideoCallStore.getState();
+
+        if (isIncomingCall) {
+          console.log("⏸ Ignoring disconnect during incoming call");
+          return;
+        }
+      } catch {}
+
+      set({ onlineUsers: [] });
+    });
+
+    /* ================= ONLINE USERS ================= */
+    sock.on("getOnlineUsers", (ids) => {
+      const safeArray = Array.isArray(ids)
+        ? ids
+        : Object.keys(ids || {});
+      set({ onlineUsers: safeArray });
+    });
+
+    /* ================= CALL EVENTS ================= */
     sock.on("incoming-call", ({ from, callType, callerName, offer }) => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
         useVideoCallStore
@@ -155,15 +209,20 @@ export const useAuthStore = create((set, get) => ({
 
     sock.on("call-rejected", () => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
+        const { isCallActive, isCalling } =
+          useVideoCallStore.getState();
+
+        if (!isCallActive && !isCalling) return;
+
         useVideoCallStore.getState().resetCallState();
         toast.error("Call was rejected");
       });
     });
 
-    /* 🔥 FIXED BLOCK */
-    sock.on("call-ended", ({ by }) => {
+    sock.on("call-ended", () => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
-        const { isCallActive } = useVideoCallStore.getState();
+        const { isCallActive } =
+          useVideoCallStore.getState();
 
         if (!isCallActive) {
           console.log("⏸ Ignoring premature call-ended");
@@ -177,6 +236,7 @@ export const useAuthStore = create((set, get) => ({
     set({ socket: sock });
   },
 
+  /* ================= SOCKET DISCONNECT ================= */
   disconnectSocket: () => {
     const s = get().socket;
     if (!s) return;

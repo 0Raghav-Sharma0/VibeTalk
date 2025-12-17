@@ -311,11 +311,12 @@ const cleanupCall = useCallback(() => {
       }
 
       setCallActive(true);
-      setCalling(false);
-      clearIncomingCall();
-      stopRingtone();
-      setCallStatus("Connected");
-      processingCallRef.current = false;
+setCalling(false);
+clearIncomingCall(); // ✅ REQUIRED
+stopRingtone();
+setCallStatus("Connected");
+processingCallRef.current = false;
+
     });
 
     /* ================= ERROR ================= */
@@ -375,6 +376,7 @@ const cleanupCall = useCallback(() => {
     }
 
     processingCallRef.current = true;
+    clearIncomingCall(); // ✅ MUST clear immediately
     setCallStatus("Accepting...");
 
     // ⭐ KEY FIX: Get stream FIRST, then create peer
@@ -398,9 +400,9 @@ const cleanupCall = useCallback(() => {
   // 1️⃣ Extract OFFER
   const { callOffer } = useVideoCallStore.getState();
 
-const offer =
-  callOffer ||
+const offer = callOffer ?? 
   pendingSignalsRef.current.find((s) => s.type === "offer");
+
   if (callOffer) {
   pendingSignalsRef.current =
     pendingSignalsRef.current.filter((s) => s.type !== "offer");
@@ -563,18 +565,11 @@ const offer =
       console.log("📡 Incoming signal:", signal.type);
 
       // Peer NOT ready yet
-      if (!peerRef.current || peerRef.current.destroyed) {
-  const exists = pendingSignalsRef.current.some(
-    (s) => s.type === signal.type
-  );
-  if (!exists) {
-    pendingSignalsRef.current.push(signal);
-  }
+     if (!peerRef.current || peerRef.current.destroyed) {
+  pendingSignalsRef.current.push(signal); // ✅ store ALL signals
   return;
 }
 
-
-      // Peer IS ready
       try {
         peerRef.current.signal(signal);
       } catch (err) {
@@ -588,14 +583,12 @@ const offer =
   const { isIncomingCall, isCallActive } =
     useVideoCallStore.getState();
 
-  // 🚫 Ignore end-call before accept
-  if (isIncomingCall && !isCallActive) {
-    console.log("⏸ Ignoring premature call-ended");
-    return;
-  }
+  if (!peerRef.current || !isCallActive) {
+  console.log("⏸ Ignoring premature call-ended");
+  return;
+}
+handleCallEnd();
 
-  console.log("📞 Call ended by:", by);
-  handleCallEnd();
 };
 
     const handleCallRejected = ({ by }) => {
@@ -635,7 +628,8 @@ const offer =
     isCalling &&
     !isIncomingCall &&
     !isCallActive &&
-    !processingCallRef.current
+    !processingCallRef.current &&
+    socket?.connected
   ) {
     startOutgoingCall();
   }

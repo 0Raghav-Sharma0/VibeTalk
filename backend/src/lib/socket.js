@@ -260,7 +260,6 @@ export function createSocketServer(server) {
           callType,
           callerName: caller?.fullName || callerName || "Caller",
           callerPic: caller?.profilePic,
-          socketId: socket.id
         });
       } catch (error) {
         console.error("❌ Error fetching caller info:", error);
@@ -272,6 +271,24 @@ export function createSocketServer(server) {
         });
       }
     });
+    socket.on("call-accept", ({ from }) => {
+  if (!from || !socket.userId) return;
+
+  const key = `${from}-${socket.userId}`;
+  const offer = callOffers.get(key);
+
+  if (offer) {
+    console.log("📤 Sending stored offer to receiver");
+
+    socket.emit("call-signal", {
+      to: socket.userId,
+      from,
+      data: offer,
+      callType: "video",
+    });
+  }
+});
+
 
     socket.on("call-signal", async (data) => {
       const { to, from, signal, callType, data: signalData } = data;
@@ -298,12 +315,19 @@ export function createSocketServer(server) {
       console.log(`📡 Signal type: ${actualSignal.type} from ${actualFrom} to ${to}`);
       
       // ⭐ KEY FIX: If this is an OFFER, update incoming call with offer data
-      io.to(target).emit("call-signal", {
-        to,
-        from: actualFrom,
-        data: actualSignal,
-        callType: callType || "video"
-      });
+      // ⭐ STORE OFFER so receiver can accept later
+if (actualSignal.type === "offer") {
+  callOffers.set(`${actualFrom}-${to}`, actualSignal);
+}
+
+// Forward signal
+io.to(target).emit("call-signal", {
+  to,
+  from: actualFrom,
+  data: actualSignal,
+  callType: callType || "video"
+});
+
     });
 
     socket.on("end-call", ({ targetUserId }) => {
@@ -375,8 +399,12 @@ export function createSocketServer(server) {
        DISCONNECT - ENHANCED CLEANUP
     ============================================================ */
     socket.on("disconnect", (reason) => {
-      console.log("🔴 Socket disconnected:", socket.id, "Reason:", reason);
-      
+  console.log("🔴 Socket disconnected:", socket.id, "Reason:", reason);
+
+  if (reason === "transport close") {
+    console.log("⏸ Ignoring transient transport close");
+    return;
+  }   
       if (socket.userId && userSocketMap[socket.userId] === socket.id) {
         console.log(`👤 User Offline: ${socket.userId}`);
         delete userSocketMap[socket.userId];
