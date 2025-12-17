@@ -298,41 +298,6 @@ export function createSocketServer(server) {
       console.log(`📡 Signal type: ${actualSignal.type} from ${actualFrom} to ${to}`);
       
       // ⭐ KEY FIX: If this is an OFFER, update incoming call with offer data
-      if (actualSignal.type === "offer") {
-        console.log("📞 Received OFFER - Updating incoming call with offer data");
-        
-        const callKey = `${actualFrom}-${to}`;
-        callOffers.set(callKey, {
-          offer: actualSignal,
-          timestamp: Date.now(),
-          callType: callType || "video"
-        });
-        
-        // Clean up old offers (older than 2 minutes)
-        for (const [key, value] of callOffers.entries()) {
-          if (Date.now() - value.timestamp > 120000) {
-            callOffers.delete(key);
-          }
-        }
-        
-        try {
-          const caller = await User.findById(actualFrom).select("fullName profilePic");
-          
-          // ⭐ Re-emit incoming-call WITH the offer
-          io.to(target).emit("incoming-call", {
-            from: actualFrom,
-            callType: callType || "video",
-            callerName: caller?.fullName || "Caller",
-            callerPic: caller?.profilePic,
-            offer: actualSignal, // ⭐ CRITICAL: Include the offer
-            socketId: socket.id
-          });
-        } catch (error) {
-          console.error("❌ Error fetching caller info:", error);
-        }
-      }
-      
-      // Forward signal to target
       io.to(target).emit("call-signal", {
         to,
         from: actualFrom,

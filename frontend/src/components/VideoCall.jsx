@@ -35,6 +35,7 @@ const VideoCall = () => {
   const { authUser, socket } = useAuthStore();
   const { selectedUser } = useChatStore();
 
+
   // Refs
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -47,15 +48,13 @@ const VideoCall = () => {
   
   const processingCallRef = useRef(false);
   const mountedRef = useRef(true);
-  const reconnectAttempts = useRef(0);
-  const MAX_RECONNECT = 3;
+  const pendingSignalsRef = useRef([]);
 
   // State
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [callStatus, setCallStatus] = useState("Initializing...");
-  const [connectionQuality, setConnectionQuality] = useState("good");
 
   const getTargetUserId = useCallback(() => {
     return selectedUser?._id || peerId || incomingCallFrom;
@@ -178,130 +177,126 @@ const VideoCall = () => {
     }
   }, []);
 
+
+    const handleCallEnd = useCallback(() => {
+    setCallStatus("Call ended");
+    setTimeout(() => cleanupCall(), 1000);
+  }, []);
+
+ 
+
   const createPeerConnection = useCallback((initiator, stream) => {
-    if (peerRef.current) {
-      console.log("🔄 Destroying existing peer");
-      try {
-        peerRef.current.destroy();
-      } catch (e) {}
-      peerRef.current = null;
-    }
+  // 🔥 destroy old peer safely
+  if (peerRef.current) {
+    try {
+      peerRef.current.destroy();
+    } catch {}
+    peerRef.current = null;
+  }
 
-    const targetUserId = getTargetUserId();
-    if (!targetUserId) {
-      console.error("❌ No target user");
-      return null;
-    }
+  const targetUserId = getTargetUserId();
+  if (!targetUserId) {
+    console.error("❌ No target user");
+    return null;
+  }
 
-    // ⭐ KEY FIX: Ensure stream exists before creating peer
-    if (!stream) {
-      console.error("❌ No stream available for peer connection");
-      return null;
-    }
+  if (!stream) {
+    console.error("❌ Stream missing");
+    return null;
+  }
 
-    console.log(`🔗 Creating ${initiator ? 'initiator' : 'receiver'} peer`, {
-      hasStream: !!stream,
-      streamTracks: stream.getTracks().length,
-      audioTracks: stream.getAudioTracks().length,
-      videoTracks: stream.getVideoTracks().length
+  console.log(`🔗 Creating ${initiator ? "initiator" : "receiver"} peer`);
+
+  const peer = new Peer({
+    initiator,
+    trickle: true,
+    stream,
+    config: {
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun2.l.google.com:19302" },
+      ],
+    },
+  });
+
+  // ================= SIGNAL OUT =================
+  peer.on("signal", (signal) => {
+    if (!socket || !mountedRef.current) return;
+
+    console.log("📤 Sending signal:", signal.type);
+
+    socket.emit("call-signal", {
+      to: targetUserId,
+      from: authUser._id,
+      data: signal,
+      callType,
+    });
+  });
+
+  // ================= STREAM IN =================
+  peer.on("stream", (remoteStream) => {
+    console.log("📥 Remote stream received", {
+      audio: remoteStream.getAudioTracks().length,
+      video: remoteStream.getVideoTracks().length,
     });
 
-    try {
-      const peer = new Peer({
-        initiator,
-        trickle: true,
-        stream, // ⭐ CRITICAL: Always pass the stream
-        config: {
-          iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-            { urls: "stun:stun1.l.google.com:19302" },
-            { urls: "stun:stun2.l.google.com:19302" },
-          ],
-        },
-      });
+    if (callType === "video") {
+     if (remoteVideoRef.current) {
+  remoteVideoRef.current.srcObject = remoteStream;
+  remoteVideoRef.current.play().catch(console.error);
+}
 
-      peer.on("signal", (data) => {
-        if (!socket || !mountedRef.current) return;
-        
-        console.log("📡 Sending signal:", data.type, "to:", targetUserId);
-        socket.emit("call-signal", {
-          to: targetUserId,
-          from: authUser?._id,
-          data,
-          callType,
-        });
-      });
+    } else {
+      if (remoteAudioRef.current) {
+  remoteAudioRef.current.srcObject = remoteStream;
+  remoteAudioRef.current.play().catch(console.error);
+}
 
-      peer.on("stream", (remoteStream) => {
-        if (!mountedRef.current) return;
-        
-        console.log("📹 Received remote stream", {
-          hasVideo: remoteStream.getVideoTracks().length > 0,
-          hasAudio: remoteStream.getAudioTracks().length > 0,
-          isVideoCall: callType === "video",
-        });
-        
-        // ⭐ Attach remote stream to appropriate element
-        if (callType === "video") {
-          if (remoteVideoRef.current) {
-            console.log("🎥 Attaching remote VIDEO stream");
-            remoteVideoRef.current.srcObject = remoteStream;
-            remoteVideoRef.current.play().catch(err => {
-              console.error("Remote video play error:", err);
-            });
-          }
-        } else {
-          if (remoteAudioRef.current) {
-            console.log("🔊 Attaching remote AUDIO stream");
-            remoteAudioRef.current.srcObject = remoteStream;
-            remoteAudioRef.current.play().catch(err => {
-              console.error("Remote audio play error:", err);
-            });
-          }
-        }
-
-        setCallActive(true);
-        setCalling(false);
-        clearIncomingCall();
-        stopRingtone();
-        setCallStatus("Connected");
-        reconnectAttempts.current = 0;
-      });
-
-      peer.on("connect", () => {
-        console.log("✅ Peer connected");
-        setCallStatus("Connected");
-      });
-
-      peer.on("close", () => {
-        console.log("🔌 Peer closed");
-        handleCallEnd();
-      });
-
-      peer.on("error", (err) => {
-        console.error("❌ Peer error:", err);
-        
-        if (reconnectAttempts.current < MAX_RECONNECT && isCallActive) {
-          reconnectAttempts.current++;
-          setCallStatus(`Reconnecting... (${reconnectAttempts.current}/${MAX_RECONNECT})`);
-          setTimeout(() => {
-            if (mountedRef.current) {
-              handleReconnect();
-            }
-          }, 2000);
-        } else {
-          setCallStatus("Connection failed");
-          handleCallEnd();
-        }
-      });
-
-      peerRef.current = peer;
-      return peer;
-    } catch (error) {
-      console.error("❌ Peer creation error:", error);
-      return null;
     }
-  }, [socket, authUser, callType, isCallActive, getTargetUserId, setCallActive, setCalling, clearIncomingCall, stopRingtone]);
+
+    setCallActive(true);
+    setCalling(false);
+    clearIncomingCall();
+    stopRingtone();
+    setCallStatus("Connected");
+  });
+
+  peer.on("close", handleCallEnd);
+  peer.on("error", (err) => {
+    console.error("❌ Peer error:", err);
+    handleCallEnd();
+  });
+
+  peerRef.current = peer;
+
+  // ⭐ FLUSH BUFFERED SIGNALS
+  if (pendingSignalsRef.current.length > 0) {
+    console.log("📥 Applying buffered signals:", pendingSignalsRef.current.length);
+    pendingSignalsRef.current.forEach((sig) => {
+      try {
+        peer.signal(sig);
+      } catch (e) {
+        console.error("❌ Buffered signal failed", e);
+      }
+    });
+    pendingSignalsRef.current = [];
+  }
+
+  return peer;
+}, [
+  socket,
+  authUser,
+  callType,
+  getTargetUserId,
+  setCallActive,
+  setCalling,
+  clearIncomingCall,
+  stopRingtone,
+  handleCallEnd,
+]);
+
+
 
   const startOutgoingCall = useCallback(async () => {
     if (processingCallRef.current) {
@@ -359,13 +354,6 @@ const VideoCall = () => {
       return;
     }
 
-    try {
-      console.log("📡 Signaling with offer");
-      peer.signal(callOffer);
-    } catch (error) {
-      console.error("❌ Signal error:", error);
-      handleCallEnd();
-    }
   }, [callOffer, initializeLocalStream, createPeerConnection, clearIncomingCall, cleanupStreams]);
 
   const rejectCall = useCallback(() => {
@@ -386,32 +374,12 @@ const VideoCall = () => {
     cleanupCall();
   }, [socket, getTargetUserId]);
 
-  const handleCallEnd = useCallback(() => {
-    setCallStatus("Call ended");
-    setTimeout(() => cleanupCall(), 1000);
-  }, []);
-
-  const handleReconnect = useCallback(async () => {
-    console.log("🔄 Attempting reconnection...");
-    cleanupStreams();
-    if (peerRef.current) {
-      try {
-        peerRef.current.destroy();
-      } catch (e) {}
-      peerRef.current = null;
-    }
-    processingCallRef.current = false;
-    
-    if (isCallActive) {
-      await startOutgoingCall();
-    }
-  }, [isCallActive, startOutgoingCall, cleanupStreams]);
-
   const cleanupCall = useCallback(() => {
     console.log("🧹 Full cleanup");
     
     processingCallRef.current = false;
-    reconnectAttempts.current = 0;
+    pendingSignalsRef.current = [];
+
     
     stopRingtone();
     cleanupStreams();
@@ -427,7 +395,6 @@ const VideoCall = () => {
     setIsVideoEnabled(true);
     setIsAudioEnabled(true);
     setCallStatus("");
-    setConnectionQuality("good");
     
     setTimeout(() => {
       if (mountedRef.current) {
@@ -521,45 +488,58 @@ const VideoCall = () => {
   }, []);
 
   useEffect(() => {
-    if (!socket) return;
+  if (!socket || !authUser) return;
 
-    const handleSignal = (data) => {
-      if (!data || data.to !== authUser?._id || !mountedRef.current) return;
+  console.log("🎧 WebRTC signal listener attached");
 
-      console.log("📡 Received signal:", data.data?.type);
+  const handleSignal = (payload) => {
+    if (!mountedRef.current) return;
+    if (!payload || payload.to !== authUser._id) return;
 
-      if (peerRef.current && !peerRef.current.destroyed) {
-        try {
-          peerRef.current.signal(data.data);
-        } catch (error) {
-          console.error("❌ Signal processing error:", error);
-        }
-      }
-    };
+    const signal = payload.data;
+    if (!signal) return;
 
-    const handleCallEnded = () => {
-      if (!mountedRef.current) return;
-      console.log("📞 Remote ended call");
-      handleCallEnd();
-    };
+    console.log("📡 Incoming signal:", signal.type);
 
-    const handleCallRejected = () => {
-      if (!mountedRef.current) return;
-      console.log("❌ Call rejected");
-      setCallStatus("Call rejected");
-      cleanupCall();
-    };
+    // ⭐ CRITICAL FIX: buffer signals until peer exists
+    if (!peerRef.current || peerRef.current.destroyed) {
+      console.log("⏳ Peer not ready, buffering:", signal.type);
+      pendingSignalsRef.current.push(signal);
+      return;
+    }
 
-    socket.on("call-signal", handleSignal);
-    socket.on("call-ended", handleCallEnded);
-    socket.on("call-rejected", handleCallRejected);
+    try {
+      peerRef.current.signal(signal);
+    } catch (err) {
+      console.error("❌ Signal apply failed:", err);
+    }
+  };
 
-    return () => {
-      socket.off("call-signal", handleSignal);
-      socket.off("call-ended", handleCallEnded);
-      socket.off("call-rejected", handleCallRejected);
-    };
-  }, [socket, authUser, handleCallEnd, cleanupCall]);
+  const handleCallEnded = ({ by }) => {
+    if (!mountedRef.current) return;
+    console.log("📞 Call ended by:", by);
+    handleCallEnd();
+  };
+
+  const handleCallRejected = ({ by }) => {
+    if (!mountedRef.current) return;
+    console.log("❌ Call rejected by:", by);
+    setCallStatus("Call rejected");
+    cleanupCall();
+  };
+
+  socket.on("call-signal", handleSignal);
+  socket.on("call-ended", handleCallEnded);
+  socket.on("call-rejected", handleCallRejected);
+
+  return () => {
+    console.log("🧹 WebRTC signal listener removed");
+    socket.off("call-signal", handleSignal);
+    socket.off("call-ended", handleCallEnded);
+    socket.off("call-rejected", handleCallRejected);
+  };
+}, [socket, authUser, handleCallEnd, cleanupCall]);
+
 
   useEffect(() => {
     if (isIncomingCall || (isCalling && !isCallActive)) {
@@ -574,15 +554,13 @@ const VideoCall = () => {
       startOutgoingCall();
     }
   }, [isCalling, isIncomingCall, isCallActive, startOutgoingCall]);
+useEffect(() => {
+  mountedRef.current = true;
+  return () => {
+    mountedRef.current = false;
+  };
+}, []);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    
-    return () => {
-      mountedRef.current = false;
-      cleanupCall();
-    };
-  }, [cleanupCall]);
 
   if (!isIncomingCall && !isCallActive && !isCalling) {
     return null;
@@ -639,10 +617,7 @@ const VideoCall = () => {
           {/* Status Badge */}
           {callStatus && (
             <div className="absolute top-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white text-sm">
-              <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
-                connectionQuality === "good" ? "bg-green-500" : 
-                connectionQuality === "poor" ? "bg-yellow-500" : "bg-red-500"
-              }`} />
+              <span className="inline-block w-2 h-2 rounded-full mr-2 bg-green-500" />
               {callStatus}
             </div>
           )}
