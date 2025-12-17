@@ -17,17 +17,16 @@ const VideoPlayer = () => {
 
   const playerRef = useRef(null);
   const ytPlayerRef = useRef(null);
-  const containerRef = useRef(null);
   const isSyncing = useRef(false);
   const [ytReady, setYtReady] = useState(false);
 
   /* ================= THEME ================= */
   const containerClass =
     theme === "light"
-      ? "bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300"
-      : "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700";
+      ? "bg-gray-200 border border-gray-300"
+      : "bg-black border border-gray-700";
 
-  /* ================= LOAD YOUTUBE API ================= */
+  /* ================= LOAD YT API ================= */
   useEffect(() => {
     if (!window.YT) {
       const script = document.createElement("script");
@@ -62,7 +61,7 @@ const VideoPlayer = () => {
     ytPlayerRef.current = new window.YT.Player("youtube-player", {
       videoId,
       playerVars: {
-        controls: 1, // REQUIRED for fullscreen
+        controls: 1,
         fs: 1,
         rel: 0,
         modestbranding: 1,
@@ -71,8 +70,9 @@ const VideoPlayer = () => {
       },
       events: {
         onReady: (e) => {
-          if (videoState.currentTime > 0)
+          if (videoState.currentTime > 0) {
             e.target.seekTo(videoState.currentTime, true);
+          }
           if (videoState.playing) e.target.playVideo();
         },
         onStateChange: (e) => {
@@ -98,7 +98,7 @@ const VideoPlayer = () => {
       ytPlayerRef.current?.destroy();
       ytPlayerRef.current = null;
     };
-  }, [videoState.type, ytReady, canControlVideo]);
+  }, [videoState.type, ytReady]);
 
   /* ================= VIEWER SYNC ================= */
   useEffect(() => {
@@ -107,8 +107,9 @@ const VideoPlayer = () => {
     isSyncing.current = true;
     const player = ytPlayerRef.current;
 
-    const diff = Math.abs(player.getCurrentTime() - videoState.currentTime);
-    if (diff > 1.5) player.seekTo(videoState.currentTime, true);
+    if (Math.abs(player.getCurrentTime() - videoState.currentTime) > 1.5) {
+      player.seekTo(videoState.currentTime, true);
+    }
 
     videoState.playing ? player.playVideo() : player.pauseVideo();
 
@@ -132,15 +133,17 @@ const VideoPlayer = () => {
 
   return (
     <div
-      ref={containerRef}
-      className={`relative w-full h-full rounded-3xl overflow-hidden ${containerClass}`}
-      style={{ zIndex: 20 }}   // 🔥 ABOVE reactions
+      className={`relative w-full rounded-xl overflow-hidden ${containerClass}`}
+      style={{
+        aspectRatio: "16 / 9",
+        maxHeight: "72vh",        // 🔥 mobile-friendly height
+      }}
     >
       {videoState.type === "youtube" ? (
         <div
           id="youtube-player"
           className="w-full h-full"
-          style={{ pointerEvents: "auto" }} // 🔥 allow touch
+          style={{ pointerEvents: "auto" }}
         />
       ) : (
         <video
@@ -149,7 +152,6 @@ const VideoPlayer = () => {
           controls
           playsInline
           className="w-full h-full object-contain"
-          style={{ pointerEvents: "auto" }}
           onPlay={() =>
             canControlVideo &&
             syncPlayback({
