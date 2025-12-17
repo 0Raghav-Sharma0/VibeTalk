@@ -1,4 +1,3 @@
-// src/store/useAuthStore.js
 import { create } from "zustand";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
@@ -20,14 +19,10 @@ export const useAuthStore = create((set, get) => ({
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
-
-  // ✅ ALWAYS ARRAY
   onlineUsers: [],
   socket: null,
 
-  /* ============================================================
-        AUTH CHECK
-  ============================================================ */
+  /* ================= AUTH CHECK ================= */
   checkAuth: async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -47,9 +42,6 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-        SIGNUP
-  ============================================================ */
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
@@ -60,7 +52,6 @@ export const useAuthStore = create((set, get) => ({
       toast.success("Account created!");
       return true;
     } catch (err) {
-      console.error("signup error", err);
       toast.error(err.response?.data?.message || "Signup failed");
       return false;
     } finally {
@@ -68,9 +59,6 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-        LOGIN
-  ============================================================ */
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
@@ -80,8 +68,7 @@ export const useAuthStore = create((set, get) => ({
       get().connectSocket();
       toast.success("Logged in!");
       return true;
-    } catch (err) {
-      console.error("login error", err);
+    } catch {
       toast.error("Invalid credentials");
       return false;
     } finally {
@@ -89,15 +76,10 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-        LOGOUT
-  ============================================================ */
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
-    } catch (err) {
-      console.warn("logout backend error:", err);
-    }
+    } catch {}
 
     localStorage.removeItem("token");
 
@@ -111,9 +93,6 @@ export const useAuthStore = create((set, get) => ({
     window.location.replace("/login");
   },
 
-  /* ============================================================
-        UPDATE PROFILE
-  ============================================================ */
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
@@ -121,80 +100,42 @@ export const useAuthStore = create((set, get) => ({
       set({ authUser: res.data });
       toast.success("Profile updated!");
     } catch (err) {
-      console.error("updateProfile error", err);
       toast.error(err.response?.data?.message || "Update failed");
     } finally {
       set({ isUpdatingProfile: false });
     }
   },
 
-  /* ============================================================
-        SOCKET CONNECTION
-  ============================================================ */
+  /* ================= SOCKET ================= */
   connectSocket: () => {
     const { authUser, socket } = get();
-
-    if (!authUser) {
-      console.warn("connectSocket: no authUser");
-      return;
-    }
-
-    if (socket && socket.connected) {
-      console.log("🔁 Socket already connected:", socket.id);
-      return;
-    }
+    if (!authUser) return;
+    if (socket && socket.connected) return;
 
     const sock = io(BASE_URL, {
       query: { userId: authUser._id },
       auth: {
         token: localStorage.getItem("token"),
         userId: authUser._id,
-        username:
-          authUser.username || authUser.fullName || "User",
+        username: authUser.username || authUser.fullName || "User",
       },
       transports: ["websocket", "polling"],
-      reconnection: true,
-      reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
     });
 
     sock.on("connect", () => {
-      console.log("🟢 Connected to socket:", sock.id);
+      console.log("🟢 Connected:", sock.id);
       requestNotificationPermission();
     });
 
-    sock.on("connect_error", (err) => {
-      console.warn("Socket connect_error:", err?.message || err);
-    });
-
-    sock.on("disconnect", (reason) => {
-      console.log("🔴 Socket disconnected:", reason);
-      set({ onlineUsers: [] });
-    });
-
-    /* ============================================================
-          ONLINE USERS (🔥 FIXED)
-    ============================================================ */
-    sock.off("getOnlineUsers");
     sock.on("getOnlineUsers", (ids) => {
-      const safeArray = Array.isArray(ids)
-        ? ids
-        : Object.keys(ids || {});
-      set({ onlineUsers: safeArray });
+      set({ onlineUsers: Array.isArray(ids) ? ids : [] });
     });
 
-    /* ============================================================
-          CALL EVENTS
-    ============================================================ */
-    sock.off("incoming-call");
     sock.on("incoming-call", ({ from, callType, callerName, offer }) => {
-      console.log("📞 INCOMING CALL:", { from, callType });
-
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
-        const { setIncomingCall } =
-          useVideoCallStore.getState();
-
-        setIncomingCall(from, offer, callType);
+        useVideoCallStore
+          .getState()
+          .setIncomingCall(from, offer, callType);
 
         showSystemNotification({
           title: `Incoming ${callType} call`,
@@ -205,17 +146,13 @@ export const useAuthStore = create((set, get) => ({
       });
     });
 
-    sock.off("call-failed");
     sock.on("call-failed", ({ reason }) => {
-      console.log("❌ CALL FAILED:", reason);
-
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
         useVideoCallStore.getState().resetCallState();
         toast.error(reason || "Call failed");
       });
     });
 
-    sock.off("call-rejected");
     sock.on("call-rejected", () => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
         useVideoCallStore.getState().resetCallState();
@@ -223,9 +160,16 @@ export const useAuthStore = create((set, get) => ({
       });
     });
 
-    sock.off("call-ended");
-    sock.on("call-ended", () => {
+    /* 🔥 FIXED BLOCK */
+    sock.on("call-ended", ({ by }) => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
+        const { isCallActive } = useVideoCallStore.getState();
+
+        if (!isCallActive) {
+          console.log("⏸ Ignoring premature call-ended");
+          return;
+        }
+
         useVideoCallStore.getState().resetCallState();
       });
     });
@@ -233,20 +177,11 @@ export const useAuthStore = create((set, get) => ({
     set({ socket: sock });
   },
 
-  /* ============================================================
-        SOCKET DISCONNECT
-  ============================================================ */
   disconnectSocket: () => {
     const s = get().socket;
     if (!s) return;
-
-    try {
-      s.removeAllListeners();
-      s.disconnect();
-    } catch (err) {
-      console.warn("disconnectSocket error", err);
-    } finally {
-      set({ socket: null, onlineUsers: [] });
-    }
+    s.removeAllListeners();
+    s.disconnect();
+    set({ socket: null, onlineUsers: [] });
   },
 }));

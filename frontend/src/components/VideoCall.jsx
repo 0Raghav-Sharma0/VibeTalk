@@ -61,9 +61,10 @@ const VideoCall = () => {
   const [callStatus, setCallStatus] = useState("Initializing...");
 
   const getTargetUserId = useCallback(() => {
-  return incomingCallFrom || selectedUser?._id || peerId;
-}, [incomingCallFrom, selectedUser, peerId]);
-
+  if (isIncomingCall && incomingCallFrom) return incomingCallFrom;
+  if (peerId) return peerId;
+  return selectedUser?._id || null;
+}, [isIncomingCall, incomingCallFrom, peerId, selectedUser]);
   const playRingtone = useCallback(() => {
     try {
       if (!ringtoneAudioRef.current) {
@@ -375,7 +376,6 @@ const cleanupCall = useCallback(() => {
 
     processingCallRef.current = true;
     setCallStatus("Accepting...");
-    clearIncomingCall();
 
     // ⭐ KEY FIX: Get stream FIRST, then create peer
     const stream = await initializeLocalStream();
@@ -396,9 +396,15 @@ const cleanupCall = useCallback(() => {
 
     try {
   // 1️⃣ Extract OFFER
-  const offer = pendingSignalsRef.current.find(
-    (s) => s.type === "offer"
-  );
+  const { callOffer } = useVideoCallStore.getState();
+
+const offer =
+  callOffer ||
+  pendingSignalsRef.current.find((s) => s.type === "offer");
+  if (callOffer) {
+  pendingSignalsRef.current =
+    pendingSignalsRef.current.filter((s) => s.type !== "offer");
+}
 
   if (!offer) {
     console.error("❌ No offer found to accept");
@@ -558,18 +564,15 @@ const cleanupCall = useCallback(() => {
 
       // Peer NOT ready yet
       if (!peerRef.current || peerRef.current.destroyed) {
-  if (signal.type === "offer") {
-  // keep existing ICE, just ensure offer is stored once
-  const hasOffer = pendingSignalsRef.current.some(s => s.type === "offer");
-  if (!hasOffer) {
-    pendingSignalsRef.current.unshift(signal);
+  const exists = pendingSignalsRef.current.some(
+    (s) => s.type === signal.type
+  );
+  if (!exists) {
+    pendingSignalsRef.current.push(signal);
   }
-} else {
-  pendingSignalsRef.current.push(signal);
-}
-
   return;
 }
+
 
       // Peer IS ready
       try {
@@ -580,10 +583,20 @@ const cleanupCall = useCallback(() => {
     };
 
     const handleCallEnded = ({ by }) => {
-      if (!mountedRef.current) return;
-      console.log("📞 Call ended by:", by);
-      handleCallEnd();
-    };
+  if (!mountedRef.current) return;
+
+  const { isIncomingCall, isCallActive } =
+    useVideoCallStore.getState();
+
+  // 🚫 Ignore end-call before accept
+  if (isIncomingCall && !isCallActive) {
+    console.log("⏸ Ignoring premature call-ended");
+    return;
+  }
+
+  console.log("📞 Call ended by:", by);
+  handleCallEnd();
+};
 
     const handleCallRejected = ({ by }) => {
   if (!mountedRef.current) return;
@@ -614,16 +627,20 @@ const cleanupCall = useCallback(() => {
     }
   }, [isIncomingCall, isCalling, isCallActive, playRingtone, stopRingtone]);
 
-  useEffect(() => {
-    if (
-      isCalling &&
-      !isIncomingCall &&
-      !isCallActive &&
-      !processingCallRef.current
-    ) {
-      startOutgoingCall();
-    }
-  }, [isCalling, isIncomingCall, isCallActive, startOutgoingCall]);
+ useEffect(() => {
+  // 🚫 Never start outgoing call if receiving one
+  if (isIncomingCall) return;
+
+  if (
+    isCalling &&
+    !isIncomingCall &&
+    !isCallActive &&
+    !processingCallRef.current
+  ) {
+    startOutgoingCall();
+  }
+}, [isCalling, isIncomingCall, isCallActive, startOutgoingCall]);
+
   useEffect(() => {
     mountedRef.current = true;
     return () => {
