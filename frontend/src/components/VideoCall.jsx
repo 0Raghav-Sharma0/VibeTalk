@@ -28,13 +28,11 @@ const VideoCall = () => {
     setCallActive,
     setCalling,
     resetCallState,
-    callOffer,
     peerId,
   } = useVideoCallStore();
 
   const { authUser, socket } = useAuthStore();
   const { selectedUser } = useChatStore();
-
 
   // Refs
   const localVideoRef = useRef(null);
@@ -45,10 +43,16 @@ const VideoCall = () => {
   const localStreamRef = useRef(null);
   const screenStreamRef = useRef(null);
   const originalStreamRef = useRef(null);
-  
+
   const processingCallRef = useRef(false);
   const mountedRef = useRef(true);
   const pendingSignalsRef = useRef([]);
+  useEffect(() => {
+  if (remoteVideoRef.current) {
+    remoteVideoRef.current.muted = false;
+  }
+}, []);
+
 
   // State
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -57,8 +61,8 @@ const VideoCall = () => {
   const [callStatus, setCallStatus] = useState("Initializing...");
 
   const getTargetUserId = useCallback(() => {
-    return selectedUser?._id || peerId || incomingCallFrom;
-  }, [selectedUser, peerId, incomingCallFrom]);
+  return incomingCallFrom || selectedUser?._id || peerId;
+}, [incomingCallFrom, selectedUser, peerId]);
 
   const playRingtone = useCallback(() => {
     try {
@@ -107,56 +111,16 @@ const VideoCall = () => {
       },
     };
   }, [callType]);
-
-  const initializeLocalStream = useCallback(async () => {
-    if (localStreamRef.current) {
-      console.log("✅ Local stream already exists");
-      return localStreamRef.current;
-    }
-
-    try {
-      console.log("🎥 Getting user media...");
-      const constraints = getMediaConstraints();
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-
-      localStreamRef.current = stream;
-      originalStreamRef.current = stream;
-
-      stream.getAudioTracks().forEach(track => {
-        track.enabled = isAudioEnabled;
-      });
-
-      if (callType === "video") {
-        stream.getVideoTracks().forEach(track => {
-          track.enabled = isVideoEnabled;
-        });
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-          localVideoRef.current.muted = true;
-          await localVideoRef.current.play().catch(console.error);
-        }
-      }
-
-      console.log("✅ Local stream initialized", {
-        hasVideo: stream.getVideoTracks().length > 0,
-        hasAudio: stream.getAudioTracks().length > 0
-      });
-      return stream;
-    } catch (error) {
-      console.error("❌ Media access error:", error);
-      setCallStatus("Cannot access camera/microphone");
-      setTimeout(() => cleanupCall(), 2000);
-      return null;
-    }
-  }, [callType, isAudioEnabled, isVideoEnabled, getMediaConstraints]);
-
   const cleanupStreams = useCallback(() => {
     console.log("🧹 Cleaning up streams");
-    
-    [localStreamRef.current, screenStreamRef.current, originalStreamRef.current].forEach(stream => {
+
+    [
+      localStreamRef.current,
+      screenStreamRef.current,
+      originalStreamRef.current,
+    ].forEach((stream) => {
       if (stream) {
-        stream.getTracks().forEach(track => {
+        stream.getTracks().forEach((track) => {
           track.stop();
         });
       }
@@ -176,127 +140,204 @@ const VideoCall = () => {
       remoteAudioRef.current.srcObject = null;
     }
   }, []);
+const cleanupCall = useCallback(() => {
+  if (!mountedRef.current) return;
+  console.log("🧹 Full cleanup");
 
+  processingCallRef.current = false;
+  pendingSignalsRef.current = [];
 
-    const handleCallEnd = useCallback(() => {
-    setCallStatus("Call ended");
-    setTimeout(() => cleanupCall(), 1000);
-  }, []);
+  stopRingtone();
+  cleanupStreams();
 
- 
-
-  const createPeerConnection = useCallback((initiator, stream) => {
-  // 🔥 destroy old peer safely
   if (peerRef.current) {
     try {
       peerRef.current.destroy();
-    } catch {}
+    } catch (e) {}
     peerRef.current = null;
   }
 
-  const targetUserId = getTargetUserId();
-  if (!targetUserId) {
-    console.error("❌ No target user");
-    return null;
-  }
+  setIsScreenSharing(false);
+  setIsVideoEnabled(true);
+  setIsAudioEnabled(true);
+  setCallStatus("");
 
-  if (!stream) {
-    console.error("❌ Stream missing");
-    return null;
-  }
+  setTimeout(() => {
+    if (mountedRef.current) {
+      resetCallState();
+    }
+  }, 100);
+}, [stopRingtone, cleanupStreams, resetCallState]);
 
-  console.log(`🔗 Creating ${initiator ? "initiator" : "receiver"} peer`);
-
-  const peer = new Peer({
-    initiator,
-    trickle: true,
-    stream,
-    config: {
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-      ],
-    },
-  });
-
-  // ================= SIGNAL OUT =================
-  peer.on("signal", (signal) => {
-    if (!socket || !mountedRef.current) return;
-
-    console.log("📤 Sending signal:", signal.type);
-
-    socket.emit("call-signal", {
-      to: targetUserId,
-      from: authUser._id,
-      data: signal,
-      callType,
-    });
-  });
-
-  // ================= STREAM IN =================
-  peer.on("stream", (remoteStream) => {
-    console.log("📥 Remote stream received", {
-      audio: remoteStream.getAudioTracks().length,
-      video: remoteStream.getVideoTracks().length,
-    });
-
-    if (callType === "video") {
-     if (remoteVideoRef.current) {
-  remoteVideoRef.current.srcObject = remoteStream;
-  remoteVideoRef.current.play().catch(console.error);
-}
-
-    } else {
-      if (remoteAudioRef.current) {
-  remoteAudioRef.current.srcObject = remoteStream;
-  remoteAudioRef.current.play().catch(console.error);
-}
-
+  const initializeLocalStream = useCallback(async () => {
+    
+    if (localStreamRef.current) {
+      console.log("✅ Local stream already exists");
+      return localStreamRef.current;
     }
 
-    setCallActive(true);
-    setCalling(false);
-    clearIncomingCall();
-    stopRingtone();
-    setCallStatus("Connected");
-  });
+    try {
+      console.log("🎥 Getting user media...");
+      const constraints = getMediaConstraints();
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-  peer.on("close", handleCallEnd);
-  peer.on("error", (err) => {
-    console.error("❌ Peer error:", err);
-    handleCallEnd();
-  });
+      localStreamRef.current = stream;
+      originalStreamRef.current = stream;
 
-  peerRef.current = peer;
+      stream.getAudioTracks().forEach((track) => {
+        track.enabled = isAudioEnabled;
+      });
 
-  // ⭐ FLUSH BUFFERED SIGNALS
-  if (pendingSignalsRef.current.length > 0) {
-    console.log("📥 Applying buffered signals:", pendingSignalsRef.current.length);
-    pendingSignalsRef.current.forEach((sig) => {
-      try {
-        peer.signal(sig);
-      } catch (e) {
-        console.error("❌ Buffered signal failed", e);
+      if (callType === "video") {
+        stream.getVideoTracks().forEach((track) => {
+          track.enabled = isVideoEnabled;
+        });
+
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+          localVideoRef.current.muted = true;
+          await localVideoRef.current.play().catch(console.error);
+        }
       }
+
+      console.log("✅ Local stream initialized", {
+        hasVideo: stream.getVideoTracks().length > 0,
+        hasAudio: stream.getAudioTracks().length > 0,
+      });
+      return stream;
+    } catch (error) {
+      console.error("❌ Media access error:", error);
+      setCallStatus("Cannot access camera/microphone");
+      setTimeout(() => cleanupCall(), 2000);
+      return null;
+    }
+  }, [callType, isAudioEnabled, isVideoEnabled, getMediaConstraints]);
+  
+  const handleCallEnd = useCallback(() => {
+    setCallStatus("Call ended");
+    setTimeout(() => {
+      if (mountedRef.current) cleanupCall();
+    }, 500);
+  }, [cleanupCall]);
+
+
+    const createPeerConnection = useCallback(
+  (initiator, stream) => {
+    // 🔥 Destroy old peer safely
+    if (peerRef.current) {
+      try {
+        peerRef.current.destroy();
+      } catch {}
+      peerRef.current = null;
+    }
+
+    const targetUserId = getTargetUserId();
+    if (!targetUserId || !stream) {
+      console.error("❌ Missing targetUserId or stream");
+      return null;
+    }
+
+    console.log(`🔗 Creating ${initiator ? "initiator" : "receiver"} peer`);
+
+    /* ================= ICE SERVERS ================= */
+    const iceServers = [
+      { urls: "stun:stun.relay.metered.ca:80" },
+    ];
+
+    if (
+      import.meta.env.VITE_TURN_USERNAME &&
+      import.meta.env.VITE_TURN_PASSWORD
+    ) {
+      iceServers.push(
+        {
+          urls: "turn:global.relay.metered.ca:80",
+          username: import.meta.env.VITE_TURN_USERNAME,
+          credential: import.meta.env.VITE_TURN_PASSWORD,
+        },
+        {
+          urls: "turn:global.relay.metered.ca:443",
+          username: import.meta.env.VITE_TURN_USERNAME,
+          credential: import.meta.env.VITE_TURN_PASSWORD,
+        },
+        {
+          urls: "turns:global.relay.metered.ca:443?transport=tcp",
+          username: import.meta.env.VITE_TURN_USERNAME,
+          credential: import.meta.env.VITE_TURN_PASSWORD,
+        }
+      );
+    }
+
+    /* ================= CREATE PEER ================= */
+    const peer = new Peer({
+      initiator,
+      trickle: false, // IMPORTANT: prevents race conditions
+      stream,
+      config: { iceServers },
     });
-    pendingSignalsRef.current = [];
-  }
 
-  return peer;
-}, [
-  socket,
-  authUser,
-  callType,
-  getTargetUserId,
-  setCallActive,
-  setCalling,
-  clearIncomingCall,
-  stopRingtone,
-  handleCallEnd,
-]);
+    /* ================= SIGNAL OUT ================= */
+    peer.on("signal", (signal) => {
+      if (!socket || !mountedRef.current) return;
 
+      console.log("📤 Sending signal:", signal.type);
 
+      socket.emit("call-signal", {
+        to: targetUserId,
+        from: authUser._id,
+        data: signal,
+        callType,
+      });
+    });
+
+    /* ================= REMOTE STREAM ================= */
+    peer.on("stream", (remoteStream) => {
+      console.log("📥 Remote stream received", {
+        audio: remoteStream.getAudioTracks().length,
+        video: remoteStream.getVideoTracks().length,
+      });
+
+      if (callType === "video" && remoteVideoRef.current) {
+        const videoEl = remoteVideoRef.current;
+        videoEl.srcObject = remoteStream;
+        videoEl.muted = false;
+        videoEl.playsInline = true;
+        videoEl.onloadedmetadata = () => {
+          videoEl.play().catch(() => {});
+        };
+      } else if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = remoteStream;
+        remoteAudioRef.current.play().catch(() => {});
+      }
+
+      setCallActive(true);
+      setCalling(false);
+      clearIncomingCall();
+      stopRingtone();
+      setCallStatus("Connected");
+      processingCallRef.current = false;
+    });
+
+    /* ================= ERROR ================= */
+    peer.on("error", (err) => {
+      console.error("❌ Peer error:", err);
+      handleCallEnd();
+    });
+
+    peerRef.current = peer;
+    return peer;
+  },
+  [
+    socket,
+    authUser,
+    callType,
+    getTargetUserId,
+    setCallActive,
+    setCalling,
+    clearIncomingCall,
+    stopRingtone,
+    handleCallEnd,
+  ]
+);
 
   const startOutgoingCall = useCallback(async () => {
     if (processingCallRef.current) {
@@ -306,7 +347,7 @@ const VideoCall = () => {
 
     processingCallRef.current = true;
     setCallStatus("Calling...");
-    
+
     // ⭐ KEY FIX: Get stream FIRST, then create peer
     const stream = await initializeLocalStream();
     if (!stream) {
@@ -325,10 +366,9 @@ const VideoCall = () => {
   }, [initializeLocalStream, createPeerConnection, cleanupStreams]);
 
   const acceptCall = useCallback(async () => {
-    if (processingCallRef.current || !callOffer) {
-      console.log("⏭️ Cannot accept call", { 
-        processing: processingCallRef.current, 
-        hasOffer: !!callOffer 
+    if (processingCallRef.current) {
+      console.log("⏭️ Cannot accept call", {
+        processing: processingCallRef.current,
       });
       return;
     }
@@ -336,7 +376,7 @@ const VideoCall = () => {
     processingCallRef.current = true;
     setCallStatus("Accepting...");
     clearIncomingCall();
-    
+
     // ⭐ KEY FIX: Get stream FIRST, then create peer
     const stream = await initializeLocalStream();
     if (!stream) {
@@ -354,7 +394,47 @@ const VideoCall = () => {
       return;
     }
 
-  }, [callOffer, initializeLocalStream, createPeerConnection, clearIncomingCall, cleanupStreams]);
+    try {
+  // 1️⃣ Extract OFFER
+  const offer = pendingSignalsRef.current.find(
+    (s) => s.type === "offer"
+  );
+
+  if (!offer) {
+    console.error("❌ No offer found to accept");
+    processingCallRef.current = false;
+    return;
+  }
+
+  console.log("📥 Applying offer");
+  peer.signal(offer);
+
+  // 2️⃣ Apply ICE candidates AFTER offer
+  const iceCandidates = pendingSignalsRef.current.filter(
+    (s) => s.type !== "offer"
+  );
+
+  console.log("📥 Applying ICE candidates:", iceCandidates.length);
+  iceCandidates.forEach((sig) => {
+    try {
+      peer.signal(sig);
+    } catch (e) {
+      console.error("❌ ICE apply failed", e);
+    }
+  });
+
+  pendingSignalsRef.current = [];
+} catch (err) {
+  console.error("❌ Failed to apply offer:", err);
+  cleanupCall();
+}
+
+  }, [
+    initializeLocalStream,
+    createPeerConnection,
+    clearIncomingCall,
+    cleanupStreams,
+  ]);
 
   const rejectCall = useCallback(() => {
     console.log("❌ Rejecting call");
@@ -374,44 +454,15 @@ const VideoCall = () => {
     cleanupCall();
   }, [socket, getTargetUserId]);
 
-  const cleanupCall = useCallback(() => {
-    console.log("🧹 Full cleanup");
-    
-    processingCallRef.current = false;
-    pendingSignalsRef.current = [];
-
-    
-    stopRingtone();
-    cleanupStreams();
-    
-    if (peerRef.current) {
-      try {
-        peerRef.current.destroy();
-      } catch (e) {}
-      peerRef.current = null;
-    }
-
-    setIsScreenSharing(false);
-    setIsVideoEnabled(true);
-    setIsAudioEnabled(true);
-    setCallStatus("");
-    
-    setTimeout(() => {
-      if (mountedRef.current) {
-        resetCallState();
-      }
-    }, 100);
-  }, [stopRingtone, cleanupStreams, resetCallState]);
-
   const toggleVideo = useCallback(() => {
     if (callType !== "video") return;
-    
+
     const newState = !isVideoEnabled;
     setIsVideoEnabled(newState);
-    
+
     const stream = localStreamRef.current;
     if (stream) {
-      stream.getVideoTracks().forEach(track => {
+      stream.getVideoTracks().forEach((track) => {
         track.enabled = newState;
       });
     }
@@ -420,10 +471,10 @@ const VideoCall = () => {
   const toggleAudio = useCallback(() => {
     const newState = !isAudioEnabled;
     setIsAudioEnabled(newState);
-    
+
     const stream = localStreamRef.current;
     if (stream) {
-      stream.getAudioTracks().forEach(track => {
+      stream.getAudioTracks().forEach((track) => {
         track.enabled = newState;
       });
     }
@@ -439,14 +490,16 @@ const VideoCall = () => {
       });
 
       screenStreamRef.current = screenStream;
-      
+
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = screenStream;
         await localVideoRef.current.play();
       }
 
       const videoTrack = screenStream.getVideoTracks()[0];
-      const sender = peerRef.current._pc.getSenders().find(s => s.track?.kind === 'video');
+      const sender = peerRef.current._pc
+        .getSenders()
+        .find((s) => s.track?.kind === "video");
       if (sender && videoTrack) {
         await sender.replaceTrack(videoTrack);
       }
@@ -466,7 +519,7 @@ const VideoCall = () => {
 
     try {
       if (screenStreamRef.current) {
-        screenStreamRef.current.getTracks().forEach(track => track.stop());
+        screenStreamRef.current.getTracks().forEach((track) => track.stop());
         screenStreamRef.current = null;
       }
 
@@ -476,7 +529,9 @@ const VideoCall = () => {
       }
 
       const videoTrack = originalStreamRef.current.getVideoTracks()[0];
-      const sender = peerRef.current._pc.getSenders().find(s => s.track?.kind === 'video');
+      const sender = peerRef.current._pc
+        .getSenders()
+        .find((s) => s.track?.kind === "video");
       if (sender && videoTrack) {
         await sender.replaceTrack(videoTrack);
       }
@@ -488,58 +543,68 @@ const VideoCall = () => {
   }, []);
 
   useEffect(() => {
-  if (!socket || !authUser) return;
+    if (!socket || !authUser) return;
 
-  console.log("🎧 WebRTC signal listener attached");
+    console.log("🎧 WebRTC signal listener attached");
 
-  const handleSignal = (payload) => {
-    if (!mountedRef.current) return;
-    if (!payload || payload.to !== authUser._id) return;
+    const handleSignal = (payload) => {
+      if (!mountedRef.current) return;
+      if (!payload || payload.to !== authUser._id) return;
 
-    const signal = payload.data;
-    if (!signal) return;
+      const signal = payload.data;
+      if (!signal) return;
 
-    console.log("📡 Incoming signal:", signal.type);
+      console.log("📡 Incoming signal:", signal.type);
 
-    // ⭐ CRITICAL FIX: buffer signals until peer exists
-    if (!peerRef.current || peerRef.current.destroyed) {
-      console.log("⏳ Peer not ready, buffering:", signal.type);
-      pendingSignalsRef.current.push(signal);
-      return;
-    }
+      // Peer NOT ready yet
+      if (!peerRef.current || peerRef.current.destroyed) {
+  if (signal.type === "offer") {
+  // keep existing ICE, just ensure offer is stored once
+  const hasOffer = pendingSignalsRef.current.some(s => s.type === "offer");
+  if (!hasOffer) {
+    pendingSignalsRef.current.unshift(signal);
+  }
+} else {
+  pendingSignalsRef.current.push(signal);
+}
 
-    try {
-      peerRef.current.signal(signal);
-    } catch (err) {
-      console.error("❌ Signal apply failed:", err);
-    }
-  };
+  return;
+}
 
-  const handleCallEnded = ({ by }) => {
-    if (!mountedRef.current) return;
-    console.log("📞 Call ended by:", by);
-    handleCallEnd();
-  };
+      // Peer IS ready
+      try {
+        peerRef.current.signal(signal);
+      } catch (err) {
+        console.error("❌ Signal apply failed:", err);
+      }
+    };
 
-  const handleCallRejected = ({ by }) => {
-    if (!mountedRef.current) return;
-    console.log("❌ Call rejected by:", by);
-    setCallStatus("Call rejected");
-    cleanupCall();
-  };
+    const handleCallEnded = ({ by }) => {
+      if (!mountedRef.current) return;
+      console.log("📞 Call ended by:", by);
+      handleCallEnd();
+    };
 
-  socket.on("call-signal", handleSignal);
-  socket.on("call-ended", handleCallEnded);
-  socket.on("call-rejected", handleCallRejected);
+    const handleCallRejected = ({ by }) => {
+  if (!mountedRef.current) return;
+  console.log("❌ Call rejected by:", by);
+  setCallStatus("Call rejected");
+  processingCallRef.current = false;
+  cleanupCall();
+};
 
-  return () => {
-    console.log("🧹 WebRTC signal listener removed");
-    socket.off("call-signal", handleSignal);
-    socket.off("call-ended", handleCallEnded);
-    socket.off("call-rejected", handleCallRejected);
-  };
-}, [socket, authUser, handleCallEnd, cleanupCall]);
 
+    socket.on("call-signal", handleSignal);
+    socket.on("call-ended", handleCallEnded);
+    socket.on("call-rejected", handleCallRejected);
+
+    return () => {
+      console.log("🧹 WebRTC signal listener removed");
+      socket.off("call-signal", handleSignal);
+      socket.off("call-ended", handleCallEnded);
+      socket.off("call-rejected", handleCallRejected);
+    };
+  }, [socket, authUser, handleCallEnd, cleanupCall]);
 
   useEffect(() => {
     if (isIncomingCall || (isCalling && !isCallActive)) {
@@ -550,17 +615,21 @@ const VideoCall = () => {
   }, [isIncomingCall, isCalling, isCallActive, playRingtone, stopRingtone]);
 
   useEffect(() => {
-    if (isCalling && !isIncomingCall && !isCallActive && !processingCallRef.current) {
+    if (
+      isCalling &&
+      !isIncomingCall &&
+      !isCallActive &&
+      !processingCallRef.current
+    ) {
       startOutgoingCall();
     }
   }, [isCalling, isIncomingCall, isCallActive, startOutgoingCall]);
-useEffect(() => {
-  mountedRef.current = true;
-  return () => {
-    mountedRef.current = false;
-  };
-}, []);
-
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   if (!isIncomingCall && !isCallActive && !isCalling) {
     return null;
@@ -586,7 +655,9 @@ useEffect(() => {
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
               <Phone size={80} className="mb-6 opacity-60" />
-              <p className="text-3xl font-bold">{selectedUser?.fullName || "Audio Call"}</p>
+              <p className="text-3xl font-bold">
+                {selectedUser?.fullName || "Audio Call"}
+              </p>
               <p className="text-lg opacity-70 mt-2">{callStatus}</p>
             </div>
           )}
@@ -653,11 +724,17 @@ useEffect(() => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
-                  isAudioEnabled ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-700"
+                  isAudioEnabled
+                    ? "bg-gray-700 hover:bg-gray-600"
+                    : "bg-red-600 hover:bg-red-700"
                 }`}
                 onClick={toggleAudio}
               >
-                {isAudioEnabled ? <Mic size={24} className="text-white" /> : <MicOff size={24} className="text-white" />}
+                {isAudioEnabled ? (
+                  <Mic size={24} className="text-white" />
+                ) : (
+                  <MicOff size={24} className="text-white" />
+                )}
               </motion.button>
 
               {callType === "video" && (
@@ -666,22 +743,36 @@ useEffect(() => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
-                      isVideoEnabled ? "bg-gray-700 hover:bg-gray-600" : "bg-red-600 hover:bg-red-700"
+                      isVideoEnabled
+                        ? "bg-gray-700 hover:bg-gray-600"
+                        : "bg-red-600 hover:bg-red-700"
                     }`}
                     onClick={toggleVideo}
                   >
-                    {isVideoEnabled ? <Video size={24} className="text-white" /> : <VideoOff size={24} className="text-white" />}
+                    {isVideoEnabled ? (
+                      <Video size={24} className="text-white" />
+                    ) : (
+                      <VideoOff size={24} className="text-white" />
+                    )}
                   </motion.button>
 
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
-                      isScreenSharing ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-600"
+                      isScreenSharing
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : "bg-gray-700 hover:bg-gray-600"
                     }`}
-                    onClick={isScreenSharing ? stopScreenShare : startScreenShare}
+                    onClick={
+                      isScreenSharing ? stopScreenShare : startScreenShare
+                    }
                   >
-                    {isScreenSharing ? <MonitorOff size={24} className="text-white" /> : <Monitor size={24} className="text-white" />}
+                    {isScreenSharing ? (
+                      <MonitorOff size={24} className="text-white" />
+                    ) : (
+                      <Monitor size={24} className="text-white" />
+                    )}
                   </motion.button>
                 </>
               )}

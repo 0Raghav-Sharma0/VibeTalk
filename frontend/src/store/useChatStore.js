@@ -29,11 +29,17 @@ export const useChatStore = create((set, get) => ({
     })),
 
   /* ============================================================
-        SAFE ONLINE MERGE
+        ✅ SAFE ONLINE MERGE
   ============================================================ */
   applyOnlineToUsers: (usersList, onlineIds) => {
     if (!Array.isArray(usersList)) return [];
-    const onlineSet = new Set(Array.isArray(onlineIds) ? onlineIds : []);
+
+    const onlineArray = Array.isArray(onlineIds)
+      ? onlineIds
+      : Object.keys(onlineIds || {});
+
+    const onlineSet = new Set(onlineArray);
+
     return usersList.map((u) => ({
       ...u,
       isOnline: onlineSet.has(u._id),
@@ -48,6 +54,7 @@ export const useChatStore = create((set, get) => ({
     try {
       const res = await axiosInstance.get("/messages/users");
       const onlineUsers = useAuthStore.getState().onlineUsers;
+
       set({
         users: get().applyOnlineToUsers(res.data, onlineUsers),
       });
@@ -215,20 +222,27 @@ export const useChatStore = create((set, get) => ({
 }));
 
 /* ============================================================
-        ONLINE STATUS MERGE
+        ✅ ONLINE STATUS SYNC (FINAL FIX)
 ============================================================ */
 useAuthStore.subscribe(
   (onlineIds) => {
     const apply = useChatStore.getState().applyOnlineToUsers;
+
+    const onlineArray = Array.isArray(onlineIds)
+      ? onlineIds
+      : Object.keys(onlineIds || {});
+
+    const onlineSet = new Set(onlineArray);
+
     useChatStore.setState((state) => ({
-      users: apply(state.users, onlineIds),
+      users: apply(state.users, onlineArray),
       selectedUser: state.selectedUser
         ? {
             ...state.selectedUser,
-            isOnline: onlineIds.includes(state.selectedUser._id),
+            isOnline: onlineSet.has(state.selectedUser._id),
           }
         : null,
     }));
   },
-  (s) => s.onlineUsers
+  (state) => state.onlineUsers
 );

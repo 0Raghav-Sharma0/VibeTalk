@@ -3,13 +3,16 @@ import { create } from "zustand";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 import { axiosInstance } from "../lib/axios.js";
-import { requestNotificationPermission, showSystemNotification } from "../utils/notifications";
-//just to commit
+import {
+  requestNotificationPermission,
+  showSystemNotification,
+} from "../utils/notifications";
 
 const BASE_URL =
   import.meta.env.MODE === "development"
     ? "http://localhost:5001"
-    : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com";
+    : import.meta.env.VITE_BACKEND_URL ||
+      "https://blah-blah-3.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -17,9 +20,14 @@ export const useAuthStore = create((set, get) => ({
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
+
+  // ✅ ALWAYS ARRAY
   onlineUsers: [],
   socket: null,
 
+  /* ============================================================
+        AUTH CHECK
+  ============================================================ */
   checkAuth: async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -39,6 +47,9 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /* ============================================================
+        SIGNUP
+  ============================================================ */
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
@@ -57,6 +68,9 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /* ============================================================
+        LOGIN
+  ============================================================ */
   login: async (data) => {
     set({ isLoggingIn: true });
     try {
@@ -75,6 +89,9 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /* ============================================================
+        LOGOUT
+  ============================================================ */
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -94,6 +111,9 @@ export const useAuthStore = create((set, get) => ({
     window.location.replace("/login");
   },
 
+  /* ============================================================
+        UPDATE PROFILE
+  ============================================================ */
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
     try {
@@ -108,16 +128,19 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  /* ============================================================
+        SOCKET CONNECTION
+  ============================================================ */
   connectSocket: () => {
     const { authUser, socket } = get();
 
     if (!authUser) {
-      console.warn("connectSocket: no authUser, skipping");
+      console.warn("connectSocket: no authUser");
       return;
     }
 
     if (socket && socket.connected) {
-      console.log("Socket already connected:", socket.id);
+      console.log("🔁 Socket already connected:", socket.id);
       return;
     }
 
@@ -126,12 +149,13 @@ export const useAuthStore = create((set, get) => ({
       auth: {
         token: localStorage.getItem("token"),
         userId: authUser._id,
-        username: authUser.username || authUser.fullName || "User"
+        username:
+          authUser.username || authUser.fullName || "User",
       },
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5
+      reconnectionAttempts: 5,
     });
 
     sock.on("connect", () => {
@@ -148,26 +172,33 @@ export const useAuthStore = create((set, get) => ({
       set({ onlineUsers: [] });
     });
 
-    // ============================================
-    // EXISTING SOCKET LISTENERS
-    // ============================================
+    /* ============================================================
+          ONLINE USERS (🔥 FIXED)
+    ============================================================ */
     sock.off("getOnlineUsers");
     sock.on("getOnlineUsers", (ids) => {
-      const safe = Array.isArray(ids) ? ids : [];
-      set({ onlineUsers: safe });
+      const safeArray = Array.isArray(ids)
+        ? ids
+        : Object.keys(ids || {});
+      set({ onlineUsers: safeArray });
     });
 
+    /* ============================================================
+          CALL EVENTS
+    ============================================================ */
     sock.off("incoming-call");
     sock.on("incoming-call", ({ from, callType, callerName, offer }) => {
-      console.log("📞 INCOMING CALL EVENT:", { from, callType, hasOffer: !!offer });
-      
+      console.log("📞 INCOMING CALL:", { from, callType });
+
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
-        const { setIncomingCall } = useVideoCallStore.getState();
+        const { setIncomingCall } =
+          useVideoCallStore.getState();
+
         setIncomingCall(from, offer, callType);
-        
+
         showSystemNotification({
           title: `Incoming ${callType} call`,
-          body: `${callerName || "Someone"} is calling you...`,
+          body: `${callerName || "Someone"} is calling you`,
           icon: "/phone-icon.png",
           onClick: () => window.focus(),
         });
@@ -177,63 +208,34 @@ export const useAuthStore = create((set, get) => ({
     sock.off("call-failed");
     sock.on("call-failed", ({ reason }) => {
       console.log("❌ CALL FAILED:", reason);
-      
+
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
-        const { resetCallState } = useVideoCallStore.getState();
-        resetCallState();
+        useVideoCallStore.getState().resetCallState();
         toast.error(reason || "Call failed");
       });
     });
 
     sock.off("call-rejected");
-    sock.on("call-rejected", ({ by }) => {
-      console.log("❌ CALL REJECTED by:", by);
-      
+    sock.on("call-rejected", () => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
-        const { resetCallState } = useVideoCallStore.getState();
-        resetCallState();
+        useVideoCallStore.getState().resetCallState();
         toast.error("Call was rejected");
       });
     });
 
     sock.off("call-ended");
-    sock.on("call-ended", ({ by }) => {
-      console.log("📞 CALL ENDED by:", by);
-      
+    sock.on("call-ended", () => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
-        const { resetCallState } = useVideoCallStore.getState();
-        resetCallState();
+        useVideoCallStore.getState().resetCallState();
       });
-    });
-
-    // ============================================
-    // WATCH PARTY SOCKET LISTENERS (NEW)
-    // ============================================
-    
-    // Note: These are handled in WatchPartyContext, but we ensure
-    // the socket is properly configured to support them
-    
-    sock.off("watchparty:room-created");
-    sock.off("watchparty:room-joined");
-    sock.off("watchparty:participants-updated");
-    sock.off("watchparty:state-synced");
-    sock.off("watchparty:reaction-received");
-    sock.off("watchparty:chat-received");
-    sock.off("watchparty:error");
-
-    // Watch party notification handlers (optional)
-    sock.on("watchparty:room-created", (data) => {
-      console.log("🎬 Watch party room created:", data.roomId);
-    });
-
-    sock.on("watchparty:error", (error) => {
-      console.error("🎬 Watch party error:", error);
-      toast.error(error.message || "Watch party error occurred");
     });
 
     set({ socket: sock });
   },
 
+  /* ============================================================
+        SOCKET DISCONNECT
+  ============================================================ */
   disconnectSocket: () => {
     const s = get().socket;
     if (!s) return;
