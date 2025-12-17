@@ -127,7 +127,10 @@ export const useChatStore = create((set, get) => ({
       const { authUser } = useAuthStore.getState();
 
       // Remove optimistic message if it exists
-      const filteredMessages = messages.filter(m => !m._id.toString().startsWith('temp-'));
+      const filteredMessages = messages.filter(
+  m => !String(m._id).startsWith("temp-") || m.senderId !== authUser._id
+);
+
 
       // You sent it
       if (msg.senderId === authUser._id) {
@@ -211,38 +214,42 @@ export const useChatStore = create((set, get) => ({
   /* ============================================================
         SELECT USER + RESET UNREAD
   ============================================================ */
-  setSelectedUser: (selectedUser) => {
-    const { authUser, socket } = useAuthStore.getState();
-    
-    if (!selectedUser) {
-      set({ selectedUser: null, messages: [] });
-      return;
-    }
+  setSelectedUser: async (selectedUser) => {
+  const { authUser, socket } = useAuthStore.getState();
 
-    const { unreadMessages } = get();
-    const updatedUnread = { ...unreadMessages };
-    delete updatedUnread[selectedUser._id];
+  if (!selectedUser) {
+    set({ selectedUser: null, messages: [] });
+    return;
+  }
 
-    const online = useAuthStore.getState().onlineUsers || [];
-    const isOnline = Array.isArray(online)
-      ? online.includes(selectedUser._id)
-      : false;
+  const { unreadMessages, getMessages } = get();
 
-    set({
-      selectedUser: { ...selectedUser, isOnline },
-      unreadMessages: updatedUnread,
-      messages: [],
-      isMessagesLoading: false,
+  const updatedUnread = { ...unreadMessages };
+  delete updatedUnread[selectedUser._id];
+
+  const online = useAuthStore.getState().onlineUsers || [];
+  const isOnline = Array.isArray(online)
+    ? online.includes(selectedUser._id)
+    : false;
+
+  set({
+    selectedUser: { ...selectedUser, isOnline },
+    unreadMessages: updatedUnread,
+    isMessagesLoading: true,
+  });
+
+  // ✅ FETCH PERSISTED MESSAGES FROM DB
+  await getMessages(selectedUser._id);
+
+  // ✅ MARK AS SEEN
+  if (socket && authUser) {
+    socket.emit("msg-seen", {
+      myId: authUser._id,
+      friendId: selectedUser._id,
     });
+  }
+},
 
-    // Mark all messages from this user as seen
-    if (socket && authUser) {
-      socket.emit("msg-seen", {
-        myId: authUser._id,
-        friendId: selectedUser._id,
-      });
-    }
-  },
 
   /* ============================================================
         EMIT TYPING STATUS
