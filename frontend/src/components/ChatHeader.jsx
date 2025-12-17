@@ -1,6 +1,6 @@
 // src/components/ChatHeader.jsx - CLEAN WITH CALL BUTTONS
 import React from "react";
-import { Phone, Video, Music2, Pencil, X, MoreVertical } from "lucide-react";
+import { Phone, Video, Music2, Pencil, X, } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useAuthStore } from "../store/useAuthStore";

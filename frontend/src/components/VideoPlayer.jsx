@@ -1,246 +1,169 @@
 // src/components/VideoPlayer.jsx
-import React, { useEffect, useRef, useState } from 'react';
-import { useWatchParty } from '../contexts/WatchPartyContext';
-import { useThemeStore } from '../store/useThemeStore';
-import './VideoPlayer.css';
+import React, { useEffect, useRef, useState } from "react";
+import { useWatchParty } from "../contexts/WatchPartyContext";
+import { useThemeStore } from "../store/useThemeStore";
+import "./VideoPlayer.css";
 
 const VideoPlayer = () => {
-  const { videoState, syncPlayback, isHost, setVideoState, canControlVideo } = useWatchParty();
+  const {
+    videoState,
+    syncPlayback,
+    isHost,
+    setVideoState,
+    canControlVideo,
+  } = useWatchParty();
+
   const { theme } = useThemeStore();
+
   const playerRef = useRef(null);
-  const youtubePlayerRef = useRef(null);
+  const ytPlayerRef = useRef(null);
   const isSyncing = useRef(false);
-  const [isYouTubeReady, setIsYouTubeReady] = useState(false);
+  const [ytReady, setYtReady] = useState(false);
 
-  // Theme-based styles
-  const getThemeStyles = () => {
-    return {
-      container: theme === 'light' 
-        ? 'bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300' 
-        : 'bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700',
-      controls: theme === 'light' 
-        ? 'text-gray-800' 
-        : 'text-white',
-      overlay: theme === 'light'
-        ? 'rgba(255, 255, 255, 0.95)'
-        : 'rgba(0, 0, 0, 0.85)'
-    };
-  };
+  /* ================= THEME ================= */
+  const containerClass =
+    theme === "light"
+      ? "bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300"
+      : "bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700";
 
-  const themeStyles = getThemeStyles();
-
-  // Load YouTube IFrame API
+  /* ================= LOAD YOUTUBE API ONCE ================= */
   useEffect(() => {
-    if (videoState.type === 'youtube' && !window.YT) {
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-      window.onYouTubeIframeAPIReady = () => {
-        setIsYouTubeReady(true);
-      };
-    } else if (window.YT && window.YT.Player) {
-      setIsYouTubeReady(true);
+    if (!window.YT) {
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      document.body.appendChild(script);
+      window.onYouTubeIframeAPIReady = () => setYtReady(true);
+    } else {
+      setYtReady(true);
     }
-  }, [videoState.type]);
+  }, []);
 
-  // Extract YouTube video ID from URL
-  const getYouTubeVideoId = (url) => {
-    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[7].length === 11) ? match[7] : null;
+  const getVideoId = (url) => {
+    const match = url.match(
+      /^.*((youtu.be\/)|(v\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/
+    );
+    return match && match[6]?.length === 11 ? match[6] : null;
   };
 
-  // Initialize YouTube Player with theme
+  /* ================= INIT YOUTUBE PLAYER ================= */
   useEffect(() => {
-    if (videoState.type === 'youtube' && isYouTubeReady && videoState.url) {
-      const videoId = getYouTubeVideoId(videoState.url);
-      
-      if (videoId && !youtubePlayerRef.current) {
-        const playerVars = {
-          autoplay: 0,
-          controls: canControlVideo ? 1 : 0,
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          color: theme === 'light' ? 'white' : 'red',
-          iv_load_policy: 3,
-          fs: 1,
-          disablekb: !canControlVideo ? 1 : 0
-        };
+    if (
+      videoState.type !== "youtube" ||
+      !ytReady ||
+      !videoState.url ||
+      ytPlayerRef.current
+    )
+      return;
 
-        youtubePlayerRef.current = new window.YT.Player('youtube-player', {
-          videoId: videoId,
-          playerVars: playerVars,
-          events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
-            onError: (event) => console.error('YouTube Player Error:', event.data)
+    const videoId = getVideoId(videoState.url);
+    if (!videoId) return;
+
+    ytPlayerRef.current = new window.YT.Player("youtube-player", {
+      videoId,
+      playerVars: {
+        controls: 1,        // ✅ REQUIRED for fullscreen
+        fs: 1,              // ✅ fullscreen enabled
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1,
+        disablekb: canControlVideo ? 0 : 1,
+      },
+      events: {
+        onReady: (e) => {
+          if (videoState.currentTime > 0)
+            e.target.seekTo(videoState.currentTime, true);
+          if (videoState.playing) e.target.playVideo();
+        },
+        onStateChange: (e) => {
+          if (!canControlVideo || isSyncing.current) return;
+
+          const currentTime = e.target.getCurrentTime();
+          const duration = e.target.getDuration();
+
+          if (e.data === window.YT.PlayerState.PLAYING) {
+            syncPlayback({ playing: true, currentTime, duration });
+            setVideoState((p) => ({ ...p, playing: true }));
           }
-        });
-      }
-    }
+
+          if (e.data === window.YT.PlayerState.PAUSED) {
+            syncPlayback({ playing: false, currentTime, duration });
+            setVideoState((p) => ({ ...p, playing: false }));
+          }
+        },
+      },
+    });
 
     return () => {
-      if (youtubePlayerRef.current && youtubePlayerRef.current.destroy) {
-        youtubePlayerRef.current.destroy();
-        youtubePlayerRef.current = null;
-      }
+      ytPlayerRef.current?.destroy();
+      ytPlayerRef.current = null;
     };
-  }, [videoState.type, videoState.url, isYouTubeReady, canControlVideo, theme]);
+  }, [videoState.type, ytReady, canControlVideo]);
 
-  const onPlayerReady = (event) => {
-    // Apply theme to YouTube player
-    if (theme === 'light') {
-      event.target.setOption('color', 'white');
-    } else {
-      event.target.setOption('color', 'red');
-    }
-
-    // Sync initial state
-    if (videoState.currentTime > 0) {
-      event.target.seekTo(videoState.currentTime, true);
-    }
-    if (videoState.playing) {
-      event.target.playVideo();
-    }
-  };
-
-  const onPlayerStateChange = (event) => {
-    if (isSyncing.current) return;
-
-    const player = event.target;
-    const currentTime = player.getCurrentTime();
-    const duration = player.getDuration();
-
-    if (canControlVideo) {
-      if (event.data === window.YT.PlayerState.PLAYING) {
-        syncPlayback({ playing: true, currentTime, duration });
-        setVideoState(prev => ({ ...prev, playing: true, currentTime, duration }));
-      } else if (event.data === window.YT.PlayerState.PAUSED) {
-        syncPlayback({ playing: false, currentTime, duration });
-        setVideoState(prev => ({ ...prev, playing: false, currentTime, duration }));
-      } else if (event.data === window.YT.PlayerState.ENDED) {
-        syncPlayback({ playing: false, currentTime: duration, duration });
-        setVideoState(prev => ({ ...prev, playing: false, currentTime: duration, duration }));
-      }
-    }
-  };
-
-  // Sync YouTube player with received state
+  /* ================= VIEWER SYNC ================= */
   useEffect(() => {
-    if (videoState.type === 'youtube' && youtubePlayerRef.current && !isHost) {
-      isSyncing.current = true;
+    if (!ytPlayerRef.current || isHost || videoState.type !== "youtube") return;
 
-      const player = youtubePlayerRef.current;
-      const currentTime = player.getCurrentTime ? player.getCurrentTime() : 0;
-      const timeDiff = Math.abs(currentTime - videoState.currentTime);
+    isSyncing.current = true;
+    const player = ytPlayerRef.current;
 
-      if (timeDiff > 1.5) {
-        player.seekTo(videoState.currentTime, true);
-      }
+    const diff = Math.abs(player.getCurrentTime() - videoState.currentTime);
+    if (diff > 1.5) player.seekTo(videoState.currentTime, true);
 
-      if (videoState.playing && player.getPlayerState() !== window.YT.PlayerState.PLAYING) {
-        player.playVideo();
-      } else if (!videoState.playing && player.getPlayerState() === window.YT.PlayerState.PLAYING) {
-        player.pauseVideo();
-      }
+    videoState.playing ? player.playVideo() : player.pauseVideo();
 
-      setTimeout(() => {
-        isSyncing.current = false;
-      }, 500);
-    }
-  }, [videoState.playing, videoState.currentTime, isHost, videoState.type]);
+    setTimeout(() => (isSyncing.current = false), 400);
+  }, [videoState.playing, videoState.currentTime, isHost]);
 
-  // Handle local video player
-  const handleLocalPlay = () => {
-    if (canControlVideo) {
-      const video = playerRef.current;
-      syncPlayback({
-        playing: true,
-        currentTime: video.currentTime,
-        duration: video.duration
-      });
-    }
-  };
-
-  const handleLocalPause = () => {
-    if (canControlVideo) {
-      const video = playerRef.current;
-      syncPlayback({
-        playing: false,
-        currentTime: video.currentTime,
-        duration: video.duration
-      });
-    }
-  };
-
-  const handleLocalSeeked = () => {
-    if (canControlVideo) {
-      const video = playerRef.current;
-      syncPlayback({
-        playing: !video.paused,
-        currentTime: video.currentTime,
-        duration: video.duration
-      });
-    }
-  };
-
-  // Sync local video with received state
+  /* ================= LOCAL VIDEO ================= */
   useEffect(() => {
-    if (videoState.type === 'local' && playerRef.current && !isHost) {
-      isSyncing.current = true;
-      const video = playerRef.current;
-      const timeDiff = Math.abs(video.currentTime - videoState.currentTime);
+    if (
+      videoState.type !== "local" ||
+      !playerRef.current ||
+      isHost
+    )
+      return;
 
-      if (timeDiff > 1.5) {
-        video.currentTime = videoState.currentTime;
-      }
+    isSyncing.current = true;
+    const v = playerRef.current;
 
-      if (videoState.playing && video.paused) {
-        video.play().catch(e => console.log('Play error:', e));
-      } else if (!videoState.playing && !video.paused) {
-        video.pause();
-      }
-
-      setTimeout(() => {
-        isSyncing.current = false;
-      }, 500);
+    if (Math.abs(v.currentTime - videoState.currentTime) > 1.5) {
+      v.currentTime = videoState.currentTime;
     }
-  }, [videoState.playing, videoState.currentTime, isHost, videoState.type]);
+
+    videoState.playing ? v.play() : v.pause();
+    setTimeout(() => (isSyncing.current = false), 400);
+  }, [videoState, isHost]);
 
   return (
-    <div className={`video-player-container ${themeStyles.container} ${!canControlVideo ? 'viewer-mode' : ''} rounded-3xl overflow-hidden transition-all duration-500`}>
-      {videoState.type === 'youtube' ? (
-        <div id="youtube-player" className="youtube-player w-full h-full"></div>
+    <div
+      className={`relative w-full h-full rounded-3xl overflow-hidden ${containerClass}`}
+    >
+      {videoState.type === "youtube" ? (
+        <div id="youtube-player" className="w-full h-full" />
       ) : (
         <video
           ref={playerRef}
           src={videoState.url}
-          controls={canControlVideo}
-          className={`local-video-player w-full h-full object-contain ${themeStyles.controls}`}
-          onPlay={handleLocalPlay}
-          onPause={handleLocalPause}
-          onSeeked={handleLocalSeeked}
-          onEnded={() => {
-            if (canControlVideo) {
-              const video = playerRef.current;
-              syncPlayback({
-                playing: false,
-                currentTime: video.duration,
-                duration: video.duration
-              });
-            }
-          }}
+          controls
           playsInline
-          preload="metadata"
+          className="w-full h-full object-contain"
+          onPlay={() =>
+            canControlVideo &&
+            syncPlayback({
+              playing: true,
+              currentTime: playerRef.current.currentTime,
+              duration: playerRef.current.duration,
+            })
+          }
+          onPause={() =>
+            canControlVideo &&
+            syncPlayback({
+              playing: false,
+              currentTime: playerRef.current.currentTime,
+              duration: playerRef.current.duration,
+            })
+          }
         />
-      )}
-      
-      {/* Viewer mode overlay */}
-      {!canControlVideo && (
-        <div className="absolute inset-0 bg-transparent z-10" title="Only host can control playback"></div>
       )}
     </div>
   );

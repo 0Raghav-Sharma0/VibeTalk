@@ -1,5 +1,6 @@
+// src/components/MusicPlayer.jsx
 import React, { useEffect, useRef, useState } from "react";
-import { SkipBack, SkipForward, Play, Pause } from "lucide-react";
+import { SkipBack, SkipForward, Play, Pause, X } from "lucide-react";
 import { useMusicStore } from "../store/musicStore";
 import { motion } from "framer-motion";
 import { io } from "socket.io-client";
@@ -16,33 +17,36 @@ const socket = io(
     : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com"
 );
 
+/* ================= GLOBAL AUDIO (🔥 FIX) ================= */
+const globalAudio =
+  window.__GLOBAL_MUSIC_AUDIO__ ||
+  (window.__GLOBAL_MUSIC_AUDIO__ = new Audio());
+
 /* ================= UTILS ================= */
-const formatTime = (seconds = 0) => {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
+const formatTime = (s = 0) => {
+  const m = Math.floor(s / 60);
+  const sec = Math.floor(s % 60);
+  return `${m}:${sec < 10 ? "0" : ""}${sec}`;
 };
 
-const truncateText = (text, max = 30) =>
-  typeof text === "string" && text.length > max
-    ? text.slice(0, max) + "..."
-    : text;
+const truncateText = (t, m = 30) =>
+  typeof t === "string" && t.length > m ? t.slice(0, m) + "..." : t;
 
 /* ================= COMPONENT ================= */
-const MusicPlayer = ({ roomId }) => {
+const MusicPlayer = ({ roomId, onClose }) => {
   const {
-    setCurrentSong,
-    setIsPlaying,
     currentSong,
     songName,
     isPlaying,
+    setCurrentSong,
+    setIsPlaying,
   } = useMusicStore();
 
-  const audioRef = useRef(null);
+  const audioRef = useRef(globalAudio);
 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(audioRef.current.volume || 1);
   const [currentGif, setCurrentGif] = useState("/select_a_song.gif");
   const [showVisualizer, setShowVisualizer] = useState(false);
 
@@ -60,17 +64,13 @@ const MusicPlayer = ({ roomId }) => {
   useEffect(() => {
     const handler = ({ action, songUrl, songName, currentTime }) => {
       const audio = audioRef.current;
-      if (!audio) return;
 
       if (action === "play") {
+        if (audio.src !== songUrl) audio.src = songUrl;
         setCurrentSong(songUrl, songName);
         setIsPlaying(true);
-        audio.src = songUrl;
-        audio.onloadedmetadata = () => {
-          setDuration(audio.duration || 0);
-          audio.currentTime = currentTime || 0;
-          audio.play().catch(() => {});
-        };
+        audio.currentTime = currentTime || 0;
+        audio.play().catch(() => {});
       }
 
       if (action === "pause") {
@@ -91,35 +91,40 @@ const MusicPlayer = ({ roomId }) => {
   /* ================= AUDIO EVENTS ================= */
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
 
-    const onTime = () => setCurrentTime(audio.currentTime);
-    const onLoaded = () => setDuration(audio.duration || 0);
+    const sync = () => {
+      setCurrentTime(audio.currentTime || 0);
+      setDuration(audio.duration || 0);
+    };
 
-    audio.addEventListener("timeupdate", onTime);
-    audio.addEventListener("loadedmetadata", onLoaded);
+    audio.addEventListener("timeupdate", sync);
+    audio.addEventListener("loadedmetadata", sync);
+
+    // 🔥 restore state on reopen
+    sync();
 
     return () => {
-      audio.removeEventListener("timeupdate", onTime);
-      audio.removeEventListener("loadedmetadata", onLoaded);
+      audio.removeEventListener("timeupdate", sync);
+      audio.removeEventListener("loadedmetadata", sync);
     };
   }, []);
 
   /* ================= VOLUME ================= */
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume;
+    audioRef.current.volume = volume;
   }, [volume]);
 
   /* ================= PLAY / PAUSE ================= */
   const togglePlayPause = () => {
-    const audio = audioRef.current;
-    if (!audio || !currentSong) return;
+    if (!currentSong) return;
 
-    setIsPlaying(!isPlaying);
+    const audio = audioRef.current;
+    const next = !isPlaying;
+    setIsPlaying(next);
 
     socket.emit("music-sync", {
       roomId,
-      action: isPlaying ? "pause" : "play",
+      action: next ? "play" : "pause",
       songUrl: currentSong,
       songName,
       currentTime: audio.currentTime,
@@ -127,79 +132,56 @@ const MusicPlayer = ({ roomId }) => {
   };
 
   /* ================= SEEK ================= */
-  const seek = (time) => {
+  const seek = (t) => {
     const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.currentTime = time;
-    setCurrentTime(time);
+    audio.currentTime = t;
+    setCurrentTime(t);
 
     socket.emit("music-sync", {
       roomId,
       action: "seek",
       songUrl: currentSong,
       songName,
-      currentTime: time,
+      currentTime: t,
     });
   };
 
-  /* ================= MP3 UPLOAD (FIXED) ================= */
+  /* ================= MP3 UPLOAD ================= */
   const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // ✅ MP3 ONLY
-    const isMp3 =
-      file.type === "audio/mpeg" ||
-      file.name.toLowerCase().endsWith(".mp3");
-
-    if (!isMp3) {
-      alert("❌ Only MP3 files are allowed");
-      e.target.value = "";
+    if (!file.type.includes("audio")) {
+      alert("Only MP3 allowed");
       return;
     }
 
-    // ✅ SIZE LIMIT (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      alert("❌ File too large (max 10MB)");
-      e.target.value = "";
-      return;
-    }
+    const form = new FormData();
+    form.append("file", file);
+    form.append("upload_preset", "my_preset");
 
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      form.append("upload_preset", "my_preset");
+    const res = await axios.post(
+      "https://api.cloudinary.com/v1_1/dbi3tuuli/upload",
+      form
+    );
 
-      const res = await axios.post(
-        "https://api.cloudinary.com/v1_1/dbi3tuuli/upload",
-        form
-      );
+    const name = truncateText(file.name.replace(/\.[^/.]+$/, ""), 40);
+    const audio = audioRef.current;
 
-      const name = truncateText(
-        file.name.replace(/\.[^/.]+$/, ""),
-        40
-      );
+    audio.src = res.data.secure_url;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
 
-      setCurrentSong(res.data.secure_url, name);
-      setIsPlaying(true);
+    setCurrentSong(res.data.secure_url, name);
+    setIsPlaying(true);
 
-      const audio = audioRef.current;
-      audio.src = res.data.secure_url;
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
-
-      socket.emit("music-sync", {
-        roomId,
-        action: "play",
-        songUrl: res.data.secure_url,
-        songName: name,
-        currentTime: 0,
-      });
-    } catch (err) {
-      console.error("Upload failed:", err);
-      alert("❌ Upload failed");
-    }
+    socket.emit("music-sync", {
+      roomId,
+      action: "play",
+      songUrl: res.data.secure_url,
+      songName: name,
+      currentTime: 0,
+    });
   };
 
   /* ================= VISUALIZER ================= */
@@ -212,14 +194,10 @@ const MusicPlayer = ({ roomId }) => {
   /* ================= UI ================= */
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-base-100 via-base-200/60 to-base-300/40 border-l shadow-xl">
-
       {/* HEADER */}
       <div className="px-6 py-4 flex justify-between items-center border-b">
         <div className="flex items-center gap-4">
-          <img
-            src={currentGif}
-            className="w-14 h-14 rounded-xl object-cover"
-          />
+          <img src={currentGif} className="w-14 h-14 rounded-xl object-cover" />
           <div>
             <h3 className="font-semibold truncate">
               {songName || "No song selected"}
@@ -230,29 +208,27 @@ const MusicPlayer = ({ roomId }) => {
           </div>
         </div>
 
-        <label className="cursor-pointer">
-          <motion.div whileHover={{ scale: 1.1 }} className="p-2 rounded-lg border">
-            <lord-icon
-              src="/wired-flat-1093-add-song-hover-pinch.json"
-              trigger="hover"
-              style={{ width: 32, height: 32 }}
-            />
-          </motion.div>
-          <input
-            type="file"
-            hidden
-            accept=".mp3,audio/mpeg"
-            onChange={handleUpload}
-          />
-        </label>
+        <div className="flex items-center gap-2">
+          <label className="cursor-pointer">
+            <motion.div whileHover={{ scale: 1.1 }} className="p-2 rounded-lg border">
+              <lord-icon
+                src="/wired-flat-1093-add-song-hover-pinch.json"
+                trigger="hover"
+                style={{ width: 32, height: 32 }}
+              />
+            </motion.div>
+            <input hidden type="file" accept=".mp3" onChange={handleUpload} />
+          </label>
+
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-base-200">
+            <X />
+          </button>
+        </div>
       </div>
 
       {/* ART */}
       <div className="p-6">
-        <img
-          src={currentGif}
-          className="w-full h-56 rounded-2xl object-cover"
-        />
+        <img src={currentGif} className="w-full h-56 rounded-2xl object-cover" />
       </div>
 
       {/* CONTROLS */}
@@ -262,7 +238,7 @@ const MusicPlayer = ({ roomId }) => {
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={togglePlayPause}
-            className="w-16 h-16 rounded-full bg-primary text-white flex items-center justify-center"
+            className="w-16 h-16 rounded-full bg-primary text-white"
           >
             {isPlaying ? <Pause /> : <Play />}
           </motion.button>
@@ -282,7 +258,6 @@ const MusicPlayer = ({ roomId }) => {
           <span className="text-xs">{formatTime(duration)}</span>
         </div>
 
-        {/* VISUALIZER */}
         <div className="mt-4 flex justify-center gap-1">
           {Array.from({ length: 20 }).map((_, i) => (
             <motion.div
@@ -296,7 +271,7 @@ const MusicPlayer = ({ roomId }) => {
       </div>
 
       {/* FOOTER */}
-      <div className="mt-auto px-6 py-4 border-t flex justify-between items-center">
+      <div className="mt-auto px-6 py-4 border-t">
         <input
           type="range"
           min="0"
@@ -306,8 +281,6 @@ const MusicPlayer = ({ roomId }) => {
           onChange={(e) => setVolume(Number(e.target.value))}
         />
       </div>
-
-      <audio ref={audioRef} />
     </div>
   );
 };
