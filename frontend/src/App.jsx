@@ -1,5 +1,7 @@
 // src/App.jsx
 import React, { useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
+
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
 import SignUpPage from "./pages/SignUpPage";
@@ -9,13 +11,14 @@ import ProfilePage from "./pages/ProfilePage";
 import WatchPartyPage from "./pages/WatchPartyPage";
 import VideoCall from "./components/VideoCall";
 import CallListener from "./components/CallListener";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "./store/useAuthStore.js";
-import { useVideoCallStore } from "./store/useVideoCallStore";
-import { useThemeStore } from "./store/useThemeStore.js";
-import { useChatStore } from "./store/useChatStore.js";
-import { SocketProvider } from "./contexts/SocketContext"; // ADD THIS IMPORT
+
+import { useAuthStore } from "./store/useAuthStore";
+import { useThemeStore } from "./store/useThemeStore";
+import { useChatStore } from "./store/useChatStore";
+
+import { SocketProvider } from "./contexts/SocketContext";
 import { WatchPartyProvider } from "./contexts/WatchPartyContext";
+
 import { Toaster } from "react-hot-toast";
 import "ldrs/grid";
 
@@ -23,23 +26,21 @@ const App = () => {
   const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
 
-  // Check authentication on mount
+  /* ================= AUTH CHECK ================= */
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // Apply theme
+  /* ================= APPLY THEME ONCE =================
+     Theme logic MUST live in store only.
+     This just initializes it on app load.
+  */
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+    setTheme(theme);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Load theme from localStorage on initial load
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("chat-theme") || "vibetalk";
-    setTheme(savedTheme);
-  }, [setTheme]);
-
-  // Global chat notification listener
+  /* ================= CHAT SOCKET LISTENER ================= */
   useEffect(() => {
     if (!socket) return;
 
@@ -51,7 +52,7 @@ const App = () => {
     };
   }, [socket]);
 
-  // Loading screen while checking auth
+  /* ================= LOADING STATE ================= */
   if (isCheckingAuth) {
     return (
       <div className="flex items-center justify-center h-screen w-screen bg-base-100 text-base-content">
@@ -61,39 +62,36 @@ const App = () => {
   }
 
   return (
-    <SocketProvider> {/* SOCKET PROVIDER MUST WRAP EVERYTHING */}
-      <WatchPartyProvider> {/* THEN WATCH PARTY PROVIDER */}
-        <div
-          data-theme={theme || "vibetalk"}
-          className="min-h-screen bg-base-100 text-base-content transition-colors duration-500"
-        >
-          {/* Only show Navbar when user is authenticated */}
+    <SocketProvider>
+      <WatchPartyProvider>
+        {/* DO NOT set data-theme here */}
+        <div className="min-h-screen bg-base-100 text-base-content">
+          {/* Navbar only when logged in */}
           {authUser && <Navbar />}
 
-          {/* Global call listener */}
+          {/* Global listeners */}
           <CallListener />
 
           {/* Routes */}
           <Routes>
-            {/* Redirect root to home or login */}
             <Route
               path="/"
               element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
             />
 
-            {/* Home route */}
             <Route
               path="/home"
               element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
             />
 
-            {/* Watch Party route */}
             <Route
               path="/watch-party"
-              element={authUser ? <WatchPartyPage /> : <Navigate to="/login" replace />}
+              element={
+                authUser ? <WatchPartyPage /> : <Navigate to="/login" replace />
+              }
             />
 
-            {/* Auth routes - only accessible when NOT logged in */}
+            {/* Auth routes */}
             <Route
               path="/signup"
               element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
@@ -104,27 +102,32 @@ const App = () => {
               element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
             />
 
-            {/* Protected routes - only accessible when logged in */}
+            {/* Protected routes */}
             <Route
               path="/settings"
-              element={authUser ? <SettingsPage /> : <Navigate to="/login" replace />}
+              element={
+                authUser ? <SettingsPage /> : <Navigate to="/login" replace />
+              }
             />
 
             <Route
               path="/profile"
-              element={authUser ? <ProfilePage /> : <Navigate to="/login" replace />}
+              element={
+                authUser ? <ProfilePage /> : <Navigate to="/login" replace />
+              }
             />
 
-            {/* 404 fallback */}
+            {/* Fallback */}
             <Route
               path="*"
               element={<Navigate to={authUser ? "/" : "/login"} replace />}
             />
           </Routes>
 
-          {/* Video call UI - always loaded but might be hidden */}
+          {/* Video call UI */}
           <VideoCall />
 
+          {/* Toasts */}
           <Toaster
             position="top-right"
             toastOptions={{
@@ -136,7 +139,7 @@ const App = () => {
           />
         </div>
       </WatchPartyProvider>
-    </SocketProvider> //{/* CLOSE SOCKET PROVIDER */}
+    </SocketProvider>
   );
 };
 

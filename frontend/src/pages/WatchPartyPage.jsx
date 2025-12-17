@@ -63,14 +63,7 @@ const WatchPartyPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-base-200 text-base-content flex items-center justify-center px-4 overflow-hidden">
-
-      {/* 🌿 Ambient green background */}
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-1/4 left-1/4 w-[420px] h-[420px] bg-primary/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-[420px] h-[420px] bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute inset-0 bg-vignette" />
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-base-200 text-gray-900 dark:text-base-content flex items-center justify-center px-4">
 
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8">
 
@@ -78,12 +71,13 @@ const WatchPartyPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-base-100 border border-base-300 rounded-2xl p-7 shadow-xl"
+          className="bg-white dark:bg-base-100 border border-gray-200 dark:border-base-300 rounded-2xl p-7 shadow-xl"
         >
-          <h1 className="text-2xl font-semibold mb-1">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-base-content mb-1">
             🎬 Watch Party
           </h1>
-          <p className="text-sm text-base-content/60 mb-5">
+
+          <p className="text-sm text-gray-700 dark:text-base-content/70 mb-5">
             Watch videos together in perfect sync.
           </p>
 
@@ -92,8 +86,8 @@ const WatchPartyPage = () => {
               className={`mb-4 px-4 py-3 rounded-xl text-sm border
                 ${
                   error
-                    ? "bg-error/10 border-error/30 text-error"
-                    : "bg-primary/10 border-primary/30 text-primary"
+                    ? "bg-red-50 border-red-200 text-red-700 dark:bg-error/10 dark:border-error/30 dark:text-error"
+                    : "bg-gray-100 border-gray-300 text-gray-800 dark:bg-base-200 dark:border-base-300"
                 }`}
             >
               {error || status}
@@ -112,8 +106,8 @@ const WatchPartyPage = () => {
                 className={`flex-1 py-2 rounded-lg font-medium transition
                   ${
                     videoType === id
-                      ? "bg-primary text-primary-content shadow"
-                      : "bg-base-200 border border-base-300 hover:bg-base-300"
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 dark:bg-base-200 border border-gray-300 dark:border-base-300 hover:bg-gray-200 dark:hover:bg-base-300 text-gray-800 dark:text-base-content"
                   }`}
               >
                 <Icon size={16} className="inline mr-2" />
@@ -128,26 +122,32 @@ const WatchPartyPage = () => {
               onChange={(e) => setVideoUrl(e.target.value)}
               placeholder="Paste YouTube link…"
               className="w-full px-4 py-2 mb-4 rounded-lg
-                         bg-base-200 border border-base-300
-                         focus:ring-2 focus:ring-primary/40 outline-none"
+                         bg-gray-100 dark:bg-base-200
+                         border border-gray-300 dark:border-base-300
+                         text-gray-900 dark:text-base-content
+                         placeholder:text-gray-500 dark:placeholder:text-base-content/50
+                         focus:ring-2 focus:ring-gray-400 dark:focus:ring-base-content/40
+                         outline-none"
             />
           ) : (
             <label className="block mb-4">
-              <div className="px-4 py-3 rounded-lg border border-dashed border-base-300
-                              text-center cursor-pointer text-base-content/70
-                              hover:bg-base-200">
+              <div className="px-4 py-3 rounded-lg border border-dashed border-gray-300 dark:border-base-300
+                              text-center cursor-pointer
+                              text-gray-700 dark:text-base-content/70
+                              hover:bg-gray-100 dark:hover:bg-base-200">
                 Choose video file
               </div>
               <input type="file" accept="video/*" hidden onChange={handleFile} />
             </label>
           )}
 
+          {/* CREATE BUTTON */}
           <button
             onClick={handleCreateRoom}
             disabled={loading}
-            className="w-full py-3 rounded-xl font-medium
-                       bg-primary text-primary-content
-                       hover:opacity-90 transition"
+            className="w-full py-3 rounded-xl font-semibold
+                       bg-primary text-black
+                       hover:bg-primary/90 transition"
           >
             {loading ? "Creating…" : "Create Watch Party"}
           </button>
@@ -158,9 +158,9 @@ const WatchPartyPage = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-base-100 border border-base-300 rounded-2xl p-7 shadow-xl"
+          className="bg-white dark:bg-base-100 border border-gray-200 dark:border-base-300 rounded-2xl p-7 shadow-xl"
         >
-          <h2 className="text-lg font-semibold mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-base-content mb-4">
             Join Existing Party
           </h2>
 
@@ -169,17 +169,24 @@ const WatchPartyPage = () => {
             onChange={(e) => setJoinRoomId(e.target.value)}
             placeholder="Enter Room ID"
             className="w-full px-4 py-2 mb-4 rounded-lg
-                       bg-base-200 border border-base-300
-                       focus:ring-2 focus:ring-primary/40 outline-none"
+                       bg-gray-100 dark:bg-base-200
+                       border border-gray-300 dark:border-base-300
+                       text-gray-900 dark:text-base-content
+                       placeholder:text-gray-500 dark:placeholder:text-base-content/50
+                       focus:ring-2 focus:ring-gray-400 dark:focus:ring-base-content/40
+                       outline-none"
           />
 
           <button
             onClick={handleJoinRoom}
             disabled={loading}
             className="w-full py-3 rounded-xl font-medium
-                       bg-base-200 border border-base-300
-                       hover:border-primary hover:bg-base-300
-                       flex items-center justify-center gap-2 transition"
+                       bg-gray-100 dark:bg-base-200
+                       border border-gray-300 dark:border-base-300
+                       hover:bg-gray-200 dark:hover:bg-base-300
+                       flex items-center justify-center gap-2
+                       text-gray-900 dark:text-base-content
+                       transition"
           >
             <Users size={18} />
             Join Party
@@ -198,8 +205,9 @@ const WatchPartyPage = () => {
               <span
                 key={f}
                 className="px-3 py-1 rounded-full
-                           bg-base-200 border border-base-300
-                           text-base-content/70"
+                           bg-gray-100 dark:bg-base-200
+                           border border-gray-300 dark:border-base-300
+                           text-gray-700 dark:text-base-content/70"
               >
                 {f}
               </span>

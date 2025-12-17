@@ -16,7 +16,6 @@ const MessageInput = () => {
   const { sendMessage, selectedUser } = useChatStore();
   const { authUser, socket } = useAuthStore();
 
-  /* ================= SEND MESSAGE ================= */
   const handleSendMessage = async () => {
     if (!selectedUser) return;
     if (!text.trim() && !imagePreview) return;
@@ -56,7 +55,6 @@ const MessageInput = () => {
     }
   };
 
-  // Image preview helper
   const previewImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -73,18 +71,18 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="relative w-full bg-base-100">
+    <div className="relative w-full bg-white dark:bg-base-100 border-t border-gray-200 dark:border-base-300">
 
-      {/* ===== IMAGE PREVIEW ===== */}
+      {/* IMAGE PREVIEW */}
       {imagePreview && (
-        <div className="mb-3 mx-3 bg-base-200 border border-base-300 rounded-xl p-3">
+        <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-gray-300 dark:border-base-300 rounded-xl p-3">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-base-content flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-800 dark:text-base-content flex items-center gap-2">
               <Paperclip size={14} /> Image attached
             </span>
             <button
               onClick={() => setImagePreview(null)}
-              className="p-1.5 rounded-lg hover:bg-base-300"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300"
             >
               <X size={16} />
             </button>
@@ -93,97 +91,87 @@ const MessageInput = () => {
           <img
             src={imagePreview}
             alt="preview"
-            className="w-20 h-20 md:w-28 md:h-28 rounded-lg object-cover border"
+            className="w-24 h-24 rounded-lg object-cover border border-gray-300 dark:border-base-300"
           />
         </div>
       )}
 
-      {/* ===== IMAGE PICKER (EXPANDED) ===== */}
+      {/* IMAGE PICKER */}
       {isExpanded && (
-        <div className="mb-3 mx-3 bg-base-200 border border-base-300 rounded-xl p-3">
-          <div className="flex gap-3">
-            <button
-              onClick={() => imageInputRef.current.click()}
-              className="
-                flex-1 flex flex-col items-center gap-2 p-3 rounded-lg
-                hover:bg-base-300 transition
-              "
-            >
-              <div className="p-2 rounded-lg bg-base-100 border border-base-300">
-                <Image size={20} />
-              </div>
-              <span className="text-xs text-base-content/60">Photo</span>
-            </button>
-          </div>
+        <div className="mx-3 mb-3 bg-gray-100 dark:bg-base-200 border border-gray-300 dark:border-base-300 rounded-xl p-3">
+          <button
+            onClick={() => imageInputRef.current.click()}
+            className="w-full flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300 transition"
+          >
+            <div className="p-2 rounded-lg bg-white dark:bg-base-100 border border-gray-300 dark:border-base-300">
+              <Image size={20} />
+            </div>
+            <span className="text-xs text-gray-600 dark:text-base-content/60">
+              Photo
+            </span>
+          </button>
         </div>
       )}
 
-      {/* ===== EMOJI PICKER ===== */}
+      {/* EMOJI PICKER */}
       {showEmojiPicker && (
-        <div className="
-          absolute bottom-20 left-2 right-2 sm:left-auto sm:right-4
-          sm:w-[340px] z-50
-        ">
-          <div className="bg-base-100 border border-base-300 rounded-xl shadow-xl">
-            <div className="p-2 border-b border-base-300 flex justify-between items-center">
-              <span className="text-sm font-medium">Emoji</span>
+        <div className="absolute bottom-20 left-2 right-2 sm:left-auto sm:right-4 sm:w-[340px] z-50">
+          <div className="bg-white dark:bg-base-100 border border-gray-300 dark:border-base-300 rounded-xl shadow-xl">
+            <div className="p-2 border-b border-gray-200 dark:border-base-300 flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-800 dark:text-base-content">
+                Emoji
+              </span>
               <button
                 onClick={() => setShowEmojiPicker(false)}
-                className="p-1 hover:bg-base-300 rounded"
+                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-base-300"
               >
                 <X size={16} />
               </button>
             </div>
-            <div className="max-h-[280px] overflow-y-auto">
-              <EmojiPicker
-                onEmojiClick={(e) => {
-                  setText((p) => p + e.emoji);
-                  inputRef.current?.focus();
-                }}
-                theme="auto"
-                width="100%"
-                height={280}
-                previewConfig={{ showPreview: false }}
-              />
-            </div>
+
+            <EmojiPicker
+              onEmojiClick={(e) => {
+                setText((p) => p + e.emoji);
+                inputRef.current?.focus();
+              }}
+              theme="auto"
+              width="100%"
+              height={280}
+              previewConfig={{ showPreview: false }}
+            />
           </div>
         </div>
       )}
 
-      {/* ===== MAIN INPUT BAR ===== */}
+      {/* INPUT BAR */}
       <div className="px-3 py-2">
         <div className="
-          flex items-center gap-1 md:gap-2
-          bg-base-200 border border-base-300
-          rounded-xl px-2 md:px-3 py-2
+          flex items-center gap-2
+          bg-gray-100 dark:bg-base-200
+          border border-gray-300 dark:border-base-300
+          rounded-xl px-3 py-2
           focus-within:ring-2 focus-within:ring-primary
-          transition
         ">
-          {/* PLUS (IMAGE) */}
           <button
             onClick={() => {
               setIsExpanded(!isExpanded);
               setShowEmojiPicker(false);
             }}
-            className="p-1.5 md:p-2 rounded-lg hover:bg-base-300 transition"
-            aria-label="Attach image"
+            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300"
           >
-            <Plus size={18} className="md:w-5 md:h-5" />
+            <Plus size={18} />
           </button>
 
-          {/* EMOJI */}
           <button
             onClick={() => {
               setShowEmojiPicker(!showEmojiPicker);
               setIsExpanded(false);
             }}
-            className="p-1.5 md:p-2 rounded-lg hover:bg-base-300 transition"
-            aria-label="Add emoji"
+            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300"
           >
-            <Smile size={18} className="md:w-5 md:h-5" />
+            <Smile size={18} />
           </button>
 
-          {/* INPUT */}
           <input
             ref={inputRef}
             value={text}
@@ -192,32 +180,26 @@ const MessageInput = () => {
             placeholder="Type your message..."
             className="
               flex-1 bg-transparent outline-none
-              text-sm md:text-base text-base-content
-              placeholder:text-base-content/50
-              py-1
+              text-gray-900 dark:text-base-content
+              placeholder:text-gray-400 dark:placeholder:text-base-content/50
+              text-sm md:text-base
             "
           />
 
-          {/* SEND */}
           <button
             onClick={handleSendMessage}
             disabled={!text.trim() && !imagePreview}
-            className={`
-              p-1.5 md:p-2.5 rounded-lg transition
-              ${
-                text.trim() || imagePreview
-                  ? "bg-primary text-primary-content hover:opacity-90"
-                  : "text-base-content/40 cursor-not-allowed"
-              }
-            `}
-            aria-label="Send message"
+            className={`p-2.5 rounded-lg transition ${
+              text.trim() || imagePreview
+                ? "bg-primary text-primary-content hover:opacity-90"
+                : "text-gray-400 cursor-not-allowed"
+            }`}
           >
-            <Send size={18} className="md:w-5 md:h-5" />
+            <Send size={18} />
           </button>
         </div>
       </div>
 
-      {/* ===== HIDDEN IMAGE INPUT ===== */}
       <input
         type="file"
         accept="image/*"

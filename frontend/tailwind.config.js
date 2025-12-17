@@ -2,6 +2,7 @@ import defaultTheme from "tailwindcss/defaultTheme";
 import daisyui from "daisyui";
 
 export default {
+  darkMode: "class", // ✅ THIS WAS MISSING
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {

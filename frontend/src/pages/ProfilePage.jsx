@@ -37,20 +37,19 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 text-base-content">
+    <div className="min-h-screen bg-gray-50 dark:bg-base-200 text-gray-900 dark:text-base-content">
       <Navbar />
 
-      {/* ================= MAIN ================= */}
       <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2">
 
-        {/* ================= LEFT (PROFILE) ================= */}
+        {/* LEFT */}
         <div className="flex items-center justify-center px-6 py-10">
           <div className="w-full max-w-md space-y-8 text-center">
 
-            {/* Avatar */}
+            {/* AVATAR */}
             <div className="flex flex-col items-center gap-3">
               <div className="relative">
-                <div className="w-28 h-28 rounded-full overflow-hidden border border-base-300 bg-base-300">
+                <div className="w-28 h-28 rounded-full overflow-hidden border border-gray-300 dark:border-base-300 bg-gray-100 dark:bg-base-300">
                   <img
                     src={avatarSrc}
                     alt="Profile"
@@ -63,13 +62,15 @@ export default function ProfilePage() {
                   className="
                     absolute bottom-1 right-1
                     w-8 h-8 rounded-full
-                    bg-primary text-black
+                    bg-base-100 dark:bg-base-200
+                    border border-gray-300 dark:border-base-300
                     flex items-center justify-center
                     cursor-pointer
-                    shadow
+                    hover:bg-gray-100 dark:hover:bg-base-300
+                    transition
                   "
                 >
-                  <Camera size={14} />
+                  <Camera size={14} className="text-gray-700 dark:text-base-content" />
                   <input
                     id="avatar"
                     type="file"
@@ -80,17 +81,19 @@ export default function ProfilePage() {
                 </label>
               </div>
 
-              <h1 className="text-2xl font-semibold text-primary">
+              {/* NAME */}
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-base-content">
                 {authUser.fullName}
               </h1>
-              <p className="text-sm text-base-content/60">
+
+              <p className="text-sm text-gray-500 dark:text-base-content/60">
                 {authUser.email}
               </p>
             </div>
 
-            {/* Name Card */}
-            <div className="bg-base-100/80 backdrop-blur border border-base-300 rounded-2xl p-5">
-              <p className="text-xs uppercase tracking-wide text-base-content/50 mb-2">
+            {/* DISPLAY NAME CARD */}
+            <div className="bg-white dark:bg-base-100 border border-gray-200 dark:border-base-300 rounded-2xl p-5">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-base-content/50 mb-2">
                 Display Name
               </p>
 
@@ -108,13 +111,20 @@ export default function ProfilePage() {
                       onChange={(e) => setName(e.target.value)}
                       className="
                         flex-1 px-4 py-2 rounded-xl
-                        bg-base-200 border border-base-300
+                        bg-gray-100 dark:bg-base-200
+                        border border-gray-300 dark:border-base-300
                         outline-none
+                        text-gray-900 dark:text-base-content
                       "
                     />
                     <button
                       onClick={saveName}
-                      className="p-2 bg-primary text-black rounded-xl"
+                      className="
+                        p-2 rounded-xl
+                        bg-gray-900 text-white
+                        hover:bg-gray-800
+                        transition
+                      "
                     >
                       <Save size={16} />
                     </button>
@@ -123,7 +133,12 @@ export default function ProfilePage() {
                         setEditing(false);
                         setName(authUser.fullName);
                       }}
-                      className="p-2 border border-base-300 rounded-xl"
+                      className="
+                        p-2 rounded-xl
+                        border border-gray-300 dark:border-base-300
+                        hover:bg-gray-100 dark:hover:bg-base-200
+                        transition
+                      "
                     >
                       <X size={16} />
                     </button>
@@ -133,15 +148,21 @@ export default function ProfilePage() {
                     <div
                       className="
                         flex-1 px-4 py-2 rounded-xl
-                        bg-base-200 border border-base-300
-                        font-medium text-primary
+                        bg-gray-100 dark:bg-base-200
+                        border border-gray-300 dark:border-base-300
+                        font-medium text-gray-900 dark:text-base-content
                       "
                     >
                       {authUser.fullName}
                     </div>
                     <button
                       onClick={() => setEditing(true)}
-                      className="p-2 border border-base-300 rounded-xl"
+                      className="
+                        p-2 rounded-xl
+                        border border-gray-300 dark:border-base-300
+                        hover:bg-gray-100 dark:hover:bg-base-200
+                        transition
+                      "
                     >
                       <Edit2 size={16} />
                     </button>
@@ -150,19 +171,19 @@ export default function ProfilePage() {
               </AnimatePresence>
             </div>
 
-            <p className="text-xs text-base-content/50">
+            <p className="text-xs text-gray-500 dark:text-base-content/50">
               Your profile info is visible to people you chat with
             </p>
           </div>
         </div>
 
-        {/* ================= RIGHT (ILLUSTRATION) ================= */}
-        <div className="hidden lg:flex items-center justify-center bg-base-200">
+        {/* RIGHT */}
+        <div className="hidden lg:flex items-center justify-center bg-gray-100 dark:bg-base-200">
           <Lottie
             animationData={profileAnimation}
             loop
             autoplay
-            className="w-[360px] opacity-80"
+            className="w-[360px] opacity-90"
           />
         </div>
       </div>

@@ -14,7 +14,7 @@ const Navbar = ({ onOpenSidebar }) => {
   const { logout, authUser } = useAuthStore();
 
   return (
-    <header className="fixed top-0 w-full z-40 bg-base-100 border-b border-base-300">
+    <header className="fixed top-0 w-full z-40 bg-white dark:bg-base-100 border-b border-gray-200 dark:border-base-300">
       <div className="flex items-center justify-between h-14 px-3 sm:px-6">
 
         {/* ================= LEFT ================= */}
@@ -22,15 +22,15 @@ const Navbar = ({ onOpenSidebar }) => {
           {/* Mobile sidebar */}
           <button
             onClick={onOpenSidebar}
-            className="md:hidden p-2 rounded-lg hover:bg-base-200 transition"
+            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200 transition"
           >
-            <Users className="w-5 h-5" />
+            <Users className="w-5 h-5 text-gray-800 dark:text-base-content" />
           </button>
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 select-none">
             <MessageSquare className="w-6 h-6 text-primary" />
-            <span className="text-lg font-semibold tracking-tight">
+            <span className="text-lg font-semibold tracking-tight text-gray-900 dark:text-base-content">
               VibeTalk
             </span>
           </Link>
@@ -39,16 +39,16 @@ const Navbar = ({ onOpenSidebar }) => {
         {/* ================= RIGHT ================= */}
         <div className="flex items-center gap-1 sm:gap-2">
 
-          {/* WATCH PARTY — ALWAYS VISIBLE */}
+          {/* WATCH PARTY */}
           <Link
             to="/watch-party"
             className="
               flex items-center gap-2
               px-2 sm:px-3 py-1.5
               rounded-lg text-sm font-medium
-              bg-primary/10 text-primary
-              border border-primary/20
-              hover:bg-primary/15
+              bg-primary/15 text-primary
+              border border-primary/30
+              hover:bg-primary/25
               transition
             "
           >
@@ -63,9 +63,10 @@ const Navbar = ({ onOpenSidebar }) => {
               flex items-center gap-2
               px-2 sm:px-3 py-1.5
               rounded-lg text-sm
-              bg-base-200 border border-base-300
-              text-base-content/70
-              hover:text-primary hover:border-primary/40
+              bg-gray-100 dark:bg-base-200
+              border border-gray-300 dark:border-base-300
+              text-gray-800 dark:text-base-content
+              hover:border-primary/40 hover:text-primary
               transition
             "
           >
@@ -82,9 +83,10 @@ const Navbar = ({ onOpenSidebar }) => {
                   flex items-center gap-2
                   px-2 sm:px-3 py-1.5
                   rounded-lg text-sm
-                  bg-base-200 border border-base-300
-                  text-base-content/70
-                  hover:text-secondary hover:border-secondary/40
+                  bg-gray-100 dark:bg-base-200
+                  border border-gray-300 dark:border-base-300
+                  text-gray-800 dark:text-base-content
+                  hover:border-secondary/40 hover:text-secondary
                   transition
                 "
               >
@@ -99,9 +101,9 @@ const Navbar = ({ onOpenSidebar }) => {
                   flex items-center gap-2
                   px-2 sm:px-3 py-1.5
                   rounded-lg text-sm font-medium
-                  bg-error/10 text-error
-                  border border-error/20
-                  hover:bg-error hover:text-white
+                  bg-red-50 text-red-600
+                  border border-red-200
+                  hover:bg-red-600 hover:text-white
                   transition
                 "
               >

@@ -15,6 +15,20 @@ export const useChatStore = create((set, get) => ({
   typing: {},
 
   /* ============================================================
+        🔥 LOCAL USER UPDATE (PROFILE SYNC FIX)
+  ============================================================ */
+  updateUserLocally: (updatedUser) =>
+    set((state) => ({
+      users: state.users.map((u) =>
+        u._id === updatedUser._id ? { ...u, ...updatedUser } : u
+      ),
+      selectedUser:
+        state.selectedUser?._id === updatedUser._id
+          ? { ...state.selectedUser, ...updatedUser }
+          : state.selectedUser,
+    })),
+
+  /* ============================================================
         SAFE ONLINE MERGE
   ============================================================ */
   applyOnlineToUsers: (usersList, onlineIds) => {
@@ -45,11 +59,10 @@ export const useChatStore = create((set, get) => ({
   },
 
   /* ============================================================
-        LOAD MESSAGES (🔥 PERSISTENCE FIX)
+        LOAD MESSAGES
   ============================================================ */
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
-
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({
@@ -68,7 +81,6 @@ export const useChatStore = create((set, get) => ({
   sendMessage: (msgData) => {
     const { authUser, socket } = useAuthStore.getState();
     const { selectedUser, messages } = get();
-
     if (!selectedUser || !socket) return;
 
     const tempId = `temp-${Date.now()}`;
@@ -89,7 +101,7 @@ export const useChatStore = create((set, get) => ({
       senderId: authUser._id,
       receiverId: selectedUser._id,
       ...msgData,
-      tempId, // 🔥 KEY FIX
+      tempId,
     });
   },
 
@@ -105,11 +117,13 @@ export const useChatStore = create((set, get) => ({
       const { messages, selectedUser, unreadMessages } = get();
       const { authUser } = useAuthStore.getState();
 
-      // 🔥 REMOVE MATCHING OPTIMISTIC MESSAGE
       const cleaned = messages.filter(
-        (m) => !(m._id.startsWith("temp-") &&
-          m.text === msg.text &&
-          m.senderId === msg.senderId)
+        (m) =>
+          !(
+            m._id.startsWith("temp-") &&
+            m.text === msg.text &&
+            m.senderId === msg.senderId
+          )
       );
 
       if (msg.senderId === authUser._id) {
@@ -151,27 +165,6 @@ export const useChatStore = create((set, get) => ({
         typing: { ...get().typing, [senderId]: isTyping },
       });
     });
-
-    socket.off("msg-delivered-update");
-    socket.on("msg-delivered-update", ({ messageId }) => {
-      set({
-        messages: get().messages.map((m) =>
-          m._id === messageId ? { ...m, delivered: true } : m
-        ),
-      });
-    });
-
-    socket.off("msg-seen-update");
-    socket.on("msg-seen-update", ({ by }) => {
-      const { authUser } = useAuthStore.getState();
-      set({
-        messages: get().messages.map((m) =>
-          m.senderId === authUser._id && m.receiverId === by
-            ? { ...m, seen: true, delivered: true }
-            : m
-        ),
-      });
-    });
   },
 
   unsubscribeFromMessages: () => {
@@ -179,12 +172,10 @@ export const useChatStore = create((set, get) => ({
     if (!socket) return;
     socket.off("newMessage");
     socket.off("typing");
-    socket.off("msg-delivered-update");
-    socket.off("msg-seen-update");
   },
 
   /* ============================================================
-        SELECT USER (🔥 MAIN PERSISTENCE FIX)
+        SELECT USER
   ============================================================ */
   setSelectedUser: async (user) => {
     const { authUser, socket } = useAuthStore.getState();
@@ -196,11 +187,10 @@ export const useChatStore = create((set, get) => ({
 
     set({
       selectedUser: user,
-      messages: [],            // ❗ clear first
+      messages: [],
       isMessagesLoading: true,
     });
 
-    // 🔥 FETCH FROM DB EVERY TIME
     await get().getMessages(user._id);
 
     if (socket && authUser) {
@@ -211,13 +201,9 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-        TYPING
-  ============================================================ */
   emitTyping: (isTyping) => {
     const { selectedUser } = get();
     const { authUser, socket } = useAuthStore.getState();
-
     if (socket && selectedUser && authUser) {
       socket.emit("typing", {
         senderId: authUser._id,
@@ -237,7 +223,10 @@ useAuthStore.subscribe(
     useChatStore.setState((state) => ({
       users: apply(state.users, onlineIds),
       selectedUser: state.selectedUser
-        ? { ...state.selectedUser, isOnline: onlineIds.includes(state.selectedUser._id) }
+        ? {
+            ...state.selectedUser,
+            isOnline: onlineIds.includes(state.selectedUser._id),
+          }
         : null,
     }));
   },

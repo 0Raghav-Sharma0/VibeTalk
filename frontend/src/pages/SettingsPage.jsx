@@ -21,56 +21,63 @@ const THEMES = [
 const SettingsPage = () => {
   const { theme, setTheme } = useThemeStore();
 
-  const applyTheme = (name) => {
-    setTheme(name);
-    localStorage.setItem("theme", name);
-    document.documentElement.setAttribute("data-theme", name);
-  };
-
   return (
-    <div className="h-screen w-full pt-24 px-6 bg-base-100 text-base-content flex justify-center overflow-y-auto">
+    <div className="min-h-screen w-full pt-24 px-6 bg-base-100 flex justify-center">
       <div className="w-full max-w-3xl space-y-10">
 
         {/* Header */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold">Choose Theme</h1>
-          <p className="text-base-content/60 text-sm mt-1">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+            Choose Theme
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
             Select between Light & Dark modes.
           </p>
         </div>
 
-        {/* Themes Section */}
+        {/* Themes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
           {THEMES.map((t) => (
             <div
               key={t.name}
-              onClick={() => applyTheme(t.name)}
+              onClick={() => setTheme(t.name)}
               className={`
-                cursor-pointer rounded-3xl border p-6 shadow-lg transition transform
-                hover:-translate-y-1 hover:shadow-xl
-                bg-base-200 backdrop-blur-md bg-opacity-50
-                ${theme === t.name ? "ring-4 ring-primary border-primary" : ""}
+                cursor-pointer rounded-3xl border p-6 transition
+                bg-white dark:bg-base-200
+                border-gray-200 dark:border-base-300
+                hover:-translate-y-1 hover:shadow-lg
+                ${
+                  theme === t.name
+                    ? "ring-4 ring-primary border-primary"
+                    : ""
+                }
               `}
             >
-              {/* Preview Background */}
-              <div className={`h-32 rounded-2xl mb-5 ${t.gradient} shadow-inner`} />
+              {/* Preview */}
+              <div
+                className={`h-32 rounded-2xl mb-5 ${t.gradient} shadow-inner`}
+              />
 
-              {/* Color Dots */}
+              {/* Color dots */}
               <div className="flex gap-2 mb-4 justify-center">
                 {t.preview.map((color, i) => (
                   <div
                     key={i}
-                    className="w-6 h-6 rounded-full border shadow"
+                    className="w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600"
                     style={{ backgroundColor: color }}
                   />
                 ))}
               </div>
 
               {/* Title */}
-              <h2 className="text-xl font-semibold text-center capitalize">
+              <h2 className="text-xl font-semibold text-center text-gray-900 dark:text-white">
                 {t.title}
               </h2>
-              <p className="text-center text-sm opacity-60">{t.description}</p>
+
+              {/* Description */}
+              <p className="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
+                {t.description}
+              </p>
             </div>
           ))}
         </div>
