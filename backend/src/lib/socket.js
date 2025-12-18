@@ -44,8 +44,6 @@ function isOriginAllowed(origin) {
 let io = null;
 const userSocketMap = {}; // { userId: socketId }
 const watchPartyRooms = new Map();
-const callOffers = new Map(); // ⭐ Store call offers temporarily
-
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
@@ -271,22 +269,18 @@ export function createSocketServer(server) {
         });
       }
     });
-    socket.on("call-accept", ({ from }) => {
+   socket.on("call-accept", ({ from }) => {
   if (!from || !socket.userId) return;
 
-  const key = `${from}-${socket.userId}`;
-  const offer = callOffers.get(key);
+  const callerSocket = getReceiverSocketId(from);
+  if (!callerSocket) return;
 
-  if (offer) {
-    console.log("📤 Sending stored offer to receiver");
+  console.log("✅ Call accepted:", socket.userId, "accepted", from);
 
-    socket.emit("call-signal", {
-      to: socket.userId,
-      from,
-      data: offer,
-      callType: "video",
-    });
-  }
+  // 🔥 Notify CALLER that call is accepted
+  io.to(callerSocket).emit("call-accepted", {
+    by: socket.userId,
+  });
 });
 
 
@@ -315,11 +309,7 @@ export function createSocketServer(server) {
       console.log(`📡 Signal type: ${actualSignal.type} from ${actualFrom} to ${to}`);
       
       // ⭐ KEY FIX: If this is an OFFER, update incoming call with offer data
-      // ⭐ STORE OFFER so receiver can accept later
-if (actualSignal.type === "offer") {
-  callOffers.set(`${actualFrom}-${to}`, actualSignal);
-}
-
+      // ⭐ STORE OFFER so receiver can accept late
 // Forward signal
 io.to(target).emit("call-signal", {
   to,
@@ -335,8 +325,6 @@ io.to(target).emit("call-signal", {
       
       console.log(`📞 Call ended: ${socket.userId} -> ${targetUserId}`);
       
-      callOffers.delete(`${socket.userId}-${targetUserId}`);
-      callOffers.delete(`${targetUserId}-${socket.userId}`);
       
       const target = getReceiverSocketId(targetUserId);
       if (target) {
@@ -349,7 +337,6 @@ io.to(target).emit("call-signal", {
       
       console.log(`❌ Call rejected by ${socket.userId}, caller: ${callerId}`);
       
-      callOffers.delete(`${callerId}-${socket.userId}`);
       
       const target = getReceiverSocketId(callerId);
       if (target) {
@@ -409,12 +396,6 @@ io.to(target).emit("call-signal", {
         console.log(`👤 User Offline: ${socket.userId}`);
         delete userSocketMap[socket.userId];
         
-        // ⭐ Clean up call offers
-        for (const [key] of callOffers.entries()) {
-          if (key.includes(socket.userId)) {
-            callOffers.delete(key);
-          }
-        }
       }
 
       handleWatchPartyDisconnect(socket);

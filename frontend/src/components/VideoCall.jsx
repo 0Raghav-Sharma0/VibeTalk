@@ -29,6 +29,7 @@ const VideoCall = () => {
     setCalling,
     resetCallState,
     peerId,
+    setPeerId,
   } = useVideoCallStore();
 
   const { authUser, socket } = useAuthStore();
@@ -214,6 +215,21 @@ const cleanupCall = useCallback(() => {
     }
   }, [callType, isAudioEnabled, isVideoEnabled, getMediaConstraints]);
   
+  const handleCallAccepted = async ({ by }) => {
+  console.log("✅ Call accepted by:", by);
+setPeerId(by);
+  stopRingtone();
+  setCallStatus("Connecting...");
+
+  // 🔥 STORE TARGET USER ID
+
+  const stream = await initializeLocalStream();
+  if (!stream) return;
+
+  createPeerConnection(true, stream, by);
+};
+
+  
   const handleCallEnd = useCallback(() => {
     setCallStatus("Call ended");
     setTimeout(() => {
@@ -223,20 +239,18 @@ const cleanupCall = useCallback(() => {
 
 
     const createPeerConnection = useCallback(
-  (initiator, stream) => {
-    // 🔥 Destroy old peer safely
-    if (peerRef.current) {
-      try {
-        peerRef.current.destroy();
-      } catch {}
-      peerRef.current = null;
-    }
+  (initiator, stream, explicitTargetId = null) => {
 
-    const targetUserId = getTargetUserId();
+    const targetUserId = explicitTargetId || getTargetUserId();
+
     if (!targetUserId || !stream) {
-      console.error("❌ Missing targetUserId or stream");
+      console.error("❌ Missing targetUserId or stream", {
+        targetUserId,
+        hasStream: !!stream,
+      });
       return null;
     }
+
 
     console.log(`🔗 Creating ${initiator ? "initiator" : "receiver"} peer`);
 
@@ -326,6 +340,19 @@ processingCallRef.current = false;
     });
 
     peerRef.current = peer;
+    // 🔄 Apply buffered signals
+if (pendingSignalsRef.current.length > 0) {
+  console.log("🔄 Applying buffered signals");
+  pendingSignalsRef.current.forEach((sig) => {
+    try {
+      peer.signal(sig);
+    } catch (e) {
+      console.error("❌ Buffered signal failed", e);
+    }
+  });
+  pendingSignalsRef.current = [];
+}
+
     return peer;
   },
   [
@@ -341,108 +368,55 @@ processingCallRef.current = false;
   ]
 );
 
-  const startOutgoingCall = useCallback(async () => {
-    if (processingCallRef.current) {
-      console.log("⏭️ Call already processing");
-      return;
-    }
+  const startOutgoingCall = useCallback(() => {
+  if (processingCallRef.current) return;
 
-    processingCallRef.current = true;
-    setCallStatus("Calling...");
+  processingCallRef.current = true;
+  setCallStatus("Ringing...");
 
-    // ⭐ KEY FIX: Get stream FIRST, then create peer
-    const stream = await initializeLocalStream();
-    if (!stream) {
-      console.error("❌ Failed to get local stream");
-      processingCallRef.current = false;
-      return;
-    }
+  const targetUserId = getTargetUserId();
+  if (!targetUserId || !socket) return;
 
-    console.log("📞 Creating initiator peer with stream");
-    const peer = createPeerConnection(true, stream);
-    if (!peer) {
-      console.error("❌ Failed to create peer");
-      processingCallRef.current = false;
-      cleanupStreams();
-    }
-  }, [initializeLocalStream, createPeerConnection, cleanupStreams]);
+  socket.emit("call-initiated", {
+    from: authUser._id,
+    to: targetUserId,
+    callType,
+    callerName: authUser.fullName,
+  });
+}, [socket, authUser, callType, getTargetUserId]);
+
 
   const acceptCall = useCallback(async () => {
-    if (processingCallRef.current) {
-      console.log("⏭️ Cannot accept call", {
-        processing: processingCallRef.current,
-      });
-      return;
-    }
+  if (processingCallRef.current) return;
 
-    processingCallRef.current = true;
-    clearIncomingCall(); // ✅ MUST clear immediately
-    setCallStatus("Accepting...");
+  processingCallRef.current = true;
+  setCallStatus("Connecting...");
 
-    // ⭐ KEY FIX: Get stream FIRST, then create peer
-    const stream = await initializeLocalStream();
-    if (!stream) {
-      console.error("❌ Failed to get local stream");
-      processingCallRef.current = false;
-      return;
-    }
-
-    console.log("📞 Creating receiver peer with stream");
-    const peer = createPeerConnection(false, stream);
-    if (!peer) {
-      console.error("❌ Failed to create peer");
-      processingCallRef.current = false;
-      cleanupStreams();
-      return;
-    }
-
-    try {
-  // 1️⃣ Extract OFFER
-  const { callOffer } = useVideoCallStore.getState();
-
-const offer = callOffer ?? 
-  pendingSignalsRef.current.find((s) => s.type === "offer");
-
-  if (callOffer) {
-  pendingSignalsRef.current =
-    pendingSignalsRef.current.filter((s) => s.type !== "offer");
-}
-
-  if (!offer) {
-    console.error("❌ No offer found to accept");
+  const callerId = incomingCallFrom;
+  if (!callerId || !socket) {
     processingCallRef.current = false;
     return;
   }
 
-  console.log("📥 Applying offer");
-  peer.signal(offer);
+  socket.emit("call-accept", { from: callerId });
+  clearIncomingCall();
 
-  // 2️⃣ Apply ICE candidates AFTER offer
-  const iceCandidates = pendingSignalsRef.current.filter(
-    (s) => s.type !== "offer"
-  );
+  const stream = await initializeLocalStream();
+  if (!stream) {
+    processingCallRef.current = false;
+    return;
+  }
 
-  console.log("📥 Applying ICE candidates:", iceCandidates.length);
-  iceCandidates.forEach((sig) => {
-    try {
-      peer.signal(sig);
-    } catch (e) {
-      console.error("❌ ICE apply failed", e);
-    }
-  });
+  createPeerConnection(false, stream, callerId);
+}, [
+  socket,
+  incomingCallFrom,
+  clearIncomingCall,
+  initializeLocalStream,
+  createPeerConnection,
+]);
 
-  pendingSignalsRef.current = [];
-} catch (err) {
-  console.error("❌ Failed to apply offer:", err);
-  cleanupCall();
-}
 
-  }, [
-    initializeLocalStream,
-    createPeerConnection,
-    clearIncomingCall,
-    cleanupStreams,
-  ]);
 
   const rejectCall = useCallback(() => {
     console.log("❌ Rejecting call");
@@ -564,9 +538,24 @@ const offer = callOffer ??
 
       console.log("📡 Incoming signal:", signal.type);
 
-      // Peer NOT ready yet
-     if (!peerRef.current || peerRef.current.destroyed) {
-  pendingSignalsRef.current.push(signal); // ✅ store ALL signals
+// Receiver gets OFFER after accepting
+if (!peerRef.current && signal.type === "offer") {
+  const fromUserId = payload.from; // 👈 IMPORTANT
+
+  initializeLocalStream().then((stream) => {
+    const peer = createPeerConnection(false, stream, fromUserId);
+    if (peer) {
+      peer.signal(signal);
+    }
+  });
+
+  return;
+}
+
+
+// Buffer anything else
+if (!peerRef.current || peerRef.current.destroyed) {
+  pendingSignalsRef.current.push(signal);
   return;
 }
 
@@ -601,12 +590,16 @@ handleCallEnd();
 
 
     socket.on("call-signal", handleSignal);
+    socket.on("call-accepted", handleCallAccepted);
+
     socket.on("call-ended", handleCallEnded);
     socket.on("call-rejected", handleCallRejected);
 
     return () => {
       console.log("🧹 WebRTC signal listener removed");
       socket.off("call-signal", handleSignal);
+      socket.off("call-accepted", handleCallAccepted);
+
       socket.off("call-ended", handleCallEnded);
       socket.off("call-rejected", handleCallRejected);
     };
