@@ -3,6 +3,10 @@ import { Server } from "socket.io";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
 
+// 🔒 Active call lock
+const activeCalls = new Map();
+// key: "callerId:calleeId" → true
+
 // Import Watch Party Controllers
 import {
   createRoom,
@@ -11,7 +15,7 @@ import {
   syncPlayback,
   sendReaction,
   sendChatMessage,
-  handleDisconnect as handleWatchPartyDisconnect
+  handleDisconnect as handleWatchPartyDisconnect,
 } from "../controllers/watchPartyController.js";
 
 /* ============================================================
@@ -19,7 +23,7 @@ import {
 ============================================================ */
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5174", 
+  "http://localhost:5174",
   "http://localhost:4173",
   "http://localhost:3000",
   "https://blah-blah-jvc4.vercel.app",
@@ -44,6 +48,7 @@ function isOriginAllowed(origin) {
 let io = null;
 const userSocketMap = {}; // { userId: socketId }
 const watchPartyRooms = new Map();
+
 export function getReceiverSocketId(userId) {
   return userSocketMap[userId];
 }
@@ -62,9 +67,9 @@ export function createSocketServer(server) {
       },
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"]
+      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     },
-    transports: ['websocket', 'polling'],
+    transports: ["websocket", "polling"],
     pingTimeout: 60000,
     pingInterval: 25000,
     connectTimeout: 45000,
@@ -77,8 +82,10 @@ export function createSocketServer(server) {
     console.log("📧 Handshake query:", socket.handshake.query);
     console.log("🔐 Handshake auth:", socket.handshake.auth);
 
-    const userId = socket.handshake.query?.userId || socket.handshake.auth?.userId;
-    const username = socket.handshake.auth?.username || `User_${socket.id.substring(0, 6)}`;
+    const userId =
+      socket.handshake.query?.userId || socket.handshake.auth?.userId;
+    const username =
+      socket.handshake.auth?.username || `User_${socket.id.substring(0, 6)}`;
 
     socket.userId = userId;
     socket.username = username;
@@ -99,9 +106,9 @@ export function createSocketServer(server) {
       console.log(`✅ User Online: ${userId} -> ${socket.id}`);
     }
 
-    socket.emit("connection-success", { 
-      socketId: socket.id, 
-      message: "Connected to server successfully" 
+    socket.emit("connection-success", {
+      socketId: socket.id,
+      message: "Connected to server successfully",
     });
 
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
@@ -116,7 +123,9 @@ export function createSocketServer(server) {
 
         if (!senderId || !receiverId) {
           console.error("❌ Missing senderId or receiverId");
-          socket.emit("message-error", { error: "Missing sender or receiver ID" });
+          socket.emit("message-error", {
+            error: "Missing sender or receiver ID",
+          });
           return;
         }
 
@@ -129,7 +138,9 @@ export function createSocketServer(server) {
           file: file ?? null,
         });
 
-        const sender = await User.findById(senderId).select("fullName profilePic");
+        const sender = await User.findById(senderId).select(
+          "fullName profilePic"
+        );
 
         const enrichedMessage = {
           ...message.toObject(),
@@ -145,7 +156,7 @@ export function createSocketServer(server) {
         }
 
         socket.emit("newMessage", enrichedMessage);
-        
+
         console.log(`✅ Message sent: ${senderId} -> ${receiverId}`);
       } catch (err) {
         console.error("❌ sendMessage error:", err);
@@ -158,9 +169,9 @@ export function createSocketServer(server) {
     ============================================================ */
     socket.on("typing", ({ senderId, receiverId, isTyping }) => {
       if (!senderId || !receiverId) return;
-      
+
       console.log(`⌨️ Typing: ${senderId} -> ${receiverId} (${isTyping})`);
-      
+
       const target = getReceiverSocketId(receiverId);
       if (target) {
         io.to(target).emit("typing", { senderId, isTyping });
@@ -173,11 +184,11 @@ export function createSocketServer(server) {
     socket.on("msg-delivered", async ({ messageId, receiverId }) => {
       try {
         await Message.findByIdAndUpdate(messageId, { delivered: true });
-        
+
         const target = getReceiverSocketId(receiverId);
         if (target) io.to(target).emit("msg-delivered-update", { messageId });
         socket.emit("msg-delivered-update", { messageId });
-        
+
         console.log(`✅ Message delivered: ${messageId}`);
       } catch (err) {
         console.error("❌ msg-delivered error:", err);
@@ -195,7 +206,7 @@ export function createSocketServer(server) {
         if (target) {
           io.to(target).emit("msg-seen-update", { by: myId });
         }
-        
+
         console.log(`👀 Messages seen by: ${myId}`);
       } catch (err) {
         console.error("❌ msg-seen error:", err);
@@ -231,102 +242,79 @@ export function createSocketServer(server) {
     ============================================================ */
     socket.on("call-initiated", async (data) => {
       const { from, to, callType, callerName } = data;
-      
-      if (!to || !from || !callType) {
-        console.error("❌ Invalid call-initiated data");
+      if (!from || !to || !callType) return;
+
+      const callKey = `${from}:${to}`;
+      const reverseKey = `${to}:${from}`;
+
+      // 🔥 BLOCK DUPLICATE / LATE CALLS
+      if (activeCalls.has(callKey) || activeCalls.has(reverseKey)) {
+        console.log("⛔ Call already in progress, ignoring");
         return;
       }
 
-      const target = getReceiverSocketId(to);
-      
-      if (!target) {
-        console.log(`❌ User ${to} is offline`);
-        socket.emit("call-failed", { 
-          reason: "User is offline",
-          userId: to 
-        });
+      activeCalls.set(callKey, true);
+
+      const receiverSocketId = getReceiverSocketId(to);
+      if (!receiverSocketId) {
+        console.log(`❌ User ${to} is offline, cannot initiate call`);
+        activeCalls.delete(callKey);
+        socket.emit("call-failed", { reason: "User is offline" });
         return;
       }
 
       console.log(`📞 Call initiated: ${from} -> ${to} (${callType})`);
-      
-      try {
-        const caller = await User.findById(from).select("fullName profilePic");
-        
-        io.to(target).emit("incoming-call", {
-          from,
-          callType,
-          callerName: caller?.fullName || callerName || "Caller",
-          callerPic: caller?.profilePic,
-        });
-      } catch (error) {
-        console.error("❌ Error fetching caller info:", error);
-        io.to(target).emit("incoming-call", {
-          from,
-          callType,
-          callerName: callerName || "Caller",
-          socketId: socket.id
-        });
-      }
+
+      io.to(receiverSocketId).emit("incoming-call", {
+        from,
+        callerName,
+        callType,
+        callKey,
+      });
     });
-   socket.on("call-accept", ({ from }) => {
-  if (!from || !socket.userId) return;
+    socket.on("call-accepted", ({ to, by }) => {
+      if (!to || !by) return;
 
-  const callerSocket = getReceiverSocketId(from);
-  if (!callerSocket) return;
+      const target = getReceiverSocketId(to);
+      if (!target) return;
 
-  console.log("✅ Call accepted:", socket.userId, "accepted", from);
+      console.log(`✅ Call accepted: ${by} → ${to}`);
 
-  // 🔥 Notify CALLER that call is accepted
-  io.to(callerSocket).emit("call-accepted", {
-    by: socket.userId,
-  });
-});
+      io.to(target).emit("call-accepted", { by });
+    });
 
-
-    socket.on("call-signal", async (data) => {
-      const { to, from, signal, callType, data: signalData } = data;
-      
-      const actualSignal = signal || signalData;
-      const actualFrom = from || socket.userId;
-      
-      if (!to || !actualSignal) {
-        console.error("❌ Invalid call-signal data", { to, hasSignal: !!actualSignal });
+    socket.on("call-signal", ({ to, from, data, callType }) => {
+      if (!to || !data) {
+        console.error("❌ Invalid call-signal", { to, hasData: !!data });
         return;
       }
 
       const target = getReceiverSocketId(to);
-      
       if (!target) {
-        console.log(`❌ User ${to} is offline`);
-        socket.emit("call-failed", { 
-          reason: "User is offline",
-          userId: to 
-        });
+        console.log(`❌ User ${to} offline`);
         return;
       }
 
-      console.log(`📡 Signal type: ${actualSignal.type} from ${actualFrom} to ${to}`);
-      
-      // ⭐ KEY FIX: If this is an OFFER, update incoming call with offer data
-      // ⭐ STORE OFFER so receiver can accept late
-// Forward signal
-io.to(target).emit("call-signal", {
-  to,
-  from: actualFrom,
-  data: actualSignal,
-  callType: callType || "video"
-});
+      console.log(`📡 Forwarding signal ${data.type} from ${from} → ${to}`);
 
+      io.to(target).emit("call-signal", {
+        from,
+        data, // ✅ MUST be `data`
+        callType,
+      });
     });
 
-    socket.on("end-call", ({ targetUserId }) => {
-      if (!targetUserId) return;
-      
-      console.log(`📞 Call ended: ${socket.userId} -> ${targetUserId}`);
-      
-      
-      const target = getReceiverSocketId(targetUserId);
+    socket.on("call-ended", ({ to }) => {
+      if (!to) return;
+
+      console.log(`📞 Call ended: ${socket.userId} → ${to}`);
+
+      const callKey = `${socket.userId}:${to}`;
+      const reverseKey = `${to}:${socket.userId}`;
+      activeCalls.delete(callKey);
+      activeCalls.delete(reverseKey);
+
+      const target = getReceiverSocketId(to);
       if (target) {
         io.to(target).emit("call-ended", { by: socket.userId });
       }
@@ -334,10 +322,15 @@ io.to(target).emit("call-signal", {
 
     socket.on("call-rejected", ({ callerId }) => {
       if (!callerId) return;
-      
+
       console.log(`❌ Call rejected by ${socket.userId}, caller: ${callerId}`);
-      
-      
+
+      // Clean up active calls
+      const callKey = `${callerId}:${socket.userId}`;
+      const reverseKey = `${socket.userId}:${callerId}`;
+      activeCalls.delete(callKey);
+      activeCalls.delete(reverseKey);
+
       const target = getReceiverSocketId(callerId);
       if (target) {
         io.to(target).emit("call-rejected", { by: socket.userId });
@@ -347,7 +340,7 @@ io.to(target).emit("call-signal", {
     /* ============================================================
        WATCH PARTY EVENTS
     ============================================================ */
-    
+
     socket.on("watchparty:create", (data) => {
       console.log(`🎬 Creating watch party room:`, data);
       createRoom(socket, data);
@@ -386,23 +379,34 @@ io.to(target).emit("call-signal", {
        DISCONNECT - ENHANCED CLEANUP
     ============================================================ */
     socket.on("disconnect", (reason) => {
-  console.log("🔴 Socket disconnected:", socket.id, "Reason:", reason);
+      console.log("🔴 Socket disconnected:", socket.id, "Reason:", reason);
 
-  if (reason === "transport close") {
-    console.log("⏸ Ignoring transient transport close");
-    return;
-  }   
+      if (reason === "transport close") {
+        console.log("⏸ Ignoring transient transport close");
+        return;
+      }
+
       if (socket.userId && userSocketMap[socket.userId] === socket.id) {
         console.log(`👤 User Offline: ${socket.userId}`);
         delete userSocketMap[socket.userId];
-        
+
+        // Clean up any active calls involving this user
+        for (const [key] of activeCalls) {
+          const [callerId, calleeId] = key.split(":");
+          if (callerId === socket.userId || calleeId === socket.userId) {
+            activeCalls.delete(key);
+            console.log(`🧹 Cleaned up call: ${key}`);
+          }
+        }
       }
 
       handleWatchPartyDisconnect(socket);
 
       io.emit("getOnlineUsers", Object.keys(userSocketMap));
-      
-      console.log(`📊 Remaining online users: ${Object.keys(userSocketMap).length}`);
+
+      console.log(
+        `📊 Remaining online users: ${Object.keys(userSocketMap).length}`
+      );
     });
 
     socket.on("connect_error", (error) => {

@@ -1,126 +1,111 @@
 // src/contexts/SocketContext.jsx
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { io } from 'socket.io-client';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { io } from "socket.io-client";
 
-const SocketContext = createContext();
+const SocketContext = createContext(null);
 
 export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocket must be used within SocketProvider');
+  const ctx = useContext(SocketContext);
+  if (!ctx) {
+    throw new Error("useSocket must be used within SocketProvider");
   }
-  return context.socket;
+  return ctx.socket;
 };
 
 export const useSocketStatus = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocketStatus must be used within SocketProvider');
+  const ctx = useContext(SocketContext);
+  if (!ctx) {
+    throw new Error("useSocketStatus must be used within SocketProvider");
   }
-  return context.isConnected;
+  return ctx.isConnected;
 };
 
 export const SocketProvider = ({ children }) => {
-  const [socket, setSocket] = useState(null);
+  const socketRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const token = localStorage.getItem('token');
-
-    // Prefer explicit socket envs, otherwise derive from backend
-    const backend = import.meta.env.VITE_BACKEND_URL;
-    const envSocket =
-      import.meta.env.VITE_SOCKET_URL ||
-      import.meta.env.VITE_SOCKET_URI ||
-      backend;
-
-    let socketUrl = envSocket;
-
-    // Strip /api if you passed the full API URL
-    if (socketUrl && socketUrl.endsWith('/api')) {
-      socketUrl = socketUrl.slice(0, -4);
-    }
-
-    // Fallback for dev only
-    if (!socketUrl && import.meta.env.DEV) {
-      socketUrl = 'http://localhost:5000';
-    }
-
-    if (!socketUrl) {
-      console.error('❌ No socket URL configured');
+    // 🔒 Prevent double creation (React 18 StrictMode)
+    if (socketRef.current) {
       return;
     }
 
-    console.log('🔌 Initializing socket connection to:', socketUrl);
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const token = localStorage.getItem("token");
 
-    const newSocket = io(socketUrl, {
+    let socketUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_SOCKET_URI ||
+      import.meta.env.VITE_BACKEND_URL;
+
+    if (socketUrl?.endsWith("/api")) {
+      socketUrl = socketUrl.slice(0, -4);
+    }
+
+    if (!socketUrl) {
+      console.error("❌ No socket URL configured");
+      return;
+    }
+
+    console.log("🔌 Initializing socket connection to:", socketUrl);
+
+    const socket = io(socketUrl, {
       auth: {
-        token: token,
-        userId: user._id || null,
-        username:
-          user.username || `Guest_${Math.random().toString(36).substr(2, 5)}`,
+        token,
+        userId: user?._id,
+        username: user?.username || user?.fullName || "Guest",
       },
-      transports: ['websocket', 'polling'],
+      transports: ["websocket"], // 🔥 IMPORTANT
       reconnection: true,
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: Infinity,
-      timeout: 20000,
     });
 
-    newSocket.on('connect', () => {
-      console.log('✅ Socket connected:', newSocket.id);
+    socket.on("connect", () => {
+      console.log("✅ Socket connected:", socket.id);
       setIsConnected(true);
     });
 
-    newSocket.on('disconnect', (reason) => {
-      console.log('❌ Socket disconnected:', reason);
+    socket.on("disconnect", (reason) => {
+      console.log("🔴 Socket disconnected:", reason);
       setIsConnected(false);
-      if (reason === 'io server disconnect') {
-        newSocket.connect();
+
+      // Auto-reconnect if server dropped us
+      if (reason === "io server disconnect") {
+        socket.connect();
       }
     });
 
-    newSocket.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error.message);
+    socket.on("connect_error", (err) => {
+      console.error("❌ Socket connect_error:", err.message);
       setIsConnected(false);
     });
 
-    newSocket.on('reconnect', (attemptNumber) => {
-      console.log('🔄 Socket reconnected after', attemptNumber, 'attempts');
+    socket.on("reconnect", (attempt) => {
+      console.log("🔄 Socket reconnected after", attempt, "attempts");
       setIsConnected(true);
     });
 
-    newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log('🔄 Reconnection attempt:', attemptNumber);
-    });
+    socketRef.current = socket;
 
-    newSocket.on('reconnect_error', (error) => {
-      console.error('❌ Reconnection error:', error.message);
-    });
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('❌ All reconnection attempts failed');
-    });
-
-    newSocket.on('error', (error) => {
-      console.error('❌ Socket error:', error);
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      if (newSocket) {
-        console.log('🧹 Cleaning up socket connection');
-        newSocket.removeAllListeners();
-        newSocket.close();
-      }
-    };
+    // ❌ DO NOT CLEAN UP SOCKET HERE
+    // React StrictMode WILL break calls
   }, []);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider
+      value={{
+        socket: socketRef.current,
+        isConnected,
+      }}
+    >
       {children}
     </SocketContext.Provider>
   );

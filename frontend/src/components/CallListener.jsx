@@ -14,33 +14,40 @@ const CallListener = () => {
 
     const handleIncomingCall = (data) => {
       console.log("📞 INCOMING CALL EVENT RECEIVED:", data);
-      
-      const { from, callType, callerName, offer } = data; // ⭐ Get offer data
-      
+
+      const { from, callType, callerName } = data;
+
       if (!from || !callType) {
         console.error("❌ Invalid incoming call data");
         return;
       }
 
-      // ⭐ KEY FIX: Pass the offer data to the store
-      setIncomingCall(from, offer, callType);
+      // ✅ FIX: pass FULL object (NO nulls)
+      setIncomingCall({
+        from,
+        callType,
+        callerName: callerName || "Unknown",
+      });
 
-      // Show browser notification
+      // 🔕 Notifications are OPTIONAL — NEVER reject call here
       if ("Notification" in window) {
         if (Notification.permission === "granted") {
-          const notification = new Notification(`Incoming ${callType} call`, {
-            body: `${callerName || "Someone"} is calling you...`,
-            icon: "/call-icon.png",
-            tag: "incoming-call",
-            requireInteraction: true,
-          });
+          const notification = new Notification(
+            `Incoming ${callType} call`,
+            {
+              body: `${callerName || "Someone"} is calling you...`,
+              icon: "/call-icon.png",
+              tag: "incoming-call",
+              requireInteraction: true,
+            }
+          );
 
           notification.onclick = () => {
             window.focus();
             notification.close();
           };
         } else if (Notification.permission !== "denied") {
-          Notification.requestPermission();
+          Notification.requestPermission().catch(() => {});
         }
       }
     };
