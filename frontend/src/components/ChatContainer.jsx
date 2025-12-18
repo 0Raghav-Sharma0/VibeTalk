@@ -212,7 +212,7 @@ export default function ChatContainer() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
             >
-              <Whiteboard roomId={roomId} />
+              <Whiteboard roomId={roomId} onClose={() => setShowWhiteboard(false)} />
             </motion.div>
           </>
         )}

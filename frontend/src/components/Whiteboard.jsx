@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 
-export default function Whiteboard({ roomId }) {
+export default function Whiteboard({ roomId, onClose }) {
   const socket = useAuthStore((state) => state.socket);
   const canvasRef = useRef(null);
   const ctxRef = useRef(null);
@@ -16,6 +16,8 @@ export default function Whiteboard({ roomId }) {
   const [size, setSize] = useState(4);
   const [isDrawingEnabled, setIsDrawingEnabled] = useState(true);
   const [isFilled, setIsFilled] = useState(false);
+  const [showMobileClose, setShowMobileClose] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const colorPalette = [
     "#000000", "#ffffff", "#ff3b30", "#ff9500", "#ffcc00",
@@ -140,9 +142,6 @@ export default function Whiteboard({ roomId }) {
       let endX = data.endX;
       let endY = data.endY;
 
-      // Better normalization detection:
-      // Check if the maximum absolute value is small (likely normalized)
-      // and the canvas is reasonably large (to avoid false positives)
       const maxValue = Math.max(
         Math.abs(startX),
         Math.abs(startY),
@@ -150,7 +149,6 @@ export default function Whiteboard({ roomId }) {
         Math.abs(endY)
       );
 
-      // If all values are small and canvas is large, they're likely normalized
       const isNormalized = maxValue <= 1.5 && canvas.width > 50 && canvas.height > 50;
 
       if (isNormalized) {
@@ -288,7 +286,7 @@ export default function Whiteboard({ roomId }) {
 
   const handleDown = (e) => {
     if (!isDrawingEnabled) return;
-    if (e.preventDefault) e.preventDefault();
+    if (e.type === 'mousedown' && e.preventDefault) e.preventDefault();
 
     const { x, y } = getCoords(e);
 
@@ -302,7 +300,7 @@ export default function Whiteboard({ roomId }) {
 
   const handleMove = (e) => {
     if (!isDrawingEnabled) return;
-    if (e.preventDefault) e.preventDefault();
+    if (e.type === 'mousemove' && e.preventDefault) e.preventDefault();
 
     const { x, y } = getCoords(e);
 
@@ -313,12 +311,18 @@ export default function Whiteboard({ roomId }) {
   const handleUp = (e) => {
     if (!isDrawingEnabled) return;
     if (!isDrawing.current) return;
-    if (e.preventDefault) e.preventDefault();
+    if (e.type === 'mouseup' && e.preventDefault) e.preventDefault();
 
     const { x, y } = getCoords(e);
 
     if (tool === "pen" || tool === "eraser") stopDrawing();
     else finishShape(x, y);
+  };
+
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
   };
 
   /* ========== Effects ========== */
@@ -351,6 +355,8 @@ export default function Whiteboard({ roomId }) {
       ctx.lineWidth = size;
       ctx.strokeStyle = color;
       ctx.fillStyle = color;
+      
+      canvas.willReadFrequently = true;
 
       if (temp.width > 0) ctx.drawImage(temp, 0, 0);
       ctxRef.current = ctx;
@@ -359,6 +365,19 @@ export default function Whiteboard({ roomId }) {
     setTimeout(resize, 100);
     window.addEventListener("resize", resize);
     return () => window.removeEventListener("resize", resize);
+  }, []);
+
+  useEffect(() => {
+    const checkIfMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setShowMobileClose(mobile);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    
+    return () => window.removeEventListener('resize', checkIfMobile);
   }, []);
 
   useEffect(() => {
@@ -425,19 +444,32 @@ export default function Whiteboard({ roomId }) {
 
   /* ========== Render ========== */
   return (
-    <div className="flex flex-col h-full bg-base-100 border-l border-base-300">
+    <div className="flex flex-col h-full bg-base-100 border-l border-base-300 relative">
+      {/* Mobile Close Button - Only visible on mobile */}
+      {showMobileClose && (
+        <button
+          onClick={handleClose}
+          className="md:hidden absolute top-3 right-3 z-50 w-10 h-10 bg-error text-error-content rounded-full flex items-center justify-center shadow-lg hover:bg-error/90 transition-all duration-200 active:scale-95"
+          style={{ zIndex: 1000 }}
+          title="Close Whiteboard"
+        >
+          <span className="text-xl">✕</span>
+        </button>
+      )}
+
       {/* Top Toolbar - Enhanced with better spacing and visual hierarchy */}
-      <div className="p-4 flex flex-wrap gap-4 items-center border-b bg-base-200/80 backdrop-blur-sm">
+      <div className={`p-3 ${isMobile ? 'px-2' : 'px-4'} flex flex-wrap gap-2 items-center border-b bg-base-200/80 backdrop-blur-sm`}>
         {/* Tools Section */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Tools</label>
-          <div className="flex gap-1 bg-base-300 rounded-xl p-1.5 shadow-sm">
+          <div className="flex gap-1 bg-base-300 rounded-xl p-1 shadow-sm">
             {tools.map(({ id, icon, label }) => (
               <button
                 key={id}
                 onClick={() => setTool(id)}
                 className={`
-                  p-2.5 rounded-lg transition-all duration-200 min-w-[44px] group relative
+                  ${isMobile ? 'p-1.5 text-sm min-w-[36px]' : 'p-2.5 min-w-[44px]'} 
+                  rounded-lg transition-all duration-200 group relative
                   ${tool === id 
                     ? "bg-primary shadow-md scale-105 text-primary-content" 
                     : "hover:bg-base-100 hover:scale-102 text-base-content"
@@ -445,28 +477,31 @@ export default function Whiteboard({ roomId }) {
                 `}
                 title={label}
               >
-                <span className="text-lg">{icon}</span>
-                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                  <div className="bg-base-300 text-xs text-base-content px-2 py-1 rounded-md whitespace-nowrap">
-                    {label}
+                <span className={isMobile ? 'text-base' : 'text-lg'}>{icon}</span>
+                {!isMobile && (
+                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                    <div className="bg-base-300 text-xs text-base-content px-2 py-1 rounded-md whitespace-nowrap">
+                      {label}
+                    </div>
                   </div>
-                </div>
+                )}
               </button>
             ))}
           </div>
         </div>
 
         {/* Colors Section */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Colors</label>
-          <div className="flex gap-2 items-center bg-base-300 rounded-xl p-2.5 shadow-sm">
-            <div className="flex gap-1.5">
+          <div className="flex gap-2 items-center bg-base-300 rounded-xl p-1.5 shadow-sm">
+            <div className="flex gap-1">
               {colorPalette.map((col) => (
                 <button
                   key={col}
                   onClick={() => setColor(col)}
                   className={`
-                    w-7 h-7 rounded-full border-2 transition-transform duration-200 hover:scale-110 shadow-sm
+                    ${isMobile ? 'w-5 h-5' : 'w-7 h-7'} 
+                    rounded-full border-2 transition-transform duration-200 hover:scale-110 shadow-sm
                     ${color === col ? "border-primary scale-110 ring-2 ring-primary/30" : "border-base-300"}
                   `}
                   style={{ backgroundColor: col }}
@@ -474,69 +509,70 @@ export default function Whiteboard({ roomId }) {
                 />
               ))}
             </div>
-            <div className="w-px h-6 bg-base-400 mx-1"></div>
+            <div className="w-px h-4 bg-base-400 mx-0.5"></div>
             <input 
               type="color" 
               value={color} 
               onChange={(e) => setColor(e.target.value)} 
-              className="w-8 h-8 rounded-lg border border-base-300 cursor-pointer shadow-sm" 
+              className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-lg border border-base-300 cursor-pointer shadow-sm`} 
               title="Custom Color" 
             />
           </div>
         </div>
 
         {/* Brush Size Section */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">
             {tool === "eraser" ? "Eraser Size" : "Brush Size"}
           </label>
-          <div className="flex gap-3 items-center bg-base-300 rounded-xl px-4 py-2.5 shadow-sm">
+          <div className="flex gap-2 items-center bg-base-300 rounded-xl px-3 py-1.5 shadow-sm">
             <input 
               type="range" 
               min="2" 
               max="25" 
               value={size} 
               onChange={(e) => setSize(Number(e.target.value))} 
-              className="w-24 accent-primary" 
+              className={`${isMobile ? 'w-16' : 'w-24'} accent-primary`} 
             />
-            <div className="flex items-center gap-2 min-w-[60px]">
+            <div className="flex items-center gap-1 min-w-[50px]">
               <div 
                 className="rounded-full bg-base-content"
                 style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
+                  width: `${Math.max(8, size)}px`,
+                  height: `${Math.max(8, size)}px`,
                   backgroundColor: tool === "eraser" ? '#9ca3af' : color
                 }}
               ></div>
-              <span className="text-sm font-medium w-6">{size}</span>
+              <span className="text-sm font-medium w-5">{size}</span>
             </div>
           </div>
         </div>
 
         {/* Fill Toggle */}
         {!isFreehandTool && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Fill</label>
             <button 
               onClick={() => setIsFilled(!isFilled)} 
               className={`
-                px-4 py-2.5 rounded-xl transition-all duration-200 font-medium
+                ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2.5'} 
+                rounded-xl transition-all duration-200 font-medium
                 ${isFilled 
                   ? "bg-primary text-primary-content shadow-md" 
                   : "bg-base-300 hover:bg-base-100 shadow-sm"
                 }
               `}
             >
-              {isFilled ? "🟦 Filled" : "⬜ Outline"}
+              {isMobile ? (isFilled ? "🟦" : "⬜") : (isFilled ? "🟦 Filled" : "⬜ Outline")}
             </button>
           </div>
         )}
 
         {/* Actions Section */}
-        <div className="flex flex-col gap-2 ml-auto">
+        <div className={`flex flex-col gap-1 ${isMobile ? 'ml-1' : 'ml-auto'}`}>
           <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Actions</label>
-          <div className="flex gap-2">
-            <div className="flex gap-1 bg-base-300 rounded-xl p-1.5 shadow-sm">
+          <div className="flex gap-1">
+            <div className="flex gap-0.5 bg-base-300 rounded-xl p-0.5 shadow-sm">
               <button 
                 onClick={() => {
                   if (historyIndex.current > 0) {
@@ -549,7 +585,7 @@ export default function Whiteboard({ roomId }) {
                     drawingHistory.current = [];
                   }
                 }} 
-                className="p-2.5 rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105"
+                className={`${isMobile ? 'p-1.5 text-sm' : 'p-2.5'} rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105`}
                 title="Undo"
               >
                 ↩️
@@ -562,7 +598,7 @@ export default function Whiteboard({ roomId }) {
                     ctxRef.current.putImageData(img, 0, 0);
                   }
                 }} 
-                className="p-2.5 rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105"
+                className={`${isMobile ? 'p-1.5 text-sm' : 'p-2.5'} rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105`}
                 title="Redo"
               >
                 ↪️
@@ -572,27 +608,28 @@ export default function Whiteboard({ roomId }) {
             <button 
               onClick={() => setIsDrawingEnabled(!isDrawingEnabled)} 
               className={`
-                px-4 py-2.5 rounded-xl transition-all duration-200 font-medium
+                ${isMobile ? 'px-2 py-1.5 text-xs' : 'px-4 py-2.5'} 
+                rounded-xl transition-all duration-200 font-medium
                 ${isDrawingEnabled 
                   ? "bg-success text-success-content shadow-md" 
                   : "bg-error text-error-content shadow-md"
                 }
               `}
             >
-              {isDrawingEnabled ? "🎯 Drawing" : "🚫 Locked"}
+              {isMobile ? (isDrawingEnabled ? "🎯" : "🚫") : (isDrawingEnabled ? "🎯 Drawing" : "🚫 Locked")}
             </button>
 
             <button 
               onClick={downloadCanvas} 
-              className="px-4 py-2.5 rounded-xl bg-info text-info-content hover:bg-info/90 transition-all duration-200 shadow-md font-medium"
+              className={`${isMobile ? 'px-2 py-1.5 text-xs' : 'px-4 py-2.5'} rounded-xl bg-info text-info-content hover:bg-info/90 transition-all duration-200 shadow-md font-medium`}
             >
-              💾 Save
+              {isMobile ? "💾" : "💾 Save"}
             </button>
             <button 
               onClick={clearBoard} 
-              className="px-4 py-2.5 rounded-xl bg-error text-error-content hover:bg-error/90 transition-all duration-200 shadow-md font-medium"
+              className={`${isMobile ? 'px-2 py-1.5 text-xs' : 'px-4 py-2.5'} rounded-xl bg-error text-error-content hover:bg-error/90 transition-all duration-200 shadow-md font-medium`}
             >
-              🗑️ Clear
+              {isMobile ? "🗑️" : "🗑️ Clear"}
             </button>
           </div>
         </div>
@@ -607,15 +644,15 @@ export default function Whiteboard({ roomId }) {
           onMouseMove={handleMove}
           onMouseUp={handleUp}
           onMouseLeave={handleUp}
-          onTouchStart={(e) => { e.preventDefault(); handleDown(e); }}
-          onTouchMove={(e) => { e.preventDefault(); handleMove(e); }}
-          onTouchEnd={(e) => { e.preventDefault(); handleUp(e); }}
+          onTouchStart={handleDown}
+          onTouchMove={handleMove}
+          onTouchEnd={handleUp}
         />
         
         {/* Drawing Status Overlay */}
         {!isDrawingEnabled && (
           <div className="absolute inset-0 bg-base-100/80 backdrop-blur-sm flex items-center justify-center">
-            <div className="bg-error text-error-content px-6 py-4 rounded-xl shadow-lg text-lg font-semibold">
+            <div className="bg-error text-error-content px-4 py-3 rounded-xl shadow-lg text-base font-semibold">
               🚫 Drawing Disabled
             </div>
           </div>
@@ -624,52 +661,56 @@ export default function Whiteboard({ roomId }) {
 
       {/* Enhanced Bottom Status Bar */}
       <div className="bg-base-200/90 backdrop-blur-sm border-t border-base-300">
-        <div className="px-4 py-3">
+        <div className={`${isMobile ? 'px-2 py-2' : 'px-4 py-3'}`}>
           <div className="flex items-center justify-between">
             {/* Left Side - Current Settings */}
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-base-content/60">Tool:</span>
-                  <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-semibold text-sm capitalize">
-                    {tool}
-                  </span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-base-content/60">Tool:</span>
+                <span className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} bg-primary/10 text-primary rounded-lg font-semibold capitalize`}>
+                  {tool}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-base-content/60">Color:</span>
+                <div className="flex items-center gap-1 px-2 py-1 bg-base-300 rounded-lg">
+                  <div 
+                    className="w-3 h-3 rounded-full border border-base-400 shadow-sm"
+                    style={{ backgroundColor: color }}
+                  ></div>
+                  {!isMobile && (
+                    <span className="text-xs font-mono font-semibold">{color}</span>
+                  )}
                 </div>
-                
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-base-content/60">Color:</span>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-base-300 rounded-lg">
-                    <div 
-                      className="w-4 h-4 rounded-full border border-base-400 shadow-sm"
-                      style={{ backgroundColor: color }}
-                    ></div>
-                    <span className="text-sm font-mono font-semibold">{color}</span>
-                  </div>
-                </div>
+              </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-base-content/60">Size:</span>
-                  <span className="px-3 py-1.5 bg-base-300 rounded-lg font-semibold text-sm">
-                    {size}px
-                  </span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-base-content/60">Size:</span>
+                <span className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} bg-base-300 rounded-lg font-semibold`}>
+                  {size}px
+                </span>
               </div>
             </div>
 
             {/* Right Side - Room Info & Status */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full ${socket ? 'bg-success animate-pulse' : 'bg-error'}`}></div>
-                <span className="text-sm font-medium text-base-content/60">Status:</span>
-                <span className="text-sm font-semibold">{socket ? 'Connected' : 'Disconnected'}</span>
+                {!isMobile && (
+                  <>
+                    <span className="text-xs font-medium text-base-content/60">Status:</span>
+                    <span className="text-xs font-semibold">{socket ? 'Connected' : 'Disconnected'}</span>
+                  </>
+                )}
               </div>
 
-              <div className="w-px h-6 bg-base-400"></div>
+              {!isMobile && <div className="w-px h-4 bg-base-400"></div>}
 
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-base-content/60">Room:</span>
-                <span className="px-3 py-1.5 bg-primary/10 text-primary rounded-lg font-semibold text-sm">
-                  {roomId || 'No Room'}
+              <div className="flex items-center gap-1">
+                {!isMobile && <span className="text-xs font-medium text-base-content/60">Room:</span>}
+                <span className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} bg-primary/10 text-primary rounded-lg font-semibold`}>
+                  {isMobile ? (roomId ? '✓' : '✗') : (roomId || 'No Room')}
                 </span>
               </div>
             </div>
