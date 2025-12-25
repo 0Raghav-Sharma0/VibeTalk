@@ -163,7 +163,7 @@
 
 <!-- ========================== SYSTEM FLOW ========================== -->
 
-<h2>🏗️ Basic System Flow</h2>
+<h2>🏗️ System Flow</h2>
 
 <ul>
   <li>
@@ -193,15 +193,15 @@
 
 <ul>
   <li>
-    <strong>Frontend:</strong> Deployed on a CDN-backed platform for fast global access.
+    <strong>Frontend:</strong> Deployed on a CDN-backed platform for fast global access - Vecel.
   </li>
   <li>
     <strong>Backend:</strong> Hosted as a long-running real-time service with
-    environment-based configuration.
+    environment-based configuration  - Render.
   </li>
   <li>
     <strong>Configuration:</strong> Separate development and production environments
-    using environment variables.
+    using environment variables - in environment file.
   </li>
 </ul>
 
