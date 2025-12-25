@@ -19,7 +19,6 @@
 
 <hr/>
 
-
 <!-- ========================== SCREENSHOTS ========================== -->
 
 <h2>📸 Screenshots</h2>
@@ -31,17 +30,37 @@
 </p>
 
 <p align="center">
-  <img src="SCREENSHOT_LOGIN.png" alt="Login Screen" width="45%" />
-  <img src="SCREENSHOT_CHAT_LIST.png" alt="Chat Dashboard" width="45%" />
+  <img 
+    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230807.png"
+    alt="Login Screen"
+    height="260"
+  />
+  <img 
+    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230858.png"
+    alt="Chat Dashboard"
+    height="260"
+  />
 </p>
 
 <p align="center">
-  <img src="SCREENSHOT_CHAT_VIEW.png" alt="Real-Time Chat" width="45%" />
-  <img src="SCREENSHOT_WATCH_PARTY.png" alt="Watch Party" width="45%" />
+  <img 
+    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230940.png"
+    alt="Real-Time Chat"
+    height="260"
+  />
+  <img 
+    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20231016.png"
+    alt="Watch Party"
+    height="260"
+  />
 </p>
 
 <p align="center">
-  <img src="SCREENSHOT_DRAWING_BOARD.png" alt="Collaborative Drawing Board" width="60%" />
+  <img 
+    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230958.png"
+    alt="Collaborative Drawing Board"
+    height="320"
+  />
 </p>
 
 <hr/>
