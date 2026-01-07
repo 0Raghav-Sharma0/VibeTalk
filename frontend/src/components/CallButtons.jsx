@@ -1,4 +1,3 @@
-// src/components/CallButtons.jsx - MODERN VERSION
 import React, { useCallback } from "react";
 import { motion } from "framer-motion";
 import { Phone, Video } from "lucide-react";
@@ -17,7 +16,7 @@ const CallButtons = () => {
 
       console.log(`📞 Initiating ${type} call to:`, selectedUser._id);
       
-      // Notify the other user
+      
       socket.emit("call-initiated", {
         from: authUser._id,
         to: selectedUser._id,
@@ -25,7 +24,7 @@ const CallButtons = () => {
         callerName: authUser.fullName,
       });
 
-      // Start local call
+      
       startCall(type, selectedUser._id);
     },
     [selectedUser, startCall, socket, authUser]
@@ -61,5 +60,6 @@ const CallButtons = () => {
     </div>
   );
 };
+
 
 export default CallButtons;
