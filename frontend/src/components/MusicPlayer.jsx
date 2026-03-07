@@ -1,5 +1,5 @@
 // src/components/MusicPlayer.jsx
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SkipBack, SkipForward, Play, Pause, X } from "lucide-react";
 import { useMusicStore } from "../store/musicStore";
 import { motion } from "framer-motion";

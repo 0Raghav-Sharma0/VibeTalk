@@ -1,5 +1,5 @@
 // src/components/Whiteboard.jsx
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 
 export default function Whiteboard({ roomId, onClose }) {
