@@ -23,8 +23,8 @@ const VideoPlayer = () => {
   /* ================= THEME ================= */
   const containerClass =
     theme === "light"
-      ? "bg-gray-200 border border-gray-300"
-      : "bg-black border border-gray-700";
+      ? "bg-gray-200 border border-transparent"
+      : "bg-black border border-transparent";
 
   /* ================= LOAD YT API ================= */
   useEffect(() => {

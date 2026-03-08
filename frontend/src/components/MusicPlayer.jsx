@@ -209,9 +209,9 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
   /* ================= UI ================= */
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-emerald-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-l border-emerald-200 dark:border-gray-700 shadow-xl">
+    <div className="h-full flex flex-col bg-gradient-to-b from-emerald-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-l border-transparent shadow-xl">
       {/* HEADER */}
-      <div className="px-6 py-4 flex justify-between items-center border-b border-emerald-200 dark:border-gray-700 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+      <div className="px-6 py-4 flex justify-between items-center border-b border-transparent bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <img 
             src={currentGif} 
@@ -339,7 +339,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
       </div>
 
       {/* FOOTER - VOLUME */}
-      <div className="mt-auto px-6 py-4 border-t border-emerald-200 dark:border-gray-700">
+      <div className="mt-auto px-6 py-4 border-t border-transparent">
         <div className="flex items-center gap-3">
           <span className="text-sm text-emerald-700 dark:text-emerald-300">🔈</span>
           <input

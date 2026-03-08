@@ -70,17 +70,18 @@ export async function cacheDelPattern(prefix) {
   }
 }
 
-// Cache key helpers
+// Cache key helpers - always normalize to string for consistent keys
 export const cacheKeys = {
-  user: (id) => `user:${id}`,
-  senderMeta: (id) => `sender:${id}`,
-  sidebarUsers: (userId) => `sidebar:${userId}`,
-  friendIds: (userId) => `friendIds:${userId}`,
+  user: (id) => `user:${id != null ? String(id) : ""}`,
+  senderMeta: (id) => `sender:${id != null ? String(id) : ""}`,
+  sidebarUsers: (userId) => `sidebar:${userId != null ? String(userId) : ""}`,
+  friendIds: (userId) => `friendIds:${userId != null ? String(userId) : ""}`,
 };
 
 /** Invalidate sidebar + friendIds for both users when friend relationship changes */
 export async function invalidateFriendCache(userId1, userId2) {
-  const ids = [String(userId1), String(userId2)].filter(Boolean);
+  const toStr = (id) => (id != null && typeof id === "object" && id._id != null ? String(id._id) : String(id ?? ""));
+  const ids = [toStr(userId1), toStr(userId2)].filter(Boolean);
   for (const id of ids) {
     await cacheDel(cacheKeys.sidebarUsers(id));
     await cacheDel(cacheKeys.friendIds(id));

@@ -129,56 +129,52 @@ const Sidebar = ({ onClose }) => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-full flex flex-col min-h-0 bg-white dark:bg-base-100 border-r border-gray-200/40 dark:border-transparent shadow-[4px_0_24px_-4px_rgba(0,0,0,0.08)] dark:shadow-none">
+    <aside className="h-full w-full flex flex-col min-h-0 bg-base-100 border-r border-base-200/50 shadow-[2px_0_16px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_16px_-2px_rgba(0,0,0,0.2)]">
       {/* HEADER */}
-      <div className="relative px-3 py-3.5 border-b border-gray-200/40 dark:border-base-300/20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 dark:from-primary/10 dark:to-transparent" />
-        <div className="absolute top-0 right-0 w-24 h-24 bg-primary/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2" />
-        <div className="relative flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/70 text-white shrink-0 shadow-md shadow-primary/20 ring-2 ring-base-200 dark:ring-base-300 ring-offset-1 ring-offset-gray-50 dark:ring-offset-base-100">
-              <Users className="w-4 h-4" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold text-gray-900 dark:text-base-content truncate tracking-tight">
-                Friends
-              </h2>
-              <p className="text-[11px] text-gray-600 dark:text-base-content/60 font-medium mt-0.5">
-                {filteredUsers.length} friends · {onlineCount} online
-              </p>
-            </div>
+      <div className="relative px-3 py-3 border-b border-base-200/50 overflow-hidden shrink-0 bg-gradient-to-b from-primary/5 to-transparent">
+        <div className="relative flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-neutral-900 shrink-0 shadow-md shadow-primary/25 [&_svg]:stroke-[2.5]">
+            <Users className="w-5 h-5" />
           </div>
-
-          <span className="relative text-[11px] px-2 py-1.5 rounded-lg font-semibold bg-success/15 text-success shrink-0 border border-success/25 flex items-center gap-1.5 shadow-sm">
-            <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse ring-2 ring-success/30" />
-            {onlineCount} online
-          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-bold text-base-content truncate tracking-tight">
+              Friends
+            </h2>
+            <p className="text-xs text-base-content mt-0.5 flex items-center gap-1.5">
+              <span className="font-medium">{filteredUsers.length} friends</span>
+              <span className="text-base-content/60">·</span>
+              <span className="flex items-center gap-1.5 text-success font-semibold">
+                <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse" />
+                {onlineCount} online
+              </span>
+            </p>
+          </div>
         </div>
 
         {/* TABS */}
-        <div className="relative mt-3 flex gap-0.5 p-0.5 rounded-xl bg-gray-100/80 dark:bg-base-200/80 backdrop-blur-sm border border-gray-200/30 dark:border-transparent">
+        <div className="relative mt-3 flex gap-1 p-1 rounded-xl bg-base-200/70 dark:bg-base-300/50">
           <button
             type="button"
             onClick={() => setActiveTab("friends")}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all duration-200 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ${
               activeTab === "friends"
-                ? "bg-white dark:bg-base-100 text-gray-900 dark:text-base-content shadow-md border border-gray-200/40 dark:border-transparent"
-                : "text-gray-600 dark:text-base-content/70 hover:bg-white/50 dark:hover:bg-base-100/50 border border-transparent"
+                ? "bg-primary text-neutral-900 shadow-md shadow-primary/20 dark:text-neutral-900 [&_svg]:stroke-[2.5]"
+                : "text-base-content hover:bg-base-100/80"
             }`}
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-4 h-4 shrink-0" />
             Friends
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("groups")}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all duration-200 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ${
               activeTab === "groups"
-                ? "bg-white dark:bg-base-100 text-gray-900 dark:text-base-content shadow-md border border-gray-200/40 dark:border-transparent"
-                : "text-gray-600 dark:text-base-content/70 hover:bg-white/50 dark:hover:bg-base-100/50 border border-transparent"
+                ? "bg-primary text-neutral-900 shadow-md shadow-primary/20 dark:text-neutral-900 [&_svg]:stroke-[2.5]"
+                : "text-base-content hover:bg-base-100/80"
             }`}
           >
-            <UsersRound className="w-3.5 h-3.5" />
+            <UsersRound className="w-4 h-4 shrink-0" />
             Groups
           </button>
           <button
@@ -188,13 +184,13 @@ const Sidebar = ({ onClose }) => {
               clearSearch();
               setAddUsername("");
             }}
-            className={`flex-1 flex items-center justify-center gap-1 py-2 px-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all duration-200 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ${
               activeTab === "add"
-                ? "bg-white dark:bg-base-100 text-gray-900 dark:text-base-content shadow-md border border-gray-200/40 dark:border-transparent"
-                : "text-gray-600 dark:text-base-content/70 hover:bg-white/50 dark:hover:bg-base-100/50 border border-transparent"
+                ? "bg-primary text-neutral-900 shadow-md shadow-primary/20 dark:text-neutral-900 [&_svg]:stroke-[2.5]"
+                : "text-base-content hover:bg-base-100/80"
             }`}
           >
-            <UserPlus className="w-3.5 h-3.5" />
+            <UserPlus className="w-4 h-4 shrink-0" />
             Add
           </button>
         </div>
@@ -203,9 +199,9 @@ const Sidebar = ({ onClose }) => {
           <button
             type="button"
             onClick={() => setShowCreateGroup(true)}
-            className="relative mt-2.5 w-full py-2 rounded-lg bg-primary/15 text-primary border border-transparent dark:border-primary/20 font-semibold text-xs flex items-center justify-center gap-1.5 hover:bg-primary/20 transition-colors"
+            className="relative mt-2.5 w-full py-2 rounded-lg bg-primary text-neutral-900 font-semibold text-xs flex items-center justify-center gap-1.5 hover:opacity-90 transition-opacity [&_svg]:stroke-[2.5]"
           >
-            <UsersRound className="w-3.5 h-3.5" />
+            <UsersRound className="w-4 h-4" />
             Create Group
           </button>
         )}
@@ -214,15 +210,15 @@ const Sidebar = ({ onClose }) => {
           <button
             type="button"
             onClick={() => setShowOnlineOnly((p) => !p)}
-            className={`relative mt-2.5 text-[11px] px-2.5 py-2 rounded-lg flex items-center gap-1.5 w-full transition-all font-semibold outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${
+            className={`relative mt-2.5 text-xs px-3 py-2 rounded-lg flex items-center gap-2 w-full transition-all font-semibold outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 ${
               showOnlineOnly
-                ? "bg-primary/15 text-primary border-2 border-primary/30 shadow-sm"
-                : "text-gray-600 dark:text-base-content/60 hover:bg-gray-100/80 dark:hover:bg-base-200/60 border-2 border-transparent"
+                ? "bg-primary/20 text-neutral-800 border border-primary/30 dark:text-neutral-900"
+                : "text-base-content hover:bg-base-200/70 border border-transparent"
             }`}
           >
             <span
               className={`w-1.5 h-1.5 rounded-full shrink-0 transition-colors ${
-                showOnlineOnly ? "bg-primary animate-pulse" : "bg-gray-400 dark:bg-base-content/40"
+                showOnlineOnly ? "bg-primary animate-pulse" : "bg-base-content/70"
               }`}
             />
             Online only
@@ -231,7 +227,7 @@ const Sidebar = ({ onClose }) => {
       </div>
 
       {/* CONTENT */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1.5 bg-gradient-to-b from-gray-50/50 to-transparent dark:from-base-200/30 dark:to-transparent scrollbar-thin scrollbar-thumb-base-300">
+      <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-2 min-h-0 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-transparent">
         {activeTab === "groups" ? (
           <>
             {groups.map((group) => {
@@ -245,24 +241,24 @@ const Sidebar = ({ onClose }) => {
                   onClick={() => handleGroupSelect(group)}
                   className={`relative rounded-xl cursor-pointer transition-all duration-200 overflow-hidden ${
                     isSelected
-                      ? "bg-white dark:bg-base-200/80 border-2 border-primary/40 shadow-lg shadow-primary/10"
-                      : "bg-white/80 dark:bg-base-200/40 border border-gray-200/30 dark:border-base-300/20 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5"
+                      ? "bg-primary/10 ring-1 ring-primary/30"
+                      : "bg-base-200/50 hover:bg-base-200/80 dark:bg-base-300/30 dark:hover:bg-base-300/50"
                   }`}
                 >
                   <div className="flex items-center gap-2.5 px-3 py-2.5">
-                    <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/15 text-primary shrink-0">
+                    <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary/15 text-neutral-700 dark:text-neutral-300 shrink-0">
                       <UsersRound className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-gray-900 dark:text-base-content truncate">
+                      <p className="text-sm font-semibold text-base-content truncate">
                         {group.name}
                       </p>
-                      <p className="text-[11px] text-gray-600 dark:text-base-content/60">
+                      <p className="text-xs text-base-content/90 font-medium">
                         {group.members?.length || 0} members · {adminCount} admin{adminCount !== 1 ? "s" : ""}
                       </p>
                     </div>
                     {unread > 0 && !isSelected && (
-                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-primary text-gray-900 font-bold shrink-0 shadow-sm">
+                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-primary text-neutral-900 font-bold shrink-0 dark:text-neutral-900">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}
@@ -271,16 +267,16 @@ const Sidebar = ({ onClose }) => {
               );
             })}
             {groups.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-10 text-center px-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex items-center justify-center mb-3">
-                  <UsersRound className="w-6 h-6 text-primary/60" />
+              <div className="flex flex-col items-center justify-center py-12 text-center px-4">
+                <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
+                  <UsersRound className="w-7 h-7 text-neutral-700 dark:text-neutral-300" />
                 </div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-base-content">No groups yet</p>
-                <p className="text-[11px] text-gray-800 dark:text-base-content/60 mt-0.5">Create a group to chat with friends</p>
+                <p className="text-sm font-bold text-base-content">No groups yet</p>
+                <p className="text-sm text-base-content/90 mt-1 font-medium">Create a group to chat with friends</p>
                 <button
                   type="button"
                   onClick={() => setShowCreateGroup(true)}
-                  className="mt-3 px-3 py-1.5 rounded-lg bg-primary text-gray-900 font-semibold text-xs"
+                  className="mt-4 px-4 py-2 rounded-lg bg-primary text-neutral-900 font-semibold text-xs hover:opacity-90 transition-opacity dark:text-neutral-900"
                 >
                   Create Group
                 </button>
@@ -301,18 +297,15 @@ const Sidebar = ({ onClose }) => {
                   className={`relative rounded-xl group transition-all duration-200 overflow-hidden
                     ${
                       isSelected
-                        ? "bg-white dark:bg-base-200/80 border-2 border-primary/40 shadow-lg shadow-primary/10"
+                        ? "bg-primary/10 ring-1 ring-primary/30"
                         : unread
-                        ? "bg-white dark:bg-base-200/60 border border-primary/20 shadow-md"
-                        : "bg-white/80 dark:bg-base-200/40 border border-gray-200/30 dark:border-base-300/20 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5"
+                        ? "bg-primary/5 ring-1 ring-primary/20"
+                        : "bg-base-200/50 hover:bg-base-200/80 dark:bg-base-300/30 dark:hover:bg-base-300/50"
                     }
                   `}
                 >
                   {isSelected && (
-                    <>
-                      <span className="absolute left-0 top-2.5 bottom-2.5 w-1 bg-primary rounded-r-full shadow-sm" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent pointer-events-none" />
-                    </>
+                    <span className="absolute left-0 top-2.5 bottom-2.5 w-0.5 bg-primary rounded-r-full" />
                   )}
 
                   <div
@@ -320,42 +313,40 @@ const Sidebar = ({ onClose }) => {
                     className="relative flex items-center gap-2.5 px-3 py-2.5 cursor-pointer"
                   >
                     <div className="relative shrink-0">
-                      <div className="p-0.5 rounded-xl bg-gradient-to-br from-primary/30 to-primary/10">
+                      <div className="rounded-xl overflow-hidden ring-2 ring-primary/20">
                         <img
                           src={user.profilePic || "/boy.png"}
                           alt={user.fullName}
-                          className="w-9 h-9 rounded-[10px] object-cover border-2 border-base-200 dark:border-base-300 shadow-sm"
+                          className="w-9 h-9 object-cover"
                         />
                       </div>
                       {isOnline && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-base-200 dark:ring-base-300 animate-pulse shadow-sm" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-base-100 dark:ring-base-200" />
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1.5">
                         <p
-                          className={`text-xs truncate ${
-                            unread && !isSelected
-                              ? "font-semibold text-gray-900 dark:text-base-content"
-                              : "font-medium text-gray-900 dark:text-base-content"
+                          className={`text-sm truncate text-base-content ${
+                            unread && !isSelected ? "font-bold" : "font-semibold"
                           }`}
                         >
                           {user.fullName || "Unknown User"}
                         </p>
 
                         {isTyping && (
-                          <span className="text-[11px] text-primary font-medium animate-pulse shrink-0">
+                          <span className="text-xs text-primary font-semibold animate-pulse shrink-0">
                             typing
                           </span>
                         )}
                       </div>
 
                       <p
-                        className={`text-[11px] font-medium ${
+                        className={`text-xs font-semibold ${
                           isOnline
                             ? "text-success"
-                            : "text-gray-700 dark:text-base-content/60"
+                            : "text-base-content/90"
                         }`}
                       >
                         {isOnline ? "Online" : "Offline"}
@@ -363,7 +354,7 @@ const Sidebar = ({ onClose }) => {
                     </div>
 
                     {unread > 0 && !isSelected && (
-                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-primary text-gray-900 font-bold shrink-0 shadow-sm">
+                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-primary text-neutral-900 font-bold shrink-0 dark:text-neutral-900">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}
@@ -375,10 +366,10 @@ const Sidebar = ({ onClose }) => {
                       e.stopPropagation();
                       removeFriend(user._id);
                     }}
-                    className="absolute right-1.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-error/15 text-error transition-all outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-error/50 focus-visible:ring-offset-2"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-error/20 text-error/80 hover:text-error transition-all outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-error/40"
                     title="Remove friend"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               );
@@ -386,13 +377,13 @@ const Sidebar = ({ onClose }) => {
 
             {filteredUsers.length === 0 && (
               <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent dark:from-primary/30 dark:to-primary/10 flex items-center justify-center mb-4 shadow-inner border border-primary/10">
-                  <Users className="w-7 h-7 text-primary/60" />
+                <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
+                  <Users className="w-7 h-7 text-neutral-700 dark:text-neutral-300" />
                 </div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-base-content">
+                <p className="text-sm font-bold text-base-content">
                   {showOnlineOnly ? "No online friends" : "No friends yet"}
                 </p>
-                <p className="text-[11px] text-gray-800 dark:text-base-content/60 mt-0.5 font-medium">
+                <p className="text-sm text-base-content/90 mt-1 font-medium">
                   {showOnlineOnly
                     ? "All friends are offline"
                     : "Add friends by username to start chatting"}
@@ -403,108 +394,104 @@ const Sidebar = ({ onClose }) => {
         ) : (
           /* ADD FRIENDS TAB */
           <div className="space-y-4">
-            <form onSubmit={handleSearch} className="flex gap-1.5">
-              <div className="relative flex-1 group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500 dark:text-base-content/50 group-focus-within:text-primary transition-colors" />
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary" />
                 <input
                   type="text"
                   placeholder="Search by username"
                   value={addUsername}
                   onChange={(e) => handleAddUsernameChange(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-gray-200/50 dark:border-base-300/30 bg-white dark:bg-base-100 text-gray-900 dark:text-base-content text-xs font-medium placeholder:text-gray-500 dark:placeholder:text-base-content/50 outline-none focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
+                  className="w-full pl-9 pr-3 py-2 rounded-xl bg-base-200/70 dark:bg-base-300/50 text-base-content text-sm font-medium placeholder:text-base-content/80 outline-none focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
                 />
               </div>
               {addUsername.trim().length >= 2 && (
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="px-4 py-2 rounded-xl bg-primary text-gray-900 text-xs font-bold disabled:opacity-50 flex items-center gap-1.5 transition-all hover:opacity-90 shrink-0 shadow-md shadow-primary/20 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+                  className="px-4 py-2 rounded-xl bg-primary text-neutral-900 text-sm font-semibold disabled:opacity-50 flex items-center gap-2 transition-opacity hover:opacity-90 shrink-0 dark:text-neutral-900"
                 >
-                  {isSearching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   Search
                 </button>
               )}
             </form>
 
             {searchResult && (
-              <div className="p-3 rounded-xl bg-white dark:bg-base-200/80 border border-gray-200/30 dark:border-base-300/20 flex items-center justify-between gap-2.5 shadow-md transition-all">
+              <div className="p-3 rounded-xl bg-base-200/70 dark:bg-base-300/50 flex items-center justify-between gap-2.5 border border-base-300/30">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <img
                     src={searchResult.user?.profilePic || "/boy.png"}
                     alt=""
-                    className="w-9 h-9 rounded-lg object-cover border border-base-300/50"
+                    className="w-9 h-9 rounded-lg object-cover ring-1 ring-primary/20"
                   />
                   <div className="min-w-0">
-                    <p className="text-xs font-medium truncate text-gray-900 dark:text-base-content">{searchResult.user?.fullName}</p>
-                    <p className="text-[11px] text-gray-800 dark:text-base-content/60 truncate font-medium">{searchResult.user?.email}</p>
+                    <p className="text-sm font-semibold truncate text-base-content">{searchResult.user?.fullName}</p>
+                    <p className="text-xs text-base-content/90 truncate font-medium">{searchResult.user?.email}</p>
                   </div>
                 </div>
                 {searchResult.status === "can_add" && (
                   <button
                     type="button"
                     onClick={() => sendRequest(searchResult.user.fullName)}
-                    className="shrink-0 px-3 py-2 rounded-lg bg-primary text-gray-900 text-xs font-bold hover:opacity-90 transition-opacity shadow-sm outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2"
+                    className="shrink-0 px-3 py-2 rounded-lg bg-primary text-neutral-900 text-xs font-semibold hover:opacity-90 transition-opacity dark:text-neutral-900"
                   >
                     Add
                   </button>
                 )}
                 {searchResult.status === "pending_outgoing" && (
-                  <span className="text-[11px] text-gray-700 dark:text-base-content/50 shrink-0 font-medium">Pending</span>
+                  <span className="text-xs text-base-content font-semibold shrink-0">Pending</span>
                 )}
                 {searchResult.status === "pending_incoming" && (
-                  <span className="text-[11px] text-gray-700 dark:text-base-content/50 shrink-0 font-medium">Sent you a request</span>
+                  <span className="text-xs text-base-content font-semibold shrink-0">Sent you a request</span>
                 )}
               </div>
             )}
 
             {/* PENDING REQUESTS */}
             <div className="space-y-3">
-              <div className="flex items-center gap-1.5">
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 dark:via-base-300 to-transparent" />
-                <h3 className="text-[11px] font-bold text-gray-600 dark:text-base-content/60 uppercase tracking-wider">
-                  Pending Requests
-                </h3>
-                <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 dark:via-base-300 to-transparent" />
-              </div>
+              <h3 className="text-xs font-bold text-base-content uppercase tracking-wider">
+                Pending Requests
+              </h3>
 
               {isPendingLoading ? (
-                <div className="flex justify-center py-4">
+                <div className="flex justify-center py-6">
                   <Loader2 className="w-5 h-5 animate-spin text-primary" />
                 </div>
               ) : (
                 <>
                   {pendingIncoming.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] text-gray-700 dark:text-base-content/50 font-semibold">Incoming</p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-base-content font-semibold">Incoming</p>
                       {pendingIncoming.map((req) => (
                         <div
                           key={req._id}
-                          className="flex items-center justify-between gap-1.5 p-2.5 rounded-xl bg-white dark:bg-base-200/60 border border-gray-200/30 dark:border-base-300/20 shadow-sm"
+                          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-base-200/60 dark:bg-base-300/40"
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <img
                               src={req.fromUser?.profilePic || "/boy.png"}
                               alt=""
-                              className="w-8 h-8 rounded-lg object-cover border border-base-300/50"
+                              className="w-8 h-8 rounded-lg object-cover ring-1 ring-primary/20"
                             />
-                            <p className="text-xs font-medium truncate text-gray-900 dark:text-base-content">{req.fromUser?.fullName}</p>
+                            <p className="text-sm font-semibold truncate text-base-content">{req.fromUser?.fullName}</p>
                           </div>
-                          <div className="flex gap-0.5 shrink-0">
+                          <div className="flex gap-1 shrink-0">
                             <button
                               type="button"
                               onClick={() => acceptRequest(req._id)}
-                              className="p-1.5 rounded-md bg-success/15 text-success hover:bg-success/25 transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-success/50 focus-visible:ring-offset-2"
+                              className="p-1.5 rounded-lg bg-success/15 text-success hover:bg-success/25 transition-colors"
                               title="Accept"
                             >
-                              <Check className="w-3.5 h-3.5" />
+                              <Check className="w-4 h-4" />
                             </button>
                             <button
                               type="button"
                               onClick={() => rejectRequest(req._id)}
-                              className="p-1.5 rounded-md bg-error/15 text-error hover:bg-error/25 transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-error/50 focus-visible:ring-offset-2"
+                              className="p-1.5 rounded-lg bg-error/15 text-error hover:bg-error/25 transition-colors"
                               title="Reject"
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <X className="w-4 h-4" />
                             </button>
                           </div>
                         </div>
@@ -513,27 +500,27 @@ const Sidebar = ({ onClose }) => {
                   )}
 
                   {pendingOutgoing.length > 0 && (
-                    <div className="space-y-1.5">
-                      <p className="text-[11px] text-gray-700 dark:text-base-content/50 font-semibold">Outgoing</p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-base-content font-semibold">Outgoing</p>
                       {pendingOutgoing.map((req) => (
                         <div
                           key={req._id}
-                          className="flex items-center gap-2 p-2.5 rounded-xl bg-white/80 dark:bg-base-200/50 border border-gray-200/30 dark:border-base-300/20 shadow-sm"
+                          className="flex items-center gap-2 p-2.5 rounded-xl bg-base-200/50 dark:bg-base-300/40"
                         >
                           <img
                             src={req.toUser?.profilePic || "/boy.png"}
                             alt=""
-                            className="w-8 h-8 rounded-lg object-cover border border-base-300/50"
+                            className="w-8 h-8 rounded-lg object-cover ring-1 ring-primary/20"
                           />
-                          <p className="text-xs font-medium truncate flex-1 text-gray-900 dark:text-base-content">{req.toUser?.fullName}</p>
-                          <span className="text-[11px] text-gray-700 dark:text-base-content/50 shrink-0 font-medium">Pending</span>
+                          <p className="text-sm font-semibold truncate flex-1 text-base-content">{req.toUser?.fullName}</p>
+                          <span className="text-xs text-base-content font-semibold shrink-0">Pending</span>
                         </div>
                       ))}
                     </div>
                   )}
 
                   {pendingIncoming.length === 0 && pendingOutgoing.length === 0 && (
-                    <p className="text-xs text-gray-700 dark:text-base-content/50 py-3 font-medium">No pending requests</p>
+                    <p className="text-sm text-base-content/90 py-4 font-medium">No pending requests</p>
                   )}
                 </>
               )}
@@ -548,24 +535,22 @@ const Sidebar = ({ onClose }) => {
 
       {/* CURRENT USER */}
       {authUser && (
-        <div className="p-3 border-t border-gray-200/40 dark:border-base-300/20 bg-gradient-to-t from-gray-100/80 to-gray-50/50 dark:from-base-200/60 dark:to-base-100/50">
-          <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-white/60 dark:bg-base-200/40 border border-transparent dark:border-base-300/20 shadow-inner">
+        <div className="p-3 border-t border-base-200/50 shrink-0 bg-gradient-to-t from-base-200/30 to-transparent">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-base-200/70 dark:bg-base-300/50 border border-base-300/30">
             <div className="relative shrink-0">
-              <div className="p-0.5 rounded-xl bg-gradient-to-br from-primary to-primary/60">
-                <img
-                  src={authUser.profilePic || "/boy.png"}
-                  alt="You"
-                  className="w-9 h-9 rounded-[10px] object-cover border-2 border-base-200 dark:border-base-300"
-                />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-base-200 dark:ring-base-300 animate-pulse shadow-sm" />
+              <img
+                src={authUser.profilePic || "/boy.png"}
+                alt="You"
+                className="w-9 h-9 rounded-xl object-cover ring-2 ring-primary/30"
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-base-100 dark:ring-base-200" />
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate text-gray-900 dark:text-base-content">
+              <p className="text-sm font-bold truncate text-base-content">
                 {authUser.fullName || "You"}
               </p>
-              <p className="text-[11px] text-success flex items-center gap-1 font-medium">
+              <p className="text-xs text-success flex items-center gap-1.5 font-semibold">
                 <span className="w-1.5 h-1.5 bg-success rounded-full shrink-0" />
                 Online
               </p>

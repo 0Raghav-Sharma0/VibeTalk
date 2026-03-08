@@ -36,13 +36,13 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
   };
 
   return (
-    <header className="h-16 px-6 flex items-center justify-between border-b border-gray-200/40 dark:border-base-300/20 bg-base-100">
+    <header className="h-16 px-6 flex items-center justify-between border-b border-transparent bg-base-100">
       
       {/* LEFT */}
       <div className="flex items-center gap-4">
         {/* Avatar */}
         <div className="relative">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-primary/40">
+          <div className="w-12 h-12 rounded-xl overflow-hidden border border-transparent">
             <img
               src={selectedUser.profilePic || "/boy.png"}
               alt={selectedUser.fullName}
@@ -51,7 +51,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           </div>
 
           <span
-            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-base-200 dark:border-base-300 ${
+            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-transparent ${
               selectedUser.isOnline ? "bg-success" : "bg-gray-400"
             }`}
           />

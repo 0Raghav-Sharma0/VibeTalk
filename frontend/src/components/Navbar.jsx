@@ -15,7 +15,7 @@ const Navbar = ({ onOpenSidebar }) => {
       className={`fixed top-0 left-0 right-0 z-40 h-14 min-h-[56px] pt-[env(safe-area-inset-top)] transition-all ${
         isSettings
           ? "border-transparent bg-transparent"
-          : "border-b border-gray-200/40 dark:border-base-300/20 bg-base-100/95 backdrop-blur-md shadow-sm"
+          : "border-b border-transparent bg-base-100/95 backdrop-blur-md shadow-sm"
       }`}
     >
       <div className={`flex h-full items-center justify-between px-4 sm:px-6 ${isSettings ? "text-white" : ""}`}>
@@ -57,7 +57,7 @@ const Navbar = ({ onOpenSidebar }) => {
             to="/watch-party"
             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
               isSettings
-                ? "text-white bg-white/15 border border-base-content/20 hover:bg-white/20 hover:border-base-content/30"
+                ? "text-white bg-white/15 border border-transparent hover:bg-white/20 hover:border-transparent"
                 : "text-primary bg-primary/15 border border-primary/25 hover:bg-primary/25 hover:border-primary/40"
             }`}
           >

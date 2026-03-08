@@ -97,7 +97,7 @@ export default function ChatContainer() {
     <div className="h-full min-h-0 flex flex-col bg-white dark:bg-base-100">
 
       {/* ================= HEADER ================= */}
-      <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-gray-200/40 dark:border-base-300/20 flex items-center justify-between bg-white dark:bg-base-100">
+      <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent flex items-center justify-between bg-white dark:bg-base-100">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedUser(null)}
@@ -109,10 +109,10 @@ export default function ChatContainer() {
           <div className="relative">
             <img
               src={selectedUser.profilePic || "/boy.png"}
-              className="w-11 h-11 rounded-xl object-cover border border-gray-300 dark:border-primary/20"
+              className="w-11 h-11 rounded-xl object-cover border border-transparent"
             />
             <div
-              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-base-200 dark:border-base-300 ${
+              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-transparent ${
                 selectedUser.isOnline ? "bg-emerald-500" : "bg-gray-400"
               }`}
             />
@@ -168,12 +168,12 @@ export default function ChatContainer() {
 
       {/* ================= SEARCH ================= */}
       {showSearch && (
-        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-gray-200/40 dark:border-base-300/20 bg-white dark:bg-base-100">
+        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent bg-white dark:bg-base-100">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search messages..."
-            className="w-full px-4 py-2 bg-gray-50 dark:bg-base-200 border border-gray-300 dark:border-base-300 rounded-lg focus:outline-none"
+            className="w-full px-4 py-2 bg-gray-50 dark:bg-base-200 border border-transparent rounded-lg focus:outline-none"
             autoFocus
           />
         </div>
@@ -207,7 +207,7 @@ export default function ChatContainer() {
               onClick={() => setShowWhiteboard(false)}
             />
             <motion.div
-              className="fixed right-0 top-0 h-full w-full md:w-[480px] bg-white dark:bg-base-100 border-l z-50 overflow-hidden flex flex-col"
+              className="fixed right-0 top-0 h-full w-full md:w-[480px] bg-white dark:bg-base-100 border-l border-transparent z-50 overflow-hidden flex flex-col"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -227,7 +227,7 @@ export default function ChatContainer() {
               onClick={() => toggleMusicPlayer(false)}
             />
             <motion.div
-              className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-white dark:bg-base-100 border-l z-50"
+              className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-white dark:bg-base-100 border-l border-transparent z-50"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}

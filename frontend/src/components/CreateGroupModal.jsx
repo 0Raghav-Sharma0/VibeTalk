@@ -35,8 +35,8 @@ const CreateGroupModal = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" role="dialog" aria-modal="true">
-      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-base-100 shadow-xl border border-gray-200/40 dark:border-base-300/20 overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200/80 dark:border-base-300/50">
+      <div className="w-full max-w-md rounded-2xl bg-white dark:bg-base-100 shadow-xl border border-transparent overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-transparent">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-primary/15">
               <Users className="w-5 h-5 text-primary" />
@@ -60,7 +60,7 @@ const CreateGroupModal = ({ onClose }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter group name"
-              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200/40 dark:border-base-300/20 bg-white dark:bg-base-100 text-gray-900 dark:text-base-content placeholder:text-gray-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+              className="w-full px-4 py-3 rounded-xl border-2 border-transparent bg-white dark:bg-base-100 text-gray-900 dark:text-base-content placeholder:text-gray-500 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
               required
             />
           </div>
@@ -69,7 +69,7 @@ const CreateGroupModal = ({ onClose }) => {
             <label className="block text-sm font-semibold text-gray-700 dark:text-base-content/80 mb-2">
               Add members (friends only)
             </label>
-            <div className="max-h-48 overflow-y-auto space-y-2 rounded-xl border-2 border-gray-200/40 dark:border-base-300/20 p-2">
+            <div className="max-h-48 overflow-y-auto space-y-2 rounded-xl border-2 border-transparent p-2">
               {friends.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-base-content/50 py-4 text-center">No friends to add</p>
               ) : (

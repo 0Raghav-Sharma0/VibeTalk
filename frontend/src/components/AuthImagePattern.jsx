@@ -8,7 +8,7 @@ const Tile = ({ src }) => {
     <div
       className="
         overflow-hidden rounded-2xl relative cursor-pointer
-        border border-base-300 bg-base-200 shadow-xl
+        border border-transparent bg-base-200 shadow-xl
         hover:shadow-2xl transition
       "
       style={{ aspectRatio: "1 / 1" }}
@@ -39,7 +39,7 @@ const AuthImagePattern = ({ title, subtitle, images = [] }) => {
       <div
         className="
           w-full max-w-lg p-8 text-center rounded-3xl
-          bg-base-200 border border-base-300 shadow-2xl
+          bg-base-200 border border-transparent shadow-2xl
         "
       >
         <div className="grid grid-cols-3 gap-4 mb-8 select-none">

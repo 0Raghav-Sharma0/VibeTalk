@@ -71,7 +71,7 @@ const WatchPartyPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-base-100 border border-gray-200/80 dark:border-base-300/50 rounded-2xl p-7 shadow-xl"
+          className="bg-white dark:bg-base-100 border border-transparent rounded-2xl p-7 shadow-xl"
         >
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-base-content mb-1">
             🎬 Watch Party
@@ -87,7 +87,7 @@ const WatchPartyPage = () => {
                 ${
                   error
                     ? "bg-red-50 border-red-200 text-red-700 dark:bg-error/10 dark:border-error/30 dark:text-error"
-                    : "bg-gray-100 border-gray-300 text-gray-800 dark:bg-base-200 dark:border-base-300"
+                    : "bg-gray-100 border-transparent text-gray-800 dark:bg-base-200 dark:border-transparent"
                 }`}
             >
               {error || status}
@@ -107,7 +107,7 @@ const WatchPartyPage = () => {
                   ${
                     videoType === id
                       ? "bg-gray-900 text-white"
-                      : "bg-gray-100 dark:bg-base-200 border border-gray-300 dark:border-base-300 hover:bg-gray-200 dark:hover:bg-base-300 text-gray-800 dark:text-base-content"
+                      : "bg-gray-100 dark:bg-base-200 border border-transparent hover:bg-gray-200 dark:hover:bg-base-300 text-gray-800 dark:text-base-content"
                   }`}
               >
                 <Icon size={16} className="inline mr-2" />
@@ -123,7 +123,7 @@ const WatchPartyPage = () => {
               placeholder="Paste YouTube link…"
               className="w-full px-4 py-2 mb-4 rounded-lg
                          bg-gray-100 dark:bg-base-200
-                         border border-gray-300 dark:border-base-300
+                         border border-transparent
                          text-gray-900 dark:text-base-content
                          placeholder:text-gray-500 dark:placeholder:text-base-content/50
                          focus:ring-2 focus:ring-gray-400 dark:focus:ring-base-content/40
@@ -131,7 +131,7 @@ const WatchPartyPage = () => {
             />
           ) : (
             <label className="block mb-4">
-              <div className="px-4 py-3 rounded-lg border border-dashed border-gray-300 dark:border-base-300
+              <div className="px-4 py-3 rounded-lg border border-dashed border-transparent
                               text-center cursor-pointer
                               text-gray-700 dark:text-base-content/70
                               hover:bg-gray-100 dark:hover:bg-base-200">
@@ -158,7 +158,7 @@ const WatchPartyPage = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white dark:bg-base-100 border border-gray-200/80 dark:border-base-300/50 rounded-2xl p-7 shadow-xl"
+          className="bg-white dark:bg-base-100 border border-transparent rounded-2xl p-7 shadow-xl"
         >
           <h2 className="text-lg font-semibold text-gray-900 dark:text-base-content mb-4">
             Join Existing Party
@@ -170,7 +170,7 @@ const WatchPartyPage = () => {
             placeholder="Enter Room ID"
             className="w-full px-4 py-2 mb-4 rounded-lg
                        bg-gray-100 dark:bg-base-200
-                       border border-gray-300 dark:border-base-300
+                       border border-transparent
                        text-gray-900 dark:text-base-content
                        placeholder:text-gray-500 dark:placeholder:text-base-content/50
                        focus:ring-2 focus:ring-gray-400 dark:focus:ring-base-content/40
@@ -182,7 +182,7 @@ const WatchPartyPage = () => {
             disabled={loading}
             className="w-full py-3 rounded-xl font-medium
                        bg-gray-100 dark:bg-base-200
-                       border border-gray-300 dark:border-base-300
+                       border border-transparent
                        hover:bg-gray-200 dark:hover:bg-base-300
                        flex items-center justify-center gap-2
                        text-gray-900 dark:text-base-content
@@ -206,7 +206,7 @@ const WatchPartyPage = () => {
                 key={f}
                 className="px-3 py-1 rounded-full
                            bg-gray-100 dark:bg-base-200
-                           border border-gray-300 dark:border-base-300
+                           border border-transparent
                            text-gray-700 dark:text-base-content/70"
               >
                 {f}

@@ -168,7 +168,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
                 ? "bg-transparent p-0 shadow-none"
                 : isMine
                 ? "bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/10"
-                : "bg-base-200 border border-base-300"
+                : "bg-base-200 border border-transparent"
             }`}
           >
             {/* Text content */}
@@ -232,7 +232,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
                 className="
                   mt-2 flex items-center gap-3 p-3 rounded-xl
                   bg-base-100 hover:bg-base-200 transition-all duration-200
-                  border border-base-300 hover:border-base-400
+                  border border-transparent hover:border-transparent
                   no-underline text-inherit
                 "
                 onClick={(e) => {

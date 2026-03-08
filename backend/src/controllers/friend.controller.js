@@ -103,11 +103,11 @@ export const acceptFriendRequest = async (req, res) => {
     request.status = "accepted";
     await request.save();
 
-    await invalidateFriendCache(myId, request.fromUser);
+    const fromUserId = String(request.fromUser?._id ?? request.fromUser);
+    await invalidateFriendCache(myId, fromUserId);
 
     const populated = await FriendRequest.findById(request._id)
       .populate("fromUser toUser", "fullName profilePic email");
-    const fromUserId = populated.fromUser._id.toString();
 
     const fromSocket = getReceiverSocketId(fromUserId);
     if (fromSocket) {

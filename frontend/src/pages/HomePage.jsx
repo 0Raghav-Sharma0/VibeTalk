@@ -56,7 +56,7 @@ export default function HomePage() {
           <div className="relative w-[320px] sm:w-[340px] max-w-[90vw] h-full bg-base-100 dark:bg-base-200 shadow-xl z-50 flex flex-col">
 
             {/* Drawer Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-transparent dark:border-base-300/30 bg-base-100">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-transparent bg-base-100">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
                 <span className="font-medium">Contacts</span>

@@ -44,7 +44,7 @@ export default function SignUpPage() {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full max-w-md bg-white dark:bg-base-100 border border-gray-200/80 dark:border-base-300/50 rounded-2xl p-8 shadow-xl overflow-hidden"
+          className="relative w-full max-w-md bg-white dark:bg-base-100 border border-transparent rounded-2xl p-8 shadow-xl overflow-hidden"
         >
           {/* subtle glow */}
           <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/15 blur-3xl rounded-full" />
@@ -76,7 +76,7 @@ export default function SignUpPage() {
                     className="
                       w-full h-11 pl-10 pr-3 rounded-lg
                       bg-gray-100 dark:bg-base-200
-                      border border-gray-300 dark:border-base-300
+                      border border-transparent
                       text-gray-900 dark:text-base-content
                       focus:outline-none focus:ring-2 focus:ring-primary/40
                     "
@@ -100,7 +100,7 @@ export default function SignUpPage() {
                     className="
                       w-full h-11 pl-10 pr-3 rounded-lg
                       bg-gray-100 dark:bg-base-200
-                      border border-gray-300 dark:border-base-300
+                      border border-transparent
                       text-gray-900 dark:text-base-content
                       focus:outline-none focus:ring-2 focus:ring-primary/40
                     "
@@ -124,7 +124,7 @@ export default function SignUpPage() {
                     className="
                       w-full h-11 pl-10 pr-10 rounded-lg
                       bg-gray-100 dark:bg-base-200
-                      border border-gray-300 dark:border-base-300
+                      border border-transparent
                       text-gray-900 dark:text-base-content
                       focus:outline-none focus:ring-2 focus:ring-primary/40
                     "

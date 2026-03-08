@@ -630,7 +630,7 @@ export default function Whiteboard({ roomId, onClose }) {
           <div className="wb-status-item">
             <span className="wb-status-label">Color</span>
             <div className="wb-status-value flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full border border-base-400" style={{ backgroundColor: color }} />
+              <div className="w-3 h-3 rounded-full border border-transparent" style={{ backgroundColor: color }} />
               {!isMobile && <span className="font-mono text-xs">{color}</span>}
             </div>
           </div>

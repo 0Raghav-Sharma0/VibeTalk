@@ -10,7 +10,7 @@ const NoChatSelected = () => {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="
           flex flex-col items-center text-center
-          border border-gray-200/30 dark:border-base-300/20 rounded-xl
+          border border-transparent rounded-xl
           p-8 sm:p-10 max-w-sm w-full bg-base-200/80 dark:bg-base-200/60
         "
       >

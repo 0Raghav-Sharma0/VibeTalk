@@ -58,9 +58,9 @@ const GroupMessageInput = () => {
   if (!selectedGroup) return null;
 
   return (
-    <div className="relative w-full bg-white dark:bg-base-100 border-t border-gray-200/40 dark:border-base-300/20 pb-[env(safe-area-inset-bottom)]">
+    <div className="relative w-full bg-white dark:bg-base-100 border-t border-transparent pb-[env(safe-area-inset-bottom)]">
       {imagePreview && (
-        <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-gray-300 dark:border-base-300 rounded-xl p-3">
+        <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-transparent rounded-xl p-3">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-gray-800 dark:text-base-content">Image preview</span>
             <button type="button" onClick={() => setImagePreview(null)} className="p-1 rounded hover:bg-gray-200 dark:hover:bg-base-300">
@@ -95,7 +95,7 @@ const GroupMessageInput = () => {
             onKeyDown={handleKeyPress}
             placeholder="Message the group..."
             rows={isExpanded ? 4 : 1}
-            className="w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-base-200 border border-gray-200/80 dark:border-base-300/50 text-gray-900 dark:text-base-content placeholder:text-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+            className="w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-base-200 border border-transparent text-gray-900 dark:text-base-content placeholder:text-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
           />
           {showEmojiPicker && (
             <div className="absolute bottom-full right-0 mb-2">

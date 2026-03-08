@@ -6,7 +6,7 @@ import FriendRequest from "../models/friendRequest.model.js";
 import { getIO, getReceiverSocketId } from "../lib/socket.js";
 import { cacheGet, cacheSet, cacheKeys } from "../lib/cache.js";
 
-const SIDEBAR_CACHE_TTL = 120; // 2 min
+const SIDEBAR_CACHE_TTL = 60; // 1 min - shorter to avoid stale friend list
 
 /* -------------------------------------------------------------------------- */
 /* 🧩  Get Friends Only (Sidebar List) - visible only after request accepted  */

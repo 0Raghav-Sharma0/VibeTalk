@@ -35,7 +35,7 @@ export default function GroupChatContainer() {
   return (
     <div className="h-full min-h-0 flex flex-col bg-white dark:bg-base-100">
       {/* HEADER */}
-      <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-gray-200/40 dark:border-base-300/20 flex items-center justify-between bg-white dark:bg-base-100">
+      <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent flex items-center justify-between bg-white dark:bg-base-100">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedGroup(null)}
@@ -79,12 +79,12 @@ export default function GroupChatContainer() {
       </div>
 
       {showSearch && (
-        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-gray-200/40 dark:border-base-300/20 bg-white dark:bg-base-100">
+        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent bg-white dark:bg-base-100">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search messages..."
-            className="w-full px-4 py-2 bg-gray-50 dark:bg-base-200 border border-gray-300 dark:border-base-300 rounded-lg focus:outline-none"
+            className="w-full px-4 py-2 bg-gray-50 dark:bg-base-200 border border-transparent rounded-lg focus:outline-none"
             autoFocus
           />
         </div>
