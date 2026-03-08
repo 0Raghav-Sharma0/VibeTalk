@@ -248,6 +248,27 @@
   }
 }
 
+@media (max-width: 768px) {
+  /* Hide chat + participants on mobile - fixes UI issues */
+  .right-panel {
+    display: none !important;
+  }
+
+  .watchparty-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+
+  .video-section {
+    padding: 0.5rem;
+  }
+
+  .video-container {
+    aspect-ratio: 16/9;
+    max-height: none;
+  }
+}
+
 @media (max-width: 640px) {
   .header-controls {
     flex-wrap: wrap;

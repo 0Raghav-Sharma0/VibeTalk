@@ -4,6 +4,7 @@ import { Smile, Send } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 import { useWatchParty } from '../contexts/WatchPartyContext';
 import { useThemeStore } from '../store/useThemeStore';
+import { useAuthStore } from '../store/useAuthStore';
 import './WatchPartyChatPanel.css';
 
 const DARK_THEMES = ['dark', 'coffee', 'vibetalk'];
@@ -11,14 +12,26 @@ const DARK_THEMES = ['dark', 'coffee', 'vibetalk'];
 const WatchPartyChatPanel = () => {
   const { chatMessages, sendChatMessage } = useWatchParty();
   const { theme } = useThemeStore();
+  const { authUser } = useAuthStore();
   const [message, setMessage] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+
+  const currentUsername = authUser?.fullName || authUser?.username || authUser?.email || '';
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
+    if (!chatEndRef.current || !messagesContainerRef.current || chatMessages.length === 0) return;
+    const inputFocused = document.activeElement === inputRef.current;
+    const lastMsg = chatMessages[chatMessages.length - 1];
+    const lastFromMe = lastMsg?.username === currentUsername;
+    if (inputFocused && !lastFromMe) return;
+    const el = messagesContainerRef.current;
+    const hasOverflow = el.scrollHeight > el.clientHeight;
+    if (!hasOverflow) return;
+    chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, currentUsername]);
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -48,7 +61,7 @@ const WatchPartyChatPanel = () => {
   return (
     <div className="wp-chat-panel">
       {/* Messages */}
-      <div className="wp-chat-messages">
+      <div ref={messagesContainerRef} className="wp-chat-messages">
         {chatMessages.length === 0 ? (
           <div className="wp-chat-empty">
             <div className="wp-chat-empty-icon">💬</div>
