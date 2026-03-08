@@ -75,11 +75,11 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="relative w-full bg-white dark:bg-base-100 border-t border-gray-200 dark:border-base-300">
+    <div className="relative w-full bg-white dark:bg-base-100 border-t border-gray-200/40 dark:border-base-300/20 pb-[env(safe-area-inset-bottom)]">
 
       {/* IMAGE PREVIEW */}
       {imagePreview && (
-        <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-gray-300 dark:border-base-300 rounded-xl p-3">
+        <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-gray-300/80 dark:border-base-300/50 rounded-xl p-3">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-gray-800 dark:text-base-content flex items-center gap-2">
               <Paperclip size={14} /> Image attached
@@ -95,19 +95,19 @@ const MessageInput = () => {
           <img
             src={imagePreview}
             alt="preview"
-            className="w-24 h-24 rounded-lg object-cover border border-gray-300 dark:border-base-300"
+            className="w-24 h-24 rounded-lg object-cover border border-gray-300/80 dark:border-base-300/50"
           />
         </div>
       )}
 
       {/* IMAGE PICKER */}
       {isExpanded && (
-        <div className="mx-3 mb-3 bg-gray-100 dark:bg-base-200 border border-gray-300 dark:border-base-300 rounded-xl p-3">
+        <div className="mx-3 mb-3 bg-gray-100 dark:bg-base-200 border border-gray-300/80 dark:border-base-300/50 rounded-xl p-3">
           <button
             onClick={() => imageInputRef.current.click()}
             className="w-full flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300 transition"
           >
-            <div className="p-2 rounded-lg bg-white dark:bg-base-100 border border-gray-300 dark:border-base-300">
+            <div className="p-2 rounded-lg bg-white dark:bg-base-100 border border-gray-300/80 dark:border-base-300/50">
               <Image size={20} />
             </div>
             <span className="text-xs text-gray-600 dark:text-base-content/60">
@@ -119,9 +119,9 @@ const MessageInput = () => {
 
       {/* EMOJI PICKER */}
       {showEmojiPicker && (
-        <div className="absolute bottom-20 left-2 right-2 sm:left-auto sm:right-4 sm:w-[340px] z-50">
-          <div className="bg-white dark:bg-base-100 border border-gray-300 dark:border-base-300 rounded-xl shadow-xl">
-            <div className="p-2 border-b border-gray-200 dark:border-base-300 flex justify-between items-center">
+        <div className="absolute bottom-20 left-2 right-2 sm:left-auto sm:right-4 sm:w-[340px] max-w-[calc(100vw-1rem)] z-50">
+          <div className="bg-white dark:bg-base-100 border border-gray-200/40 dark:border-base-300/20 rounded-xl shadow-xl">
+            <div className="p-2 border-b border-gray-200/40 dark:border-base-300/20 flex justify-between items-center">
               <span className="text-sm font-medium text-gray-800 dark:text-base-content">
                 Emoji
               </span>
@@ -148,13 +148,13 @@ const MessageInput = () => {
       )}
 
       {/* INPUT BAR */}
-      <div className="px-3 py-2">
+      <div className="px-3 py-2" data-message-input>
         <div className="
           flex items-center gap-2
           bg-gray-100 dark:bg-base-200
-          border border-gray-300 dark:border-base-300
+          border border-gray-300/80 dark:border-base-300/50/50
           rounded-xl px-3 py-2
-          focus-within:ring-2 focus-within:ring-primary
+          focus-within:border-gray-400 dark:focus-within:border-base-300
         ">
           <button
             onClick={() => {
@@ -183,7 +183,7 @@ const MessageInput = () => {
             onKeyDown={handleKeyPress}
             placeholder="Type your message..."
             className="
-              flex-1 bg-transparent outline-none
+              flex-1 bg-transparent outline-none focus:outline-none focus-visible:outline-none
               text-gray-900 dark:text-base-content
               placeholder:text-gray-400 dark:placeholder:text-base-content/50
               text-sm md:text-base

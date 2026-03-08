@@ -1,17 +1,21 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap");
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ================= CSS RESET ================= */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
 html,
 body {
   height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  -webkit-text-size-adjust: 100%;
 }
 
 *,
@@ -22,7 +26,9 @@ body {
 }
 
 body {
-  font-family: "Plus Jakarta Sans", "gg sans", "Noto Sans", system-ui, -apple-system, sans-serif;
+  font-family: "Outfit", "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -106,13 +112,27 @@ body {
 /* ================= TYPOGRAPHY ================= */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   color: var(--text);
 }
 
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+h4 { font-size: 1.125rem; }
+h5 { font-size: 1rem; }
+h6 { font-size: 0.9375rem; }
+
 p {
+  font-size: 0.9375rem;
   line-height: 1.6;
   color: var(--text-secondary);
+}
+
+small, .text-muted {
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 /* ================= BACKGROUND UTILITIES ================= */
@@ -296,7 +316,7 @@ input:focus, textarea:focus, select:focus {
 
 /* ================= UTILITY CLASSES ================= */
 
-/* Safe area padding for mobile */
+/* Safe area padding for mobile (notched phones) */
 .safe-top {
   padding-top: env(safe-area-inset-top);
 }
@@ -311,6 +331,19 @@ input:focus, textarea:focus, select:focus {
 
 .safe-right {
   padding-right: env(safe-area-inset-right);
+}
+
+/* Responsive: prevent horizontal overflow on small screens */
+html, body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive: ensure proper scaling on mobile */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
 }
 
 /* Touch-friendly targets */
@@ -465,6 +498,12 @@ select:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+/* Message input - no green outline (uses neutral border instead) */
+[data-message-input] input:focus,
+[data-message-input] input:focus-visible {
+  outline: none !important;
 }
 
 /* High contrast mode support */

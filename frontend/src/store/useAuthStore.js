@@ -136,11 +136,12 @@ export const useAuthStore = create((set, get) => ({
 
     if (socket && socket.connected) return;
 
+    const userId = authUser._id != null ? String(authUser._id) : "";
     const sock = io(BASE_URL, {
-      query: { userId: authUser._id },
+      query: { userId },
       auth: {
         token: localStorage.getItem("token"),
-        userId: authUser._id,
+        userId,
         username: authUser.username || authUser.fullName || "User",
       },
       transports: ["websocket", "polling"],

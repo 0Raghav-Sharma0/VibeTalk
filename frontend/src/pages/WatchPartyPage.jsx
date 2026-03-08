@@ -71,7 +71,7 @@ const WatchPartyPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-base-100 border border-gray-200 dark:border-base-300 rounded-2xl p-7 shadow-xl"
+          className="bg-white dark:bg-base-100 border border-gray-200/80 dark:border-base-300/50 rounded-2xl p-7 shadow-xl"
         >
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-base-content mb-1">
             🎬 Watch Party
@@ -158,7 +158,7 @@ const WatchPartyPage = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white dark:bg-base-100 border border-gray-200 dark:border-base-300 rounded-2xl p-7 shadow-xl"
+          className="bg-white dark:bg-base-100 border border-gray-200/80 dark:border-base-300/50 rounded-2xl p-7 shadow-xl"
         >
           <h2 className="text-lg font-semibold text-gray-900 dark:text-base-content mb-4">
             Join Existing Party

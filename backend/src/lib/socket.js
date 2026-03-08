@@ -49,11 +49,15 @@ function isOriginAllowed(origin) {
    SOCKET SERVER
 ============================================================ */
 let io = null;
-const userSocketMap = {}; // { userId: socketId }
+const userSocketMap = {}; // { userId: socketId } — keys normalized to string
 const watchPartyRooms = new Map();
 
+function toStr(id) {
+  return id != null ? String(id) : "";
+}
+
 export function getReceiverSocketId(userId) {
-  return userSocketMap[userId];
+  return userSocketMap[toStr(userId)];
 }
 
 export function createSocketServer(server) {
@@ -96,17 +100,18 @@ export function createSocketServer(server) {
     console.log(`👤 Socket user: ${username} (${userId})`);
 
     if (userId) {
-      if (userSocketMap[userId]) {
-        console.log(`🔄 Replacing old connection for user ${userId}`);
-        const oldSocket = io.sockets.sockets.get(userSocketMap[userId]);
+      const uid = toStr(userId);
+      if (userSocketMap[uid]) {
+        console.log(`🔄 Replacing old connection for user ${uid}`);
+        const oldSocket = io.sockets.sockets.get(userSocketMap[uid]);
         if (oldSocket) {
           oldSocket.disconnect(true);
         }
-        delete userSocketMap[userId];
+        delete userSocketMap[uid];
       }
 
-      userSocketMap[userId] = socket.id;
-      console.log(`✅ User Online: ${userId} -> ${socket.id}`);
+      userSocketMap[uid] = socket.id;
+      console.log(`✅ User Online: ${uid} -> ${socket.id}`);
     }
 
     socket.emit("connection-success", {
@@ -438,14 +443,15 @@ export function createSocketServer(server) {
         return;
       }
 
-      if (socket.userId && userSocketMap[socket.userId] === socket.id) {
-        console.log(`👤 User Offline: ${socket.userId}`);
-        delete userSocketMap[socket.userId];
+      const uid = socket.userId ? toStr(socket.userId) : "";
+      if (uid && userSocketMap[uid] === socket.id) {
+        console.log(`👤 User Offline: ${uid}`);
+        delete userSocketMap[uid];
 
         // Clean up any active calls involving this user
         for (const [key] of activeCalls) {
           const [callerId, calleeId] = key.split(":");
-          if (callerId === socket.userId || calleeId === socket.userId) {
+          if (callerId === uid || calleeId === uid) {
             activeCalls.delete(key);
             console.log(`🧹 Cleaned up call: ${key}`);
           }

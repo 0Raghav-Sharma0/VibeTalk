@@ -40,6 +40,15 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ================= THEME-COLOR META (light/dark) ================= */
+  useEffect(() => {
+    const meta = document.getElementById("theme-color-meta");
+    if (meta) {
+      const isDark = ["dark", "coffee", "vibetalk"].includes(theme);
+      meta.setAttribute("content", isDark ? "#0e1512" : "#f5faf7");
+    }
+  }, [theme]);
+
   /* ================= CHAT SOCKET LISTENER ================= */
   useEffect(() => {
     if (!socket) return;

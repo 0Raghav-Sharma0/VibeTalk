@@ -36,7 +36,7 @@ export default function GroupMembersPanel({ group, onClose }) {
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full max-w-sm bg-white dark:bg-base-100 shadow-xl flex flex-col">
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-base-300">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200/80 dark:border-base-300/50">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             <h2 className="font-bold text-gray-900 dark:text-base-content">Group Members</h2>

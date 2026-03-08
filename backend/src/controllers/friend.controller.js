@@ -112,6 +112,9 @@ export const acceptFriendRequest = async (req, res) => {
     const fromSocket = getReceiverSocketId(fromUserId);
     if (fromSocket) {
       getIO().to(fromSocket).emit("friend-request-accepted", { request: populated });
+      console.log(`📤 friend-request-accepted sent to sender: ${fromUserId}`);
+    } else {
+      console.warn(`⚠️ Sender ${fromUserId} not connected — they'll see the friend when they refresh`);
     }
 
     res.status(200).json(request);

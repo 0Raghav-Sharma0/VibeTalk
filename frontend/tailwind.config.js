@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "gg sans", "Noto Sans", ...defaultTheme.fontFamily.sans],
+        sans: ["Outfit", "Plus Jakarta Sans", "system-ui", ...defaultTheme.fontFamily.sans],
       },
       colors: {
         bg: "var(--bg)",

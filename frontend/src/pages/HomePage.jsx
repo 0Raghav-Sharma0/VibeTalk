@@ -15,16 +15,16 @@ export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen w-full bg-base-200 text-base-content flex flex-col overflow-hidden">
+    <div className="h-screen w-full min-h-[100dvh] bg-base-200 text-base-content flex flex-col overflow-hidden">
 
       {/* ==================== NAVBAR (WITH MOBILE SIDEBAR BUTTON) ==================== */}
       <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
 
       {/* ==================== MAIN AREA: Two-column layout, aligned top to bottom ==================== */}
-      <div className="flex flex-1 min-h-0 pt-14">
+      <div className="flex flex-1 min-h-0" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}>
 
-        {/* DESKTOP SIDEBAR - fixed width 280px, full height, overflow scroll */}
-        <div className="hidden md:flex md:w-[280px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden">
+        {/* DESKTOP SIDEBAR - fixed width 320px, full height, overflow scroll */}
+        <div className="hidden md:flex md:w-[320px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden">
           <Sidebar />
         </div>
 
@@ -52,11 +52,11 @@ export default function HomePage() {
             onClick={() => setSidebarOpen(false)}
           />
 
-          {/* Drawer Panel */}
-          <div className="relative w-80 max-w-full h-full bg-base-200 shadow-xl z-50 flex flex-col">
+          {/* Drawer Panel - responsive width */}
+          <div className="relative w-[320px] sm:w-[340px] max-w-[90vw] h-full bg-base-100 dark:bg-base-200 shadow-xl z-50 flex flex-col">
 
             {/* Drawer Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 bg-base-100">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-transparent dark:border-base-300/30 bg-base-100">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-primary" />
                 <span className="font-medium">Contacts</span>

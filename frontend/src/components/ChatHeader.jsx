@@ -36,7 +36,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
   };
 
   return (
-    <header className="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-base-300 bg-base-100">
+    <header className="h-16 px-6 flex items-center justify-between border-b border-gray-200/40 dark:border-base-300/20 bg-base-100">
       
       {/* LEFT */}
       <div className="flex items-center gap-4">
@@ -51,7 +51,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           </div>
 
           <span
-            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-base-100 ${
+            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-base-200 dark:border-base-300 ${
               selectedUser.isOnline ? "bg-success" : "bg-gray-400"
             }`}
           />

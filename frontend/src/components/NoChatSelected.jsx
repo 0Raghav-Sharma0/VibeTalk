@@ -10,8 +10,8 @@ const NoChatSelected = () => {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="
           flex flex-col items-center text-center
-          border border-base-300 rounded-xl
-          p-10 max-w-sm w-full bg-base-200
+          border border-gray-200/30 dark:border-base-300/20 rounded-xl
+          p-8 sm:p-10 max-w-sm w-full bg-base-200/80 dark:bg-base-200/60
         "
       >
         {/* Minimal geometric icon */}
@@ -25,7 +25,7 @@ const NoChatSelected = () => {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-primary"
+            className="text-primary/80 dark:text-primary/70"
           >
             <path d="M21 15v-8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14l4-4h10" />
           </svg>

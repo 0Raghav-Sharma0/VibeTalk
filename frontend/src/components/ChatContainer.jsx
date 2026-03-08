@@ -97,7 +97,7 @@ export default function ChatContainer() {
     <div className="h-full min-h-0 flex flex-col bg-white dark:bg-base-100">
 
       {/* ================= HEADER ================= */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-base-300 flex items-center justify-between bg-white dark:bg-base-100">
+      <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-gray-200/40 dark:border-base-300/20 flex items-center justify-between bg-white dark:bg-base-100">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedUser(null)}
@@ -112,7 +112,7 @@ export default function ChatContainer() {
               className="w-11 h-11 rounded-xl object-cover border border-gray-300 dark:border-primary/20"
             />
             <div
-              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-base-100 ${
+              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-base-200 dark:border-base-300 ${
                 selectedUser.isOnline ? "bg-emerald-500" : "bg-gray-400"
               }`}
             />
@@ -168,7 +168,7 @@ export default function ChatContainer() {
 
       {/* ================= SEARCH ================= */}
       {showSearch && (
-        <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-base-300 bg-white dark:bg-base-100">
+        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-gray-200/40 dark:border-base-300/20 bg-white dark:bg-base-100">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

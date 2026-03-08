@@ -699,7 +699,7 @@ const VideoCall = () => {
           {/* Local Video PIP */}
           {callType === "video" && (
             <motion.div
-              className="absolute top-6 right-6 w-64 h-48 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20"
+              className="absolute top-6 right-6 w-64 h-48 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-base-300/50"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}

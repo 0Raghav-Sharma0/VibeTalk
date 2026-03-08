@@ -44,7 +44,7 @@ export default function LoginPage() {
           variants={rise}
           initial="hidden"
           animate="show"
-          className="relative w-full max-w-md bg-white dark:bg-base-100 border border-gray-200 dark:border-base-300 rounded-2xl p-8 shadow-xl overflow-hidden"
+          className="relative w-full max-w-md bg-white dark:bg-base-100 border border-gray-200/80 dark:border-base-300/50 rounded-2xl p-8 shadow-xl overflow-hidden"
         >
           {/* subtle glow */}
           <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/15 blur-3xl rounded-full" />
