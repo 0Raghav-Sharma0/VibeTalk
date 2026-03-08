@@ -1,6 +1,8 @@
 // src/components/Whiteboard.jsx
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
+import { Eraser, Square, Circle, Minus, CircleDot, Undo2, Redo2, Download, Trash2, Lock, PenLine } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
+import "./Whiteboard.css";
 
 export default function Whiteboard({ roomId, onClose }) {
   const socket = useAuthStore((state) => state.socket);
@@ -25,12 +27,12 @@ export default function Whiteboard({ roomId, onClose }) {
   ];
 
   const tools = [
-    { id: "pen", icon: "✏️", label: "Pen" },
-    { id: "eraser", icon: "🧽", label: "Eraser" },
-    { id: "line", icon: "📏", label: "Line" },
-    { id: "rectangle", icon: "⬜", label: "Rectangle" },
-    { id: "ellipse", icon: "⭕", label: "Ellipse" },
-    { id: "circle", icon: "⚪", label: "Circle" }
+    { id: "pen", Icon: PenLine, label: "Pen" },
+    { id: "eraser", Icon: Eraser, label: "Eraser" },
+    { id: "line", Icon: Minus, label: "Line" },
+    { id: "rectangle", Icon: Square, label: "Rectangle" },
+    { id: "ellipse", Icon: Circle, label: "Ellipse" },
+    { id: "circle", Icon: CircleDot, label: "Circle" }
   ];
 
   /* ========== Core drawing functions ========== */
@@ -444,8 +446,8 @@ export default function Whiteboard({ roomId, onClose }) {
 
   /* ========== Render ========== */
   return (
-    <div className="flex flex-col h-full bg-base-100 border-l border-base-300 relative">
-      {/* Mobile Close Button - Only visible on mobile */}
+    <div className="whiteboard-panel relative">
+      {/* Mobile Close Button */}
       {showMobileClose && (
         <button
           onClick={handleClose}
@@ -453,193 +455,153 @@ export default function Whiteboard({ roomId, onClose }) {
           style={{ zIndex: 1000 }}
           title="Close Whiteboard"
         >
-          <span className="text-xl">✕</span>
+          <span className="text-xl">×</span>
         </button>
       )}
 
-      {/* Top Toolbar - Enhanced with better spacing and visual hierarchy */}
-      <div className={`p-3 ${isMobile ? 'px-2' : 'px-4'} flex flex-wrap gap-2 items-center border-b bg-base-200/80 backdrop-blur-sm`}>
-        {/* Tools Section */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Tools</label>
-          <div className="flex gap-1 bg-base-300 rounded-xl p-1 shadow-sm">
-            {tools.map(({ id, icon, label }) => (
+      {/* Toolbar */}
+      <div className="wb-toolbar">
+        {/* Tools */}
+        <div className="wb-section">
+          <span className="wb-section-label">Tools</span>
+          <div className="wb-tools">
+            {tools.map(({ id, Icon, label }) => (
               <button
                 key={id}
                 onClick={() => setTool(id)}
-                className={`
-                  ${isMobile ? 'p-1.5 text-sm min-w-[36px]' : 'p-2.5 min-w-[44px]'} 
-                  rounded-lg transition-all duration-200 group relative
-                  ${tool === id 
-                    ? "bg-primary shadow-md scale-105 text-primary-content" 
-                    : "hover:bg-base-100 hover:scale-102 text-base-content"
-                  }
-                `}
+                className={`wb-tool-btn ${tool === id ? "active" : ""}`}
                 title={label}
+                data-tool={id}
               >
-                <span className={isMobile ? 'text-base' : 'text-lg'}>{icon}</span>
-                {!isMobile && (
-                  <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                    <div className="bg-base-300 text-xs text-base-content px-2 py-1 rounded-md whitespace-nowrap">
-                      {label}
-                    </div>
-                  </div>
-                )}
+                <Icon size={20} strokeWidth={2.5} />
               </button>
             ))}
           </div>
         </div>
 
-        {/* Colors Section */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Colors</label>
-          <div className="flex gap-2 items-center bg-base-300 rounded-xl p-1.5 shadow-sm">
-            <div className="flex gap-1">
-              {colorPalette.map((col) => (
-                <button
-                  key={col}
-                  onClick={() => setColor(col)}
-                  className={`
-                    ${isMobile ? 'w-5 h-5' : 'w-7 h-7'} 
-                    rounded-full border-2 transition-transform duration-200 hover:scale-110 shadow-sm
-                    ${color === col ? "border-primary scale-110 ring-2 ring-primary/30" : "border-base-300"}
-                  `}
-                  style={{ backgroundColor: col }}
-                  title={col}
-                />
-              ))}
-            </div>
-            <div className="w-px h-4 bg-base-400 mx-0.5"></div>
-            <input 
-              type="color" 
-              value={color} 
-              onChange={(e) => setColor(e.target.value)} 
-              className={`${isMobile ? 'w-6 h-6' : 'w-8 h-8'} rounded-lg border border-base-300 cursor-pointer shadow-sm`} 
-              title="Custom Color" 
+        {/* Colors */}
+        <div className="wb-section">
+          <span className="wb-section-label">Colors</span>
+          <div className="wb-colors">
+            {colorPalette.map((col) => (
+              <button
+                key={col}
+                onClick={() => setColor(col)}
+                className={`wb-color-swatch ${color === col ? "active" : ""}`}
+                style={{ backgroundColor: col }}
+                title={col}
+              />
+            ))}
+            <div className="wb-color-divider" />
+            <input
+              type="color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              className="wb-color-picker"
+              title="Custom Color"
             />
           </div>
         </div>
 
-        {/* Brush Size Section */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">
+        {/* Brush Size */}
+        <div className="wb-section">
+          <span className="wb-section-label">
             {tool === "eraser" ? "Eraser Size" : "Brush Size"}
-          </label>
-          <div className="flex gap-2 items-center bg-base-300 rounded-xl px-3 py-1.5 shadow-sm">
-            <input 
-              type="range" 
-              min="2" 
-              max="25" 
-              value={size} 
-              onChange={(e) => setSize(Number(e.target.value))} 
-              className={`${isMobile ? 'w-16' : 'w-24'} accent-primary`} 
+          </span>
+          <div className="wb-size-wrap">
+            <input
+              type="range"
+              min="2"
+              max="25"
+              value={size}
+              onChange={(e) => setSize(Number(e.target.value))}
+              className="wb-size-slider"
             />
-            <div className="flex items-center gap-1 min-w-[50px]">
-              <div 
-                className="rounded-full bg-base-content"
-                style={{
-                  width: `${Math.max(8, size)}px`,
-                  height: `${Math.max(8, size)}px`,
-                  backgroundColor: tool === "eraser" ? '#9ca3af' : color
-                }}
-              ></div>
-              <span className="text-sm font-medium w-5">{size}</span>
-            </div>
+            <div
+              className="wb-size-preview"
+              style={{
+                width: `${Math.max(8, size)}px`,
+                height: `${Math.max(8, size)}px`,
+                backgroundColor: tool === "eraser" ? "#9ca3af" : color
+              }}
+            />
+            <span className="wb-size-value">{size}</span>
           </div>
         </div>
 
         {/* Fill Toggle */}
         {!isFreehandTool && (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Fill</label>
-            <button 
-              onClick={() => setIsFilled(!isFilled)} 
-              className={`
-                ${isMobile ? 'px-3 py-1.5 text-sm' : 'px-4 py-2.5'} 
-                rounded-xl transition-all duration-200 font-medium
-                ${isFilled 
-                  ? "bg-primary text-primary-content shadow-md" 
-                  : "bg-base-300 hover:bg-base-100 shadow-sm"
-                }
-              `}
+          <div className="wb-section">
+            <span className="wb-section-label">Fill</span>
+            <button
+              onClick={() => setIsFilled(!isFilled)}
+              className={`wb-fill-btn ${isFilled ? "active" : ""}`}
             >
-              {isMobile ? (isFilled ? "🟦" : "⬜") : (isFilled ? "🟦 Filled" : "⬜ Outline")}
+              {isFilled ? "Filled" : "Outline"}
             </button>
           </div>
         )}
 
-        {/* Actions Section */}
-        <div className={`flex flex-col gap-1 ${isMobile ? 'ml-1' : 'ml-auto'}`}>
-          <label className="text-xs font-semibold text-base-content/60 uppercase tracking-wide">Actions</label>
-          <div className="flex gap-1">
-            <div className="flex gap-0.5 bg-base-300 rounded-xl p-0.5 shadow-sm">
-              <button 
-                onClick={() => {
-                  if (historyIndex.current > 0) {
-                    historyIndex.current--;
-                    const img = drawingHistory.current[historyIndex.current];
-                    ctxRef.current.putImageData(img, 0, 0);
-                  } else if (historyIndex.current === 0) {
-                    ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                    historyIndex.current = -1;
-                    drawingHistory.current = [];
-                  }
-                }} 
-                className={`${isMobile ? 'p-1.5 text-sm' : 'p-2.5'} rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105`}
-                title="Undo"
-              >
-                ↩️
-              </button>
-              <button 
-                onClick={() => {
-                  if (historyIndex.current < drawingHistory.current.length - 1) {
-                    historyIndex.current++;
-                    const img = drawingHistory.current[historyIndex.current];
-                    ctxRef.current.putImageData(img, 0, 0);
-                  }
-                }} 
-                className={`${isMobile ? 'p-1.5 text-sm' : 'p-2.5'} rounded-lg hover:bg-base-100 transition-all duration-200 hover:scale-105`}
-                title="Redo"
-              >
-                ↪️
-              </button>
-            </div>
-
-            <button 
-              onClick={() => setIsDrawingEnabled(!isDrawingEnabled)} 
-              className={`
-                ${isMobile ? 'px-2 py-1.5 text-xs' : 'px-4 py-2.5'} 
-                rounded-xl transition-all duration-200 font-medium
-                ${isDrawingEnabled 
-                  ? "bg-success text-success-content shadow-md" 
-                  : "bg-error text-error-content shadow-md"
+        {/* Actions */}
+        <div className="wb-actions">
+          <div className="wb-action-group">
+            <button
+              onClick={() => {
+                if (historyIndex.current > 0) {
+                  historyIndex.current--;
+                  const img = drawingHistory.current[historyIndex.current];
+                  ctxRef.current.putImageData(img, 0, 0);
+                } else if (historyIndex.current === 0) {
+                  ctxRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                  historyIndex.current = -1;
+                  drawingHistory.current = [];
                 }
-              `}
+              }}
+              className="wb-action-btn"
+              title="Undo"
             >
-              {isMobile ? (isDrawingEnabled ? "🎯" : "🚫") : (isDrawingEnabled ? "🎯 Drawing" : "🚫 Locked")}
+              <Undo2 size={16} />
             </button>
-
-            <button 
-              onClick={downloadCanvas} 
-              className={`${isMobile ? 'px-2 py-1.5 text-xs' : 'px-4 py-2.5'} rounded-xl bg-info text-info-content hover:bg-info/90 transition-all duration-200 shadow-md font-medium`}
+            <button
+              onClick={() => {
+                if (historyIndex.current < drawingHistory.current.length - 1) {
+                  historyIndex.current++;
+                  const img = drawingHistory.current[historyIndex.current];
+                  ctxRef.current.putImageData(img, 0, 0);
+                }
+              }}
+              className="wb-action-btn"
+              title="Redo"
             >
-              {isMobile ? "💾" : "💾 Save"}
-            </button>
-            <button 
-              onClick={clearBoard} 
-              className={`${isMobile ? 'px-2 py-1.5 text-xs' : 'px-4 py-2.5'} rounded-xl bg-error text-error-content hover:bg-error/90 transition-all duration-200 shadow-md font-medium`}
-            >
-              {isMobile ? "🗑️" : "🗑️ Clear"}
+              <Redo2 size={16} />
             </button>
           </div>
+
+          <button
+            onClick={() => setIsDrawingEnabled(!isDrawingEnabled)}
+            className={`wb-action-btn primary ${isDrawingEnabled ? "drawing-on" : "drawing-off"}`}
+          >
+            {isDrawingEnabled ? <PenLine size={14} /> : <Lock size={14} />}
+            {!isMobile && (isDrawingEnabled ? " Drawing" : " Locked")}
+          </button>
+
+          <button onClick={downloadCanvas} className="wb-action-btn primary save">
+            <Download size={14} />
+            {!isMobile && " Save"}
+          </button>
+
+          <button onClick={clearBoard} className="wb-action-btn primary clear">
+            <Trash2 size={14} />
+            {!isMobile && " Clear"}
+          </button>
         </div>
       </div>
 
-      {/* Canvas Area */}
-      <div className="flex-1 bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden relative">
+      {/* Canvas */}
+      <div className="wb-canvas-wrap">
         <canvas
           ref={canvasRef}
-          className="w-full h-full bg-white touch-none cursor-crosshair shadow-inner"
+          className="wb-canvas"
           onMouseDown={handleDown}
           onMouseMove={handleMove}
           onMouseUp={handleUp}
@@ -648,73 +610,47 @@ export default function Whiteboard({ roomId, onClose }) {
           onTouchMove={handleMove}
           onTouchEnd={handleUp}
         />
-        
-        {/* Drawing Status Overlay */}
         {!isDrawingEnabled && (
           <div className="absolute inset-0 bg-base-100/80 backdrop-blur-sm flex items-center justify-center">
-            <div className="bg-error text-error-content px-4 py-3 rounded-xl shadow-lg text-base font-semibold">
-              🚫 Drawing Disabled
+            <div className="bg-error text-error-content px-4 py-3 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2">
+              <Lock size={18} />
+              Drawing Disabled
             </div>
           </div>
         )}
       </div>
 
-      {/* Enhanced Bottom Status Bar */}
-      <div className="bg-base-200/90 backdrop-blur-sm border-t border-base-300">
-        <div className={`${isMobile ? 'px-2 py-2' : 'px-4 py-3'}`}>
-          <div className="flex items-center justify-between">
-            {/* Left Side - Current Settings */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-base-content/60">Tool:</span>
-                <span className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} bg-primary/10 text-primary rounded-lg font-semibold capitalize`}>
-                  {tool}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-base-content/60">Color:</span>
-                <div className="flex items-center gap-1 px-2 py-1 bg-base-300 rounded-lg">
-                  <div 
-                    className="w-3 h-3 rounded-full border border-base-400 shadow-sm"
-                    style={{ backgroundColor: color }}
-                  ></div>
-                  {!isMobile && (
-                    <span className="text-xs font-mono font-semibold">{color}</span>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-base-content/60">Size:</span>
-                <span className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} bg-base-300 rounded-lg font-semibold`}>
-                  {size}px
-                </span>
-              </div>
-            </div>
-
-            {/* Right Side - Room Info & Status */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${socket ? 'bg-success animate-pulse' : 'bg-error'}`}></div>
-                {!isMobile && (
-                  <>
-                    <span className="text-xs font-medium text-base-content/60">Status:</span>
-                    <span className="text-xs font-semibold">{socket ? 'Connected' : 'Disconnected'}</span>
-                  </>
-                )}
-              </div>
-
-              {!isMobile && <div className="w-px h-4 bg-base-400"></div>}
-
-              <div className="flex items-center gap-1">
-                {!isMobile && <span className="text-xs font-medium text-base-content/60">Room:</span>}
-                <span className={`${isMobile ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm'} bg-primary/10 text-primary rounded-lg font-semibold`}>
-                  {isMobile ? (roomId ? '✓' : '✗') : (roomId || 'No Room')}
-                </span>
-              </div>
+      {/* Status Bar */}
+      <div className="wb-status">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="wb-status-item">
+            <span className="wb-status-label">Tool</span>
+            <span className="wb-status-value highlight">{tool}</span>
+          </div>
+          <div className="wb-status-item">
+            <span className="wb-status-label">Color</span>
+            <div className="wb-status-value flex items-center gap-1.5">
+              <div className="w-3 h-3 rounded-full border border-base-400" style={{ backgroundColor: color }} />
+              {!isMobile && <span className="font-mono text-xs">{color}</span>}
             </div>
           </div>
+          <div className="wb-status-item">
+            <span className="wb-status-label">Size</span>
+            <span className="wb-status-value">{size}px</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="wb-status-item">
+            <div className={`wb-status-dot ${socket ? "connected" : "disconnected"}`} />
+            {!isMobile && (
+              <span className="wb-status-value">{socket ? "Connected" : "Disconnected"}</span>
+            )}
+          </div>
+          {roomId && (
+            <div className="wb-status-item">
+              <span className="wb-status-value highlight room-id" title={roomId}>{roomId}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

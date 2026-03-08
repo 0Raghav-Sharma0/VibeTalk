@@ -1,97 +1,123 @@
 // src/components/WatchPartyChatPanel.jsx
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { Smile, Send } from 'lucide-react';
+import EmojiPicker from 'emoji-picker-react';
 import { useWatchParty } from '../contexts/WatchPartyContext';
+import { useThemeStore } from '../store/useThemeStore';
 import './WatchPartyChatPanel.css';
+
+const DARK_THEMES = ['dark', 'coffee', 'vibetalk'];
 
 const WatchPartyChatPanel = () => {
   const { chatMessages, sendChatMessage } = useWatchParty();
+  const { theme } = useThemeStore();
   const [message, setMessage] = useState('');
+  const [showEmoji, setShowEmoji] = useState(false);
   const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
 
-  // Auto-scroll when messages change
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
 
-  const handleSendMessage = (e) => {
+  const handleSend = (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-
     sendChatMessage(message.trim());
     setMessage('');
+    setShowEmoji(false);
   };
 
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend(e);
+    }
   };
 
-  const messageLabel =
-    chatMessages.length === 0
-      ? 'Be the first to send a message'
-      : `${chatMessages.length} message${chatMessages.length > 1 ? 's' : ''}`;
+  const formatTime = (ts) => {
+    try {
+      return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
+  };
+
+  const emojiTheme = DARK_THEMES.includes(theme) ? 'dark' : 'light';
 
   return (
-    <div className="chat-panel yt-chat">
-      {/* HEADER */}
-      <div className="chat-header">
-        <div className="chat-header-main">
-          <h3>Live Chat</h3>
-
-          <span className="chat-live-pill">
-            <span className="live-dot" />
-            Live
-          </span>
-        </div>
-
-        <span className="chat-subtitle">{messageLabel}</span>
-      </div>
-
-      {/* MESSAGES */}
-      <div className="chat-messages">
+    <div className="wp-chat-panel">
+      {/* Messages */}
+      <div className="wp-chat-messages">
         {chatMessages.length === 0 ? (
-          <div className="chat-empty">
-            <div className="empty-icon">💬</div>
-            <p>No messages yet</p>
-            <span>Say hi and start the conversation!</span>
+          <div className="wp-chat-empty">
+            <div className="wp-chat-empty-icon">💬</div>
+            <p>No messages yet — Be the first to say something!</p>
           </div>
         ) : (
-          chatMessages.map((msg, index) => (
-            <div key={index} className="chat-message">
-              <div className="message-meta">
-                <span className="message-username">{msg.username}</span>
-                <span className="message-time">{formatTime(msg.timestamp)}</span>
+          chatMessages.map((msg, i) => (
+            <div key={i} className="wp-chat-msg">
+              <div className="wp-chat-msg-avatar">
+                {msg.profilePic ? (
+                  <img src={msg.profilePic} alt={msg.username || ''} className="wp-chat-msg-avatar-img" />
+                ) : (
+                  <span>{ (msg.username || 'U').charAt(0).toUpperCase() }</span>
+                )}
               </div>
-
-              <div className="message-bubble">
-                <div className="message-content">{msg.message}</div>
+              <div className="wp-chat-msg-body">
+                <div className="wp-chat-msg-meta">
+                  <span className="wp-chat-msg-user">{msg.username || 'Anonymous'}</span>
+                  <span className="wp-chat-msg-time">{formatTime(msg.timestamp)}</span>
+                </div>
+                <div className="wp-chat-msg-bubble">
+                  {msg.message}
+                </div>
               </div>
             </div>
           ))
         )}
-
         <div ref={chatEndRef} />
       </div>
 
-      {/* INPUT */}
-      <form className="chat-input-form big-input" onSubmit={handleSendMessage}>
-        <div className="chat-input-wrapper">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Say something…"
-            className="chat-input"
-            maxLength={500}
+      {/* Emoji picker (above input) */}
+      {showEmoji && (
+        <div className="wp-emoji-picker-wrap">
+          <EmojiPicker
+            onEmojiClick={(e) => setMessage((p) => p + e.emoji)}
+            theme={emojiTheme}
+            width="100%"
+            height={240}
+            previewConfig={{ showPreview: false }}
           />
         </div>
+      )}
 
+      {/* Input - fixed at bottom */}
+      <form className="wp-chat-input-wrap" onSubmit={handleSend}>
+        <button
+          type="button"
+          onClick={() => setShowEmoji((p) => !p)}
+          className="wp-chat-emoji-btn"
+          aria-label="Emoji"
+        >
+          <Smile className="w-5 h-5" />
+        </button>
+        <input
+          ref={inputRef}
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Type a message…"
+          className="wp-chat-input"
+          maxLength={500}
+        />
         <button
           type="submit"
-          className="chat-send-btn big-send"
           disabled={!message.trim()}
+          className="wp-chat-send-btn"
         >
-          Send
+          <Send className="w-4 h-4" />
         </button>
       </form>
     </div>

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -22,7 +22,7 @@ body {
 }
 
 body {
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Plus Jakarta Sans", "gg sans", "Noto Sans", system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -450,11 +450,21 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
-/* Focus styles for accessibility */
-:focus-visible {
+/* Focus styles - no outline on click, ring only for keyboard */
+button:focus,
+input:focus,
+textarea:focus,
+select:focus,
+a:focus {
+  outline: none;
+}
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
 /* High contrast mode support */
@@ -488,4 +498,11 @@ input:focus, textarea:focus, select:focus {
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+/* ================= TOAST NOTIFICATIONS ================= */
+/* Toast polish - backdrop blur, theme-aware */
+.toast-notification {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

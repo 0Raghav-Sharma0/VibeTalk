@@ -38,11 +38,12 @@ export const useChatStore = create((set, get) => ({
       ? onlineIds
       : Object.keys(onlineIds || {});
 
-    const onlineSet = new Set(onlineArray);
+    const toStr = (id) => (id?.toString?.() || String(id || ""));
+    const onlineSet = new Set(onlineArray.map(toStr));
 
     return usersList.map((u) => ({
       ...u,
-      isOnline: onlineSet.has(u._id),
+      isOnline: onlineSet.has(toStr(u._id)),
     }));
   },
 
@@ -198,7 +199,12 @@ export const useChatStore = create((set, get) => ({
       isMessagesLoading: true,
     });
 
-    await get().getMessages(user._id);
+    try {
+      const { useGroupStore } = await import("./useGroupStore");
+      useGroupStore.getState().setSelectedGroup(null);
+    } catch {}
+
+    get().getMessages(user._id);
 
     if (socket && authUser) {
       socket.emit("msg-seen", {
@@ -232,14 +238,15 @@ useAuthStore.subscribe(
       ? onlineIds
       : Object.keys(onlineIds || {});
 
-    const onlineSet = new Set(onlineArray);
+    const toStr = (id) => (id?.toString?.() || String(id || ""));
+    const onlineSet = new Set(onlineArray.map(toStr));
 
     useChatStore.setState((state) => ({
       users: apply(state.users, onlineArray),
       selectedUser: state.selectedUser
         ? {
             ...state.selectedUser,
-            isOnline: onlineSet.has(state.selectedUser._id),
+            isOnline: onlineSet.has(toStr(state.selectedUser._id)),
           }
         : null,
     }));

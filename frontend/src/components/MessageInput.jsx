@@ -1,8 +1,11 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Image, Send, X, Plus, Smile, Paperclip } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
+import { useThemeStore } from "../store/useThemeStore";
+
+const DARK_THEMES = ["dark", "coffee", "vibetalk"];
 
 const MessageInput = () => {
   const [text, setText] = useState("");
@@ -15,6 +18,7 @@ const MessageInput = () => {
 
   const { sendMessage, selectedUser } = useChatStore();
   const { authUser, socket } = useAuthStore();
+  const { theme } = useThemeStore();
 
   const handleSendMessage = async () => {
     if (!selectedUser) return;
@@ -134,7 +138,7 @@ const MessageInput = () => {
                 setText((p) => p + e.emoji);
                 inputRef.current?.focus();
               }}
-              theme="auto"
+              theme={DARK_THEMES.includes(theme) ? "dark" : "light"}
               width="100%"
               height={280}
               previewConfig={{ showPreview: false }}

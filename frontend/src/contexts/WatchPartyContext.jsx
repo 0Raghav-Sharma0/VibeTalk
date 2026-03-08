@@ -1,9 +1,10 @@
 // src/contexts/WatchPartyContext.jsx
 // This is the CORRECTED version with proper logging
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useSocket } from './SocketContext';
 import { useAuthStore } from '../store/useAuthStore';
+import { showSystemNotification } from '../utils/notifications';
 
 const WatchPartyContext = createContext();
 
@@ -30,6 +31,8 @@ export const WatchPartyProvider = ({ children }) => {
   });
   const [reactions, setReactions] = useState([]);
   const [chatMessages, setChatMessages] = useState([]);
+  const isInitialJoin = useRef(true);
+  const prevParticipantCount = useRef(0);
 
   const canControlVideo = isHost;
 
@@ -39,7 +42,8 @@ export const WatchPartyProvider = ({ children }) => {
       const userData = {
         id: authUser._id,
         username: authUser.fullName || authUser.username || authUser.email,
-        email: authUser.email
+        email: authUser.email,
+        profilePic: authUser.profilePic || null
       };
       
       console.log('🎬 Creating room with user data:', userData);
@@ -60,7 +64,8 @@ export const WatchPartyProvider = ({ children }) => {
       const userData = {
         id: authUser._id,
         username: authUser.fullName || authUser.username || authUser.email,
-        email: authUser.email
+        email: authUser.email,
+        profilePic: authUser.profilePic || null
       };
       
       console.log('🎬 Joining room with user data:', userData);
@@ -109,6 +114,8 @@ export const WatchPartyProvider = ({ children }) => {
     // Room created
     socket.on('watchparty:room-created', (data) => {
       console.log('✅ Room created:', data);
+      isInitialJoin.current = false;
+      prevParticipantCount.current = 1;
       setRoomId(data.roomId);
       setIsHost(true);
       setVideoState(prev => ({
@@ -122,7 +129,9 @@ export const WatchPartyProvider = ({ children }) => {
     socket.on('watchparty:room-joined', (data) => {
       console.log('✅ Room joined:', data);
       console.log('👥 Participants received:', data.participants);
-      
+      isInitialJoin.current = false;
+      prevParticipantCount.current = data.participants?.length ?? 0;
+
       setRoomId(data.roomId);
       setIsHost(data.isHost);
       setParticipants(data.participants); // This should have username fields
@@ -139,7 +148,19 @@ export const WatchPartyProvider = ({ children }) => {
     // Participants updated
     socket.on('watchparty:participants-updated', (data) => {
       console.log('👥 Participants updated:', data.participants);
+      const newCount = data.participants?.length ?? 0;
+      const prevCount = prevParticipantCount.current;
+      prevParticipantCount.current = newCount;
       setParticipants(data.participants);
+      // Notify when someone joins (skip initial load)
+      if (!isInitialJoin.current && newCount > prevCount && !document.hasFocus()) {
+        const newUser = data.participants[newCount - 1];
+        showSystemNotification({
+          title: 'Watch Party',
+          body: `${newUser?.username || 'Someone'} joined the room`,
+          onClick: () => window.focus(),
+        });
+      }
     });
 
     // Playback state synced
@@ -163,6 +184,14 @@ export const WatchPartyProvider = ({ children }) => {
     // Chat message received
     socket.on('watchparty:chat-received', (data) => {
       setChatMessages(prev => [...prev, data]);
+      // Notify when new message arrives and tab is not focused
+      if (!document.hasFocus()) {
+        showSystemNotification({
+          title: 'Watch Party',
+          body: `${data.username || 'Someone'}: ${(data.message || '').slice(0, 50)}${(data.message || '').length > 50 ? '…' : ''}`,
+          onClick: () => window.focus(),
+        });
+      }
     });
 
     // Error handling

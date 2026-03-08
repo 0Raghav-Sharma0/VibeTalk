@@ -13,13 +13,14 @@ import {
 } from "lucide-react";
 import { formatMessageTime } from "../lib/utils";
 
-export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
+export default function MessageBubble({ msg, isMine, authUser, selectedUser, showSenderName }) {
   const [copied, setCopied] = useState(false);
 
   // Safe defaults for props
   const safeMsg = msg || {};
   const safeAuthUser = authUser || {};
   const safeSelectedUser = selectedUser || {};
+  const avatarUrl = !isMine ? (safeMsg.senderAvatar || safeSelectedUser.profilePic || "/boy.png") : (safeAuthUser.profilePic || "/boy.png");
 
   const copyText = () => {
     if (!safeMsg.text) return;
@@ -108,9 +109,9 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
       {/* Sender avatar (left side) */}
       {!isMine && (
         <img
-          src={safeSelectedUser.profilePic || "/boy.png"}
+          src={avatarUrl}
           className="w-8 h-8 rounded-full mt-5 flex-shrink-0"
-          alt={safeSelectedUser.fullName || "User"}
+          alt={safeMsg.senderName || safeSelectedUser.fullName || "User"}
           onError={(e) => {
             e.target.src = "/boy.png";
           }}
@@ -120,6 +121,9 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser }) {
       <div className={`flex flex-col max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
         {/* Message metadata */}
         <div className={`flex items-center gap-2 mb-1 px-1 ${isMine ? 'flex-row-reverse' : ''}`}>
+          {showSenderName && safeMsg.senderName && (
+            <span className="text-xs font-medium text-primary">{safeMsg.senderName}</span>
+          )}
           <span className="text-xs text-base-content/40">
             {formatMessageTime(safeMsg.createdAt || safeMsg.timestamp)}
           </span>

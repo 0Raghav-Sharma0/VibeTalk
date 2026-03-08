@@ -1,90 +1,73 @@
-import React from "react";
+import { LogOut } from "lucide-react";
 import { useThemeStore } from "../store/useThemeStore";
+import { useAuthStore } from "../store/useAuthStore";
+import "./SettingsPage.css";
 
-const THEMES = [
-  {
-    name: "light",
-    title: "Light Theme",
-    description: "Clean and bright interface.",
-    gradient: "bg-gradient-to-br from-white to-gray-200",
-    preview: ["#ffffff", "#e5e7eb", "#d1d5db"],
-  },
-  {
-    name: "dark",
-    title: "Dark Theme",
-    description: "Smooth dark interface for low-light use.",
-    gradient: "bg-gradient-to-br from-gray-800 to-gray-900",
-    preview: ["#1e1e1e", "#2d2d2d", "#3a3a3a"],
-  },
-];
+const DARK_THEMES = ["dark", "coffee", "vibetalk"];
 
-const SettingsPage = () => {
+export default function SettingsPage() {
   const { theme, setTheme } = useThemeStore();
+  const { authUser, logout } = useAuthStore();
+
+  const isDark = DARK_THEMES.includes(theme);
+  const lampOn = !isDark; // Lamp OFF = dark mode, Lamp ON = light mode
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark");
+
+  if (!authUser) return null;
 
   return (
-    <div className="min-h-screen w-full pt-24 px-6 bg-base-100 flex justify-center">
-      <div className="w-full max-w-3xl space-y-10">
-
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
-            Choose Theme
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400 text-sm">
-            Select between Light & Dark modes.
-          </p>
-        </div>
-
-        {/* Themes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-          {THEMES.map((t) => (
-            <div
-              key={t.name}
-              onClick={() => setTheme(t.name)}
-              className={`
-                cursor-pointer rounded-3xl border p-6 transition
-                bg-white dark:bg-base-200
-                border-gray-200 dark:border-base-300
-                hover:-translate-y-1 hover:shadow-lg
-                ${
-                  theme === t.name
-                    ? "ring-4 ring-primary border-primary"
-                    : ""
-                }
-              `}
-            >
-              {/* Preview */}
-              <div
-                className={`h-32 rounded-2xl mb-5 ${t.gradient} shadow-inner`}
+    <div className="h-screen w-full overflow-hidden flex flex-col relative pt-14">
+      {/* Street lamp background */}
+      <div className={`settings-lamp-bg ${lampOn ? "lamp-on" : ""}`}>
+        <div className="settings-lamp-content">
+          <div className="settings-lamp-buildings">
+            <div className="settings-lamp-window" />
+            <div className="settings-lamp-window" />
+            <div className="settings-lamp-window" />
+            <div className="settings-lamp-window" />
+            <div className="settings-lamp-window" />
+            <div className="settings-lamp-window" />
+          </div>
+          <div className="settings-lamp-ground">
+            <div className="settings-lamp-sewer" />
+          </div>
+          <div className="settings-lamp-streetlamp">
+            <div className="settings-lamp-base" />
+            <div className="settings-lamp-basetop" />
+            <div className="settings-lamp-pole" />
+            <div className="settings-lamp-poletop" />
+            <div className="settings-lamp-head">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="settings-lamp-label"
+                aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
               />
-
-              {/* Color dots */}
-              <div className="flex gap-2 mb-4 justify-center">
-                {t.preview.map((color, i) => (
-                  <div
-                    key={i}
-                    className="w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-
-              {/* Title */}
-              <h2 className="text-xl font-semibold text-center text-gray-900 dark:text-white">
-                {t.title}
-              </h2>
-
-              {/* Description */}
-              <p className="mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
-                {t.description}
-              </p>
+              <div className="settings-lamp-top" />
+              <div className="settings-lamp-glass" />
+              <div className="settings-lamp-bot" />
             </div>
-          ))}
+            <div className="settings-lamp-light" />
+            <div className="settings-lamp-ground-light" />
+          </div>
         </div>
+      </div>
 
+      {/* Settings content overlay - pointer-events-none so lamp receives clicks */}
+      <div className="flex-1 flex flex-col relative z-10 min-h-0 overflow-hidden justify-end pointer-events-none">
+        {/* Logout - fixed at bottom, synced with background */}
+        <div className="shrink-0 p-4 flex flex-col items-center gap-2 pointer-events-auto">
+          <p className="text-[11px] text-white/80">Click the street lamp to switch theme</p>
+          <button
+            type="button"
+            onClick={logout}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-red-300 font-medium hover:bg-red-500/20 hover:text-red-200 transition-colors text-sm"
+          >
+            <LogOut className="w-4 h-4" />
+            Log out
+          </button>
+        </div>
       </div>
     </div>
   );
-};
-
-export default SettingsPage;
+}

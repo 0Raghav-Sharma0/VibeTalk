@@ -1,14 +1,17 @@
 // src/pages/HomePage.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ChatContainer from "../components/ChatContainer";
+import GroupChatContainer from "../components/GroupChatContainer";
 import NoChatSelected from "../components/NoChatSelected";
 import { useChatStore } from "../store/useChatStore";
+import { useGroupStore } from "../store/useGroupStore";
 import { Users, X } from "lucide-react";
 
 export default function HomePage() {
   const { selectedUser } = useChatStore();
+  const { selectedGroup } = useGroupStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
@@ -17,24 +20,26 @@ export default function HomePage() {
       {/* ==================== NAVBAR (WITH MOBILE SIDEBAR BUTTON) ==================== */}
       <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
 
-      {/* ==================== MAIN AREA ==================== */}
-      <div className="flex flex-1 overflow-hidden pt-14">
+      {/* ==================== MAIN AREA: Two-column layout, aligned top to bottom ==================== */}
+      <div className="flex flex-1 min-h-0 pt-14">
 
-        {/* DESKTOP SIDEBAR */}
-        <div className="hidden md:block md:w-72">
+        {/* DESKTOP SIDEBAR - fixed width 280px, full height, overflow scroll */}
+        <div className="hidden md:flex md:w-[280px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden">
           <Sidebar />
         </div>
 
-        {/* MAIN CHAT PANEL */}
-        <div className="flex-1 bg-base-200 overflow-hidden">
-          {selectedUser ? (
-            <ChatContainer />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-center select-none">
-              <NoChatSelected />
-            </div>
-          )}
-        </div>
+        {/* MAIN CHAT PANEL - flex: 1, same height as sidebar */}
+        <div className="flex-1 min-h-0 h-full flex flex-col bg-base-200 overflow-hidden">
+            {selectedUser ? (
+              <ChatContainer />
+            ) : selectedGroup ? (
+              <GroupChatContainer />
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center select-none">
+                <NoChatSelected />
+              </div>
+            )}
+          </div>
       </div>
 
       {/* ==================== MOBILE DRAWER SIDEBAR ==================== */}
@@ -48,7 +53,7 @@ export default function HomePage() {
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-72 max-w-full h-full bg-base-200 shadow-xl z-50 flex flex-col">
+          <div className="relative w-80 max-w-full h-full bg-base-200 shadow-xl z-50 flex flex-col">
 
             {/* Drawer Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 bg-base-100">

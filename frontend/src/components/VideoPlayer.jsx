@@ -136,7 +136,7 @@ const VideoPlayer = () => {
       className={`relative w-full rounded-xl overflow-hidden ${containerClass}`}
       style={{
         aspectRatio: "16 / 9",
-        maxHeight: "72vh",        // 🔥 mobile-friendly height
+        maxHeight: "100%",
       }}
     >
       {videoState.type === "youtube" ? (

@@ -32,11 +32,11 @@ const NoChatSelected = () => {
         </div>
 
         <h2 className="text-lg font-semibold text-base-content mb-1">
-          Select a Chat
+          Select a chat
         </h2>
 
         <p className="text-base-content/60 text-sm leading-relaxed">
-          Choose someone from the sidebar to start messaging.
+          Choose a friend or group from the sidebar to start messaging.
         </p>
       </motion.div>
 

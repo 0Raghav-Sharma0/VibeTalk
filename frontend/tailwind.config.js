@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", ...defaultTheme.fontFamily.sans],
+        sans: ["Plus Jakarta Sans", "gg sans", "Noto Sans", ...defaultTheme.fontFamily.sans],
       },
       colors: {
         bg: "var(--bg)",

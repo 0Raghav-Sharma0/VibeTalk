@@ -1,16 +1,16 @@
 // src/App.jsx
-import React, { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
-import HomePage from "./pages/HomePage";
-import SignUpPage from "./pages/SignUpPage";
-import LoginPage from "./pages/LoginPage";
-import SettingsPage from "./pages/SettingsPage";
-import ProfilePage from "./pages/ProfilePage";
-import WatchPartyPage from "./pages/WatchPartyPage";
 import VideoCall from "./components/VideoCall";
 import CallListener from "./components/CallListener";
+
+const HomePage = lazy(() => import("./pages/HomePage"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const WatchPartyPage = lazy(() => import("./pages/WatchPartyPage"));
 
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
@@ -47,8 +47,15 @@ const App = () => {
     const chatStore = useChatStore.getState();
     chatStore.subscribeToMessages();
 
+    import("./store/useGroupStore").then(({ useGroupStore }) => {
+      useGroupStore.getState().subscribeToGroupMessages();
+    });
+
     return () => {
       chatStore.unsubscribeFromMessages();
+      import("./store/useGroupStore").then(({ useGroupStore }) => {
+        useGroupStore.getState().unsubscribeFromGroupMessages();
+      });
     };
   }, [socket]);
 
@@ -72,8 +79,15 @@ const App = () => {
           {/* Global listeners */}
           <CallListener />
 
-          {/* Routes */}
-          <Routes>
+          {/* Routes - lazy loaded for faster initial load */}
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center min-h-[60vh]">
+                <l-grid size="80" speed="1.5" color="currentColor"></l-grid>
+              </div>
+            }
+          >
+            <Routes>
             <Route
               path="/"
               element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
@@ -112,9 +126,7 @@ const App = () => {
 
             <Route
               path="/profile"
-              element={
-                authUser ? <ProfilePage /> : <Navigate to="/login" replace />
-              }
+              element={<Navigate to="/settings" replace />}
             />
 
             {/* Fallback */}
@@ -123,17 +135,52 @@ const App = () => {
               element={<Navigate to={authUser ? "/" : "/login"} replace />}
             />
           </Routes>
+          </Suspense>
 
           {/* Video call UI */}
           <VideoCall />
 
-          {/* Toasts */}
+          {/* Toasts - positioned below navbar, theme-aware, polished UI */}
           <Toaster
-            position="top-right"
+            position="top-center"
+            reverseOrder={false}
+            gutter={12}
+            containerStyle={{
+              top: 72,
+              left: 16,
+              right: 16,
+            }}
             toastOptions={{
+              duration: 4000,
+              className: "toast-notification",
               style: {
                 background: "var(--b2)",
                 color: "var(--bc)",
+                border: "1px solid var(--b3)",
+                borderRadius: "14px",
+                boxShadow: "0 10px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+                padding: "14px 18px",
+                fontSize: "0.9375rem",
+                fontWeight: 500,
+                maxWidth: "min(400px, calc(100vw - 32px))",
+              },
+              success: {
+                iconTheme: {
+                  primary: "var(--success, #10b981)",
+                  secondary: "var(--b2)",
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: "var(--error, #ef4444)",
+                  secondary: "var(--b2)",
+                },
+              },
+              loading: {
+                iconTheme: {
+                  primary: "var(--p)",
+                  secondary: "var(--b2)",
+                },
               },
             }}
           />

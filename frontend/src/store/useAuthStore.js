@@ -184,6 +184,28 @@ export const useAuthStore = create((set, get) => ({
       set({ onlineUsers: safeArray });
     });
 
+    /* ================= FRIEND REQUESTS (real-time) ================= */
+    sock.on("friend-request-received", () => {
+      import("./useFriendStore").then(({ useFriendStore }) => {
+        useFriendStore.getState().fetchPendingRequests();
+      });
+    });
+    sock.on("friend-request-accepted", () => {
+      import("./useFriendStore").then(({ useFriendStore }) => {
+        useFriendStore.getState().onFriendRequestAccepted();
+      });
+    });
+    sock.on("friend-removed", () => {
+      import("./useFriendStore").then(({ useFriendStore }) => {
+        useFriendStore.getState().onFriendRemoved();
+      });
+    });
+    sock.on("friend-request-rejected", () => {
+      import("./useFriendStore").then(({ useFriendStore }) => {
+        useFriendStore.getState().fetchPendingRequests();
+      });
+    });
+
     /* ================= CALL EVENTS ================= */
     sock.on("incoming-call", ({ from, callType, callerName, offer }) => {
       import("./useVideoCallStore").then(({ useVideoCallStore }) => {
