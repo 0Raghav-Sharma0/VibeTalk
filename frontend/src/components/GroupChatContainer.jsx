@@ -90,8 +90,12 @@ export default function GroupChatContainer() {
         </div>
       )}
 
-      {/* MESSAGES - scrollable middle section */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 space-y-3 bg-white dark:bg-base-100">
+      {/* MESSAGES - scrollable only when content overflows (mobile: no scroll when typing + empty) */}
+      <div
+        className={`flex-1 min-h-0 px-4 py-4 space-y-3 bg-white dark:bg-base-100 chat-messages-scroll ${
+          filteredMessages.length === 0 ? "overflow-y-hidden" : "overflow-y-auto"
+        }`}
+      >
         {isGroupMessagesLoading ? (
           <div className="flex justify-center py-8">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />

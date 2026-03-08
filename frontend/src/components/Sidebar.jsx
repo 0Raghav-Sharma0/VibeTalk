@@ -129,7 +129,7 @@ const Sidebar = ({ onClose }) => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-full flex flex-col min-h-0 bg-base-100 border-r border-base-200/50 shadow-[2px_0_16px_-2px_rgba(0,0,0,0.06)] dark:shadow-[2px_0_16px_-2px_rgba(0,0,0,0.2)]">
+    <aside className="h-full w-full flex flex-col min-h-0 bg-base-100">
       {/* HEADER */}
       <div className="relative px-3 py-3 border-b border-base-200/50 overflow-hidden shrink-0 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="relative flex items-center gap-2.5 min-w-0">

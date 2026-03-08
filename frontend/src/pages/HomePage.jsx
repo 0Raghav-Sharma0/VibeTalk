@@ -24,7 +24,7 @@ export default function HomePage() {
       <div className="flex flex-1 min-h-0" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}>
 
         {/* DESKTOP SIDEBAR - fixed width 320px, full height, overflow scroll */}
-        <div className="hidden md:flex md:w-[320px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden">
+        <div className="hidden md:flex md:w-[320px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden sidebar-separator">
           <Sidebar />
         </div>
 
