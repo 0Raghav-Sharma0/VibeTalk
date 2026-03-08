@@ -2,6 +2,9 @@
 import { Server } from "socket.io";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
+import Group from "../models/group.model.js";
+import GroupMessage from "../models/groupMessage.model.js";
+import { cacheGet, cacheSet, cacheKeys } from "./cache.js";
 
 // 🔒 Active call lock
 const activeCalls = new Map();
@@ -138,9 +141,14 @@ export function createSocketServer(server) {
           file: file ?? null,
         });
 
-        const sender = await User.findById(senderId).select(
-          "fullName profilePic"
-        );
+        let sender = await cacheGet(cacheKeys.senderMeta(senderId));
+        if (!sender) {
+          const u = await User.findById(senderId).select("fullName profilePic").lean();
+          if (u) {
+            sender = { fullName: u.fullName, profilePic: u.profilePic };
+            await cacheSet(cacheKeys.senderMeta(senderId), sender, 300);
+          }
+        }
 
         const enrichedMessage = {
           ...message.toObject(),
@@ -175,6 +183,50 @@ export function createSocketServer(server) {
       const target = getReceiverSocketId(receiverId);
       if (target) {
         io.to(target).emit("typing", { senderId, isTyping });
+      }
+    });
+
+    /* ============================================================
+       GROUP MESSAGING
+    ============================================================ */
+    socket.on("sendGroupMessage", async (data) => {
+      try {
+        const { groupId, senderId, text, image, video, file } = data;
+        if (!groupId || !senderId) return;
+
+        const group = await Group.findById(groupId);
+        if (!group) return;
+        const isInGroup = group.members.some(
+          (m) => m.userId.toString() === senderId.toString()
+        );
+        if (!isInGroup) return;
+
+        const msg = await GroupMessage.create({
+          groupId,
+          senderId,
+          text: text ?? "",
+          image: image ?? null,
+          video: video ?? null,
+          file: file ?? null,
+        });
+
+        const populated = await GroupMessage.findById(msg._id)
+          .populate("senderId", "fullName profilePic");
+
+        const enriched = {
+          ...populated.toObject(),
+          senderName: populated.senderId?.fullName || "Unknown",
+          senderAvatar: populated.senderId?.profilePic || null,
+        };
+
+        for (const m of group.members) {
+          const sid = getReceiverSocketId(m.userId.toString());
+          if (sid) io.to(sid).emit("newGroupMessage", enriched);
+        }
+
+        socket.emit("newGroupMessage", enriched);
+      } catch (err) {
+        console.error("❌ sendGroupMessage error:", err);
       }
     });
 
@@ -425,5 +477,5 @@ export function getIO() {
   if (!io) throw new Error("Socket not initialized");
   return io;
 }
-
 export { watchPartyRooms };
+

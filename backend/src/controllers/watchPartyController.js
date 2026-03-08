@@ -41,8 +41,9 @@ export const createRoom = (socket, { videoUrl, videoType, user }) => {
     const roomId = generateRoomId();
     const username = getUsernameFromSocket(socket, user);
     const userId = getUserIdFromSocket(socket, user);
+    const profilePic = user?.profilePic || null;
     
-    const room = new WatchPartyRoom(roomId, socket.id, username, videoUrl, videoType, userId);
+    const room = new WatchPartyRoom(roomId, socket.id, username, videoUrl, videoType, userId, profilePic);
     activeRooms.set(roomId, room);
     
     // Join socket room
@@ -79,8 +80,9 @@ export const joinRoom = (socket, { roomId, user }) => {
     
     const username = getUsernameFromSocket(socket, user);
     const userId = getUserIdFromSocket(socket, user);
+    const profilePic = user?.profilePic || null;
     
-    room.addParticipant(socket.id, username, userId);
+    room.addParticipant(socket.id, username, userId, profilePic);
     
     // Join socket room
     socket.join(roomId);

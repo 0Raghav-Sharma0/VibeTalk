@@ -7,8 +7,11 @@ import path from "path";
 import http from "http";
 
 import { connectDB } from "./lib/db.js";
+import { connectRedis, disconnectRedis } from "./lib/redis.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
+import friendRoutes from "./routes/friend.route.js";
+import groupRoutes from "./routes/group.route.js";
 import cloudinary from "./lib/cloudinary.js";
 
 import { createSocketServer } from "./lib/socket.js";
@@ -43,6 +46,8 @@ app.use(cookieParser());
 ===================================================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/friends", friendRoutes);
+app.use("/api/groups", groupRoutes);
 
 /* =====================================================
    SONGS
@@ -68,11 +73,12 @@ if (process.env.NODE_ENV === 'production') {
 /* =====================================================
    START SERVER
 ===================================================== */
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Socket.IO initialized`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  connectDB();
+  await connectDB();
+  await connectRedis();
 });
 
 /* =====================================================
@@ -90,16 +96,18 @@ server.listen(PORT, () => {
 /* =====================================================
    GRACEFUL SHUTDOWN
 ===================================================== */
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('⚠️  SIGTERM signal received: closing HTTP server');
+  await disconnectRedis();
   server.close(() => {
     console.log('✅ HTTP server closed');
     process.exit(0);
   });
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('⚠️  SIGINT signal received: closing HTTP server');
+  await disconnectRedis();
   server.close(() => {
     console.log('✅ HTTP server closed');
     process.exit(0);

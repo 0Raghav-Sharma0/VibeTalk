@@ -1,6 +1,6 @@
 // backend/src/models/WatchPartyRoom.js
 export class WatchPartyRoom {
-  constructor(roomId, hostSocketId, hostUsername, videoUrl, videoType, hostUserId) {
+  constructor(roomId, hostSocketId, hostUsername, videoUrl, videoType, hostUserId, hostProfilePic = null) {
     this.roomId = roomId;
     this.hostSocketId = hostSocketId;
     this.hostUserId = hostUserId;
@@ -10,6 +10,7 @@ export class WatchPartyRoom {
       socketId: hostSocketId,
       username: hostUsername,
       userId: hostUserId,
+      profilePic: hostProfilePic,
       isHost: true,
       connected: true
     }];
@@ -22,7 +23,7 @@ export class WatchPartyRoom {
     this.createdAt = new Date();
   }
 
-  addParticipant(socketId, username, userId) {
+  addParticipant(socketId, username, userId, profilePic = null) {
     // Remove if already exists (reconnection)
     this.removeParticipant(socketId);
     
@@ -30,6 +31,7 @@ export class WatchPartyRoom {
       socketId,
       username,
       userId,
+      profilePic,
       isHost: false,
       connected: true
     });
@@ -58,6 +60,7 @@ export class WatchPartyRoom {
       id: Date.now() + Math.random(),
       socketId,
       username: participant.username,
+      profilePic: participant.profilePic || null,
       message,
       timestamp: new Date()
     };

@@ -1,5 +1,11 @@
 import User from "../models/user.model.js";
 import { generateToken } from "../lib/utils.js";
+import { cacheDel, cacheKeys } from "../lib/cache.js";
+
+const invalidateUserCaches = async (userId) => {
+  await cacheDel(cacheKeys.user(userId));
+  await cacheDel(cacheKeys.senderMeta(userId));
+};
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
 
@@ -89,18 +95,21 @@ export const logout = (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { fullName, profilePic } = req.body;
+    const { fullName, profilePic, about } = req.body;
 
     let updateData = {};
 
     // Update name
-    if (fullName) updateData.fullName = fullName;
+    if (fullName !== undefined) updateData.fullName = fullName;
 
     // Update profile picture
     if (profilePic) {
       const uploadRes = await cloudinary.uploader.upload(profilePic);
       updateData.profilePic = uploadRes.secure_url;
     }
+
+    // Update about
+    if (about !== undefined) updateData.about = about;
 
     // If nothing provided
     if (Object.keys(updateData).length === 0) {
@@ -112,6 +121,8 @@ export const updateProfile = async (req, res) => {
       updateData,
       { new: true }
     ).select("-password");
+
+    await invalidateUserCaches(userId);
 
     res.status(200).json(updatedUser);
 

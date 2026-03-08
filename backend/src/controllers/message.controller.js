@@ -2,20 +2,48 @@
 
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import FriendRequest from "../models/friendRequest.model.js";
 import { getIO, getReceiverSocketId } from "../lib/socket.js";
+import { cacheGet, cacheSet, cacheKeys } from "../lib/cache.js";
+
+const SIDEBAR_CACHE_TTL = 120; // 2 min
 
 /* -------------------------------------------------------------------------- */
-/* 🧩  Get All Users (Sidebar List)                                           */
+/* 🧩  Get Friends Only (Sidebar List) - visible only after request accepted  */
 /* -------------------------------------------------------------------------- */
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
+    const cacheKey = cacheKeys.sidebarUsers(loggedInUserId);
 
-    const users = await User.find({ _id: { $ne: loggedInUserId } }).select(
-      "-password"
+    const cached = await cacheGet(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
+    const acceptedRequests = await FriendRequest.find({
+      status: "accepted",
+      $or: [
+        { fromUser: loggedInUserId },
+        { toUser: loggedInUserId },
+      ],
+    }).lean();
+
+    const friendIds = acceptedRequests.map((r) =>
+      r.fromUser.toString() === loggedInUserId.toString()
+        ? r.toUser.toString()
+        : r.fromUser.toString()
     );
 
-    res.status(200).json(users);
+    const users = await User.find({ _id: { $in: friendIds } })
+      .select("-password")
+      .lean();
+
+    const serialized = users.map((u) => ({
+      ...u,
+      _id: u._id.toString(),
+    }));
+    await cacheSet(cacheKey, serialized, SIDEBAR_CACHE_TTL);
+
+    res.status(200).json(serialized);
   } catch (error) {
     console.error("❌ Error in getUsersForSidebar:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -23,21 +51,27 @@ export const getUsersForSidebar = async (req, res) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* 💬  Get Chat Messages Between Two Users                                    */
+/* 💬  Get Chat Messages Between Two Users (paginated, latest 100)            */
 /* -------------------------------------------------------------------------- */
 export const getMessages = async (req, res) => {
   try {
     const myId = req.user._id;
     const friendId = req.params.id;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 100, 200);
 
     const messages = await Message.find({
       $or: [
         { senderId: myId, receiverId: friendId },
         { senderId: friendId, receiverId: myId }
       ],
-    }).sort({ createdAt: 1 });
+    })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
 
-    res.status(200).json(messages);
+    const sorted = messages.reverse();
+
+    res.status(200).json(sorted);
   } catch (error) {
     console.error("❌ Error in getMessages:", error.message);
     res.status(500).json({ message: "Internal Server Error" });
