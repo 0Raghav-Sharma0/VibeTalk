@@ -32,7 +32,7 @@ const WatchPartyDebug = () => {
       zIndex: 9999,
       fontFamily: 'monospace'
     }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#10b981' }}>
+      <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#8b5cf6' }}>
         🐛 Debug Info
       </div>
       

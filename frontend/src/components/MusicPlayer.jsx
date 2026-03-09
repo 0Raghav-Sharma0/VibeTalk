@@ -209,20 +209,20 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
   /* ================= UI ================= */
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-emerald-50 via-white to-emerald-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-l border-transparent shadow-xl">
+    <div className="h-full flex flex-col bg-gradient-to-b from-violet-50 via-white to-violet-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-l border-transparent shadow-xl">
       {/* HEADER */}
       <div className="px-6 py-4 flex justify-between items-center border-b border-transparent bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <img 
             src={currentGif} 
-            className="w-14 h-14 rounded-xl object-cover ring-2 ring-emerald-500/20 dark:ring-emerald-500/30" 
+            className="w-14 h-14 rounded-xl object-cover ring-2 ring-violet-500/20 dark:ring-violet-500/30" 
             alt="Album cover"
           />
           <div>
-            <h3 className="font-semibold truncate text-emerald-900 dark:text-emerald-100">
+            <h3 className="font-semibold truncate text-violet-900 dark:text-violet-100">
               {songName || "No song selected"}
             </h3>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400">
+            <p className="text-xs text-violet-600 dark:text-violet-400">
               {currentSong ? (isPlaying ? "🎶 Now Playing" : "⏸️ Paused") : "Idle"}
             </p>
           </div>
@@ -233,13 +233,13 @@ const MusicPlayer = ({ roomId, onClose }) => {
             <motion.div 
               whileHover={{ scale: 1.1 }} 
               whileTap={{ scale: 0.95 }}
-              className="p-2 rounded-lg border border-emerald-300 dark:border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
+              className="p-2 rounded-lg border border-violet-300 dark:border-violet-600 bg-violet-50 dark:bg-violet-900/30 hover:bg-violet-100 dark:hover:bg-violet-900/50"
             >
               <lord-icon
                 src="/wired-flat-1093-add-song-hover-pinch.json"
                 trigger="hover"
                 style={{ width: 32, height: 32 }}
-                colors="primary:#10b981,secondary:#059669"
+                colors="primary:#8b5cf6,secondary:#7c3aed"
               />
             </motion.div>
             <input hidden type="file" accept=".mp3" onChange={handleUpload} />
@@ -247,7 +247,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
           <button 
             onClick={onClose} 
-            className="p-2 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300"
+            className="p-2 rounded-lg hover:bg-violet-100 dark:hover:bg-violet-900/30 text-violet-700 dark:text-violet-300"
           >
             <X size={20} />
           </button>
@@ -258,7 +258,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
       <div className="p-6">
         <img 
           src={currentGif} 
-          className="w-full h-56 rounded-2xl object-cover shadow-lg ring-2 ring-emerald-500/10 dark:ring-emerald-500/20" 
+          className="w-full h-56 rounded-2xl object-cover shadow-lg ring-2 ring-violet-500/10 dark:ring-violet-500/20" 
           alt="Album art"
         />
       </div>
@@ -270,7 +270,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => seek(currentTime - 10)}
-            className="p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="p-2 rounded-full hover:bg-violet-100 dark:hover:bg-violet-900/30 text-violet-700 dark:text-violet-300 disabled:opacity-30 disabled:cursor-not-allowed"
             disabled={!currentSong}
           >
             <SkipBack size={24} />
@@ -282,8 +282,8 @@ const MusicPlayer = ({ roomId, onClose }) => {
             onClick={togglePlayPause}
             className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg ${
               currentSong 
-                ? "bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600 text-white hover:from-emerald-600 hover:to-teal-600 dark:hover:from-emerald-500 dark:hover:to-teal-500" 
-                : "bg-emerald-200 dark:bg-emerald-900/50 text-emerald-400 dark:text-emerald-500 cursor-not-allowed"
+                ? "bg-gradient-to-r from-violet-500 to-violet-600 dark:from-violet-600 dark:to-violet-700 text-white hover:from-violet-600 hover:to-violet-700 dark:hover:from-violet-500 dark:hover:to-violet-600" 
+                : "bg-violet-200 dark:bg-violet-900/50 text-violet-400 dark:text-violet-500 cursor-not-allowed"
             } transition-all`}
             disabled={!currentSong}
           >
@@ -294,7 +294,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => seek(currentTime + 10)}
-            className="p-2 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="p-2 rounded-full hover:bg-violet-100 dark:hover:bg-violet-900/30 text-violet-700 dark:text-violet-300 disabled:opacity-30 disabled:cursor-not-allowed"
             disabled={!currentSong}
           >
             <SkipForward size={24} />
@@ -303,7 +303,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
         {/* PROGRESS BAR */}
         <div className="mt-4 flex items-center gap-3">
-          <span className="text-xs text-emerald-700 dark:text-emerald-300 w-10 text-right">
+          <span className="text-xs text-violet-700 dark:text-violet-300 w-10 text-right">
             {formatTime(currentTime)}
           </span>
           <input
@@ -312,10 +312,10 @@ const MusicPlayer = ({ roomId, onClose }) => {
             max={duration || 100}
             value={currentTime}
             onChange={(e) => seek(Number(e.target.value))}
-            className="flex-1 h-2 bg-emerald-200 dark:bg-emerald-900/50 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-emerald-500 [&::-webkit-slider-thumb]:to-teal-500 dark:[&::-webkit-slider-thumb]:from-emerald-500 dark:[&::-webkit-slider-thumb]:to-teal-500"
+            className="flex-1 h-2 bg-violet-200 dark:bg-violet-900/50 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-violet-500 [&::-webkit-slider-thumb]:to-violet-600 dark:[&::-webkit-slider-thumb]:from-violet-500 dark:[&::-webkit-slider-thumb]:to-violet-600"
             disabled={!currentSong}
           />
-          <span className="text-xs text-emerald-700 dark:text-emerald-300 w-10">
+          <span className="text-xs text-violet-700 dark:text-violet-300 w-10">
             {formatTime(duration)}
           </span>
         </div>
@@ -332,7 +332,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
                   : "#d1fae5"
               }}
               transition={{ repeat: Infinity, duration: 0.5 }}
-              className="w-1 h-6 rounded bg-gradient-to-t from-emerald-400 to-emerald-500 dark:from-emerald-500 dark:to-teal-500"
+              className="w-1 h-6 rounded bg-gradient-to-t from-violet-400 to-violet-500 dark:from-violet-500 dark:to-violet-600"
             />
           ))}
         </div>
@@ -341,7 +341,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
       {/* FOOTER - VOLUME */}
       <div className="mt-auto px-6 py-4 border-t border-transparent">
         <div className="flex items-center gap-3">
-          <span className="text-sm text-emerald-700 dark:text-emerald-300">🔈</span>
+          <span className="text-sm text-violet-700 dark:text-violet-300">🔈</span>
           <input
             type="range"
             min="0"
@@ -349,9 +349,9 @@ const MusicPlayer = ({ roomId, onClose }) => {
             step="0.01"
             value={volume}
             onChange={(e) => setVolume(Number(e.target.value))}
-            className="flex-1 h-2 bg-emerald-200 dark:bg-emerald-900/50 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-emerald-500 [&::-webkit-slider-thumb]:to-teal-500 dark:[&::-webkit-slider-thumb]:from-emerald-500 dark:[&::-webkit-slider-thumb]:to-teal-500"
+            className="flex-1 h-2 bg-violet-200 dark:bg-violet-900/50 rounded-full appearance-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-violet-500 [&::-webkit-slider-thumb]:to-violet-600 dark:[&::-webkit-slider-thumb]:from-violet-500 dark:[&::-webkit-slider-thumb]:to-violet-600"
           />
-          <span className="text-sm text-emerald-700 dark:text-emerald-300 w-12">
+          <span className="text-sm text-violet-700 dark:text-violet-300 w-12">
             {Math.round(volume * 100)}%
           </span>
         </div>

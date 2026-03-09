@@ -41,7 +41,7 @@ const CallButtons = () => {
         onClick={() => handleCall("audio")}
         aria-label="Audio Call"
         title="Audio Call"
-        className="p-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 text-emerald-600 hover:from-emerald-500/20 hover:to-emerald-600/20 border border-emerald-500/20 transition-all shadow-sm"
+        className="p-2.5 rounded-xl bg-gradient-to-r from-violet-500/10 to-violet-600/10 text-violet-600 hover:from-violet-500/20 hover:to-violet-600/20 border border-violet-500/20 dark:text-[#b29bff] dark:from-violet-500/20 dark:to-violet-600/20 dark:border-violet-500/30 transition-all shadow-sm"
       >
         <Phone size={18} />
       </motion.button>
@@ -53,7 +53,7 @@ const CallButtons = () => {
         onClick={() => handleCall("video")}
         aria-label="Video Call"
         title="Video Call"
-        className="p-2.5 rounded-xl bg-gradient-to-r from-blue-500/10 to-blue-600/10 text-blue-600 hover:from-blue-500/20 hover:to-blue-600/20 border border-blue-500/20 transition-all shadow-sm"
+        className="p-2.5 rounded-xl bg-gradient-to-r from-violet-500/10 to-violet-600/10 text-violet-600 hover:from-violet-500/20 hover:to-violet-600/20 border border-violet-500/20 dark:text-[#b29bff] dark:from-violet-500/20 dark:to-violet-600/20 dark:border-violet-500/30 transition-all shadow-sm"
       >
         <Video size={18} />
       </motion.button>

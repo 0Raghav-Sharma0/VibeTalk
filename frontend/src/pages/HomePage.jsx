@@ -15,7 +15,7 @@ export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen w-full min-h-[100dvh] bg-base-200 text-base-content flex flex-col overflow-hidden">
+    <div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark:bg-[#1e1c24] flex flex-col overflow-hidden">
 
       {/* ==================== NAVBAR (WITH MOBILE SIDEBAR BUTTON) ==================== */}
       <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
@@ -29,7 +29,7 @@ export default function HomePage() {
         </div>
 
         {/* MAIN CHAT PANEL - flex: 1, same height as sidebar */}
-        <div className="flex-1 min-h-0 h-full flex flex-col bg-base-200 overflow-hidden">
+        <div className="flex-1 min-h-0 h-full flex flex-col bg-white dark:bg-[#1e1c24] overflow-hidden">
             {selectedUser ? (
               <ChatContainer />
             ) : selectedGroup ? (
@@ -53,17 +53,16 @@ export default function HomePage() {
           />
 
           {/* Drawer Panel - responsive width */}
-          <div className="relative w-[320px] sm:w-[340px] max-w-[90vw] h-full bg-base-100 dark:bg-base-200 shadow-xl z-50 flex flex-col">
-
+          <div className="relative w-[320px] sm:w-[340px] max-w-[90vw] h-full shadow-xl z-50 flex flex-col overflow-hidden sidebar-theme">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-transparent bg-base-100">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/20 shrink-0">
+              <div className="flex items-center gap-2 text-gray-900 dark:text-white">
+                <Users className="w-5 h-5" />
                 <span className="font-medium">Contacts</span>
               </div>
 
               <button
-                className="btn btn-ghost btn-square btn-sm"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/20 text-gray-700 dark:text-white transition-colors"
                 onClick={() => setSidebarOpen(false)}
               >
                 <X className="w-4 h-4" />

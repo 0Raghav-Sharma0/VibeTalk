@@ -75,7 +75,7 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="relative w-full bg-white dark:bg-base-100 border-t border-transparent pb-[env(safe-area-inset-bottom)]">
+    <div className="relative w-full bg-white dark:bg-[#1e1c24] border-t border-transparent dark:border-white/10 pb-[env(safe-area-inset-bottom)]">
 
       {/* IMAGE PREVIEW */}
       {imagePreview && (
@@ -151,8 +151,8 @@ const MessageInput = () => {
       <div className="px-3 py-2" data-message-input>
         <div className="
           flex items-center gap-2
-          bg-gray-100 dark:bg-base-200
-          border border-transparent
+          bg-gray-100 dark:bg-white/10
+          border border-transparent dark:border-white/10
           rounded-xl px-3 py-2
           focus-within:border-transparent
         ">
@@ -184,8 +184,8 @@ const MessageInput = () => {
             placeholder="Type your message..."
             className="
               flex-1 bg-transparent outline-none focus:outline-none focus-visible:outline-none
-              text-gray-900 dark:text-base-content
-              placeholder:text-gray-400 dark:placeholder:text-base-content/50
+              text-gray-900 dark:text-white
+              placeholder:text-gray-400 dark:placeholder:text-white/50
               text-sm md:text-base
             "
           />
@@ -195,8 +195,8 @@ const MessageInput = () => {
             disabled={!text.trim() && !imagePreview}
             className={`p-2.5 rounded-lg transition ${
               text.trim() || imagePreview
-                ? "bg-primary text-primary-content hover:opacity-90"
-                : "text-gray-400 cursor-not-allowed"
+                ? "bg-violet-600 text-white hover:opacity-90 dark:bg-violet-500"
+                : "text-gray-400 dark:text-white/40 cursor-not-allowed"
             }`}
           >
             <Send size={18} />

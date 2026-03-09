@@ -15,10 +15,12 @@ const Navbar = ({ onOpenSidebar }) => {
       className={`fixed top-0 left-0 right-0 z-40 h-14 min-h-[56px] pt-[env(safe-area-inset-top)] transition-all ${
         isSettings
           ? "border-transparent bg-transparent"
-          : "border-b border-transparent bg-base-100/95 backdrop-blur-md shadow-sm"
+          : "border-b border-transparent bg-white/95 dark:bg-[#1e1c24]/95 backdrop-blur-md shadow-sm"
       }`}
     >
-      <div className={`flex h-full items-center justify-between px-4 sm:px-6 ${isSettings ? "text-white" : ""}`}>
+      <div className={`flex h-full items-center justify-between px-4 sm:px-6 ${
+        isSettings ? "text-white" : "text-gray-900 dark:text-[#b29bff]"
+      }`}>
 
         {/* LEFT */}
         <div className="flex items-center gap-4">
@@ -27,7 +29,7 @@ const Navbar = ({ onOpenSidebar }) => {
             className={`md:hidden p-2 rounded-xl transition-colors ${
               isSettings
                 ? "text-white/90 hover:bg-white/10 hover:text-white"
-                : "text-gray-600 dark:text-base-content/70 hover:bg-base-200 hover:text-gray-900 dark:hover:text-base-content"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#b29bff] dark:hover:bg-white/10 dark:hover:text-white"
             }`}
             aria-label="Open sidebar"
           >
@@ -39,12 +41,16 @@ const Navbar = ({ onOpenSidebar }) => {
             className="flex items-center gap-2.5 group select-none"
           >
             <div className={`flex items-center justify-center w-9 h-9 rounded-xl transition-colors ${
-              isSettings ? "bg-white/20 text-white group-hover:bg-white/30" : "bg-primary/20 text-primary group-hover:bg-primary/30"
+              isSettings
+                ? "bg-white/20 text-white group-hover:bg-white/30"
+                : "bg-violet-100 text-violet-600 group-hover:bg-violet-200 dark:bg-white/10 dark:text-[#b29bff] dark:group-hover:bg-white/20"
             }`}>
               <MessageSquare className="w-5 h-5" />
             </div>
             <span className={`text-lg font-bold tracking-tight ${
-              isSettings ? "text-white" : "text-gray-900 dark:text-base-content"
+              isSettings
+                ? "text-white"
+                : "text-gray-900 dark:text-[#b29bff]"
             }`}>
               VibeTalk
             </span>
@@ -55,10 +61,10 @@ const Navbar = ({ onOpenSidebar }) => {
         <div className="flex items-center gap-2">
           <Link
             to="/watch-party"
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
               isSettings
-                ? "text-white bg-white/15 border border-transparent hover:bg-white/20 hover:border-transparent"
-                : "text-primary bg-primary/15 border border-primary/25 hover:bg-primary/25 hover:border-primary/40"
+                ? "text-white bg-white/15 border-white/30 hover:bg-white/20"
+                : "text-violet-600 bg-violet-50 border-violet-200 hover:bg-violet-100 dark:text-[#b29bff] dark:bg-transparent dark:border-white/20 dark:hover:bg-white/10"
             }`}
           >
             <Film className="w-4 h-4" />
@@ -70,7 +76,7 @@ const Navbar = ({ onOpenSidebar }) => {
             className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
               isSettings
                 ? "text-white/90 hover:bg-white/10 hover:text-white"
-                : "text-gray-700 dark:text-base-content/80 hover:text-gray-900 dark:hover:text-base-content hover:bg-base-200"
+                : "text-gray-700 hover:text-gray-900 hover:bg-gray-100 dark:text-[#b29bff] dark:hover:bg-white/10 dark:hover:text-white"
             }`}
           >
             <Settings className="w-4 h-4" />

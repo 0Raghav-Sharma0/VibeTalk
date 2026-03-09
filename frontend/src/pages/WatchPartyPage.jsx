@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useWatchParty } from "../contexts/WatchPartyContext";
 import WatchParty from "../components/WatchParty";
 import { Youtube, Upload, Users, ArrowRight } from "lucide-react";
@@ -15,7 +15,13 @@ const WatchPartyPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (roomId) return <WatchParty />;
+  if (roomId) {
+    return (
+      <div className="w-full min-w-full max-w-full h-screen min-h-[100dvh] overflow-hidden flex flex-col">
+        <WatchParty />
+      </div>
+    );
+  }
 
   const handleCreateRoom = async () => {
     setError("");

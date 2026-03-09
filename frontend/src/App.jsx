@@ -81,7 +81,7 @@ const App = () => {
     <SocketProvider>
       <WatchPartyProvider>
         {/* DO NOT set data-theme here */}
-        <div className="min-h-screen bg-base-100 text-base-content">
+        <div className="w-full min-h-screen bg-white dark:bg-[#1e1c24] text-gray-900 dark:text-white">
           {/* Navbar only when logged in */}
           {authUser && <Navbar />}
 
@@ -175,7 +175,7 @@ const App = () => {
               },
               success: {
                 iconTheme: {
-                  primary: "var(--success, #10b981)",
+                  primary: "var(--success, #8b5cf6)",
                   secondary: "var(--b2)",
                 },
               },

@@ -36,13 +36,13 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
   };
 
   return (
-    <header className="h-16 px-6 flex items-center justify-between border-b border-transparent bg-base-100">
+    <header className="h-16 px-6 flex items-center justify-between border-b border-transparent bg-white dark:bg-[#1e1c24] dark:border-white/10">
       
       {/* LEFT */}
       <div className="flex items-center gap-4">
         {/* Avatar */}
         <div className="relative">
-          <div className="w-12 h-12 rounded-xl overflow-hidden border border-transparent">
+          <div className="w-12 h-12 rounded-xl overflow-hidden border border-transparent dark:border-white/20">
             <img
               src={selectedUser.profilePic || "/boy.png"}
               alt={selectedUser.fullName}
@@ -51,22 +51,22 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           </div>
 
           <span
-            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-transparent ${
-              selectedUser.isOnline ? "bg-success" : "bg-gray-400"
+            className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white ${
+              selectedUser.isOnline ? "bg-emerald-500" : "bg-gray-400"
             }`}
           />
         </div>
 
         {/* User Info */}
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-base-content">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-violet-400">
             {selectedUser.fullName}
           </h2>
           <p
             className={`text-sm ${
               selectedUser.isOnline
-                ? "text-success"
-                : "text-gray-500 dark:text-base-content/60"
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-gray-500 dark:text-white/70"
             }`}
           >
             {selectedUser.isOnline ? "Online" : "Offline"}
@@ -81,7 +81,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
         <button
           onClick={handleAudioCall}
           title="Audio Call"
-          className="p-3 rounded-xl border border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 transition"
+          className="p-3 rounded-xl border border-violet-500/30 text-violet-600 hover:bg-violet-500/10 dark:border-[#b29bff]/50 dark:text-[#b29bff] dark:hover:bg-white/10 transition"
         >
           <Phone size={18} />
         </button>
@@ -90,7 +90,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
         <button
           onClick={handleVideoCall}
           title="Video Call"
-          className="p-3 rounded-xl border border-blue-500/30 text-blue-600 hover:bg-blue-500/10 transition"
+          className="p-3 rounded-xl border border-violet-500/30 text-violet-600 hover:bg-violet-500/10 dark:border-[#b29bff]/50 dark:text-[#b29bff] dark:hover:bg-white/10 transition"
         >
           <Video size={18} />
         </button>
@@ -105,7 +105,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           className={`p-3 rounded-xl transition ${
             isMusicPlayerOpen
               ? "bg-pink-500 text-white"
-              : "bg-gray-100 dark:bg-base-200 hover:bg-gray-200 dark:hover:bg-base-300 text-gray-700 dark:text-base-content"
+              : "bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-[#b29bff]"
           }`}
         >
           <Music2 size={18} />
@@ -121,7 +121,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
           className={`p-3 rounded-xl transition ${
             showWhiteboard
               ? "bg-purple-500 text-white"
-              : "bg-gray-100 dark:bg-base-200 hover:bg-gray-200 dark:hover:bg-base-300 text-gray-700 dark:text-base-content"
+              : "bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-[#b29bff]"
           }`}
         >
           <Pencil size={18} />
@@ -131,7 +131,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
         <button
           onClick={() => setSelectedUser(null)}
           title="Close Chat"
-          className="p-3 rounded-xl bg-gray-100 dark:bg-base-200 hover:bg-gray-200 dark:hover:bg-base-300 text-gray-700 dark:text-base-content transition"
+          className="p-3 rounded-xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-[#b29bff] transition"
         >
           <X size={18} />
         </button>

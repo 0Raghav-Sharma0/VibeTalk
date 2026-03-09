@@ -668,7 +668,7 @@ const VideoCall = () => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[9999] bg-gradient-to-br from-gray-900 to-black flex items-center justify-center"
+        className="fixed inset-0 z-[9999] bg-[#1e1c24] flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -687,19 +687,19 @@ const VideoCall = () => {
           />
 
           {callType !== "video" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-              <Phone size={80} className="mb-6 opacity-60" />
-              <p className="text-3xl font-bold">
-                {selectedUser?.fullName || "Audio Call"}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-[#b29bff]">
+              <Phone size={80} className="mb-6 text-violet-400/80" />
+              <p className="text-3xl font-bold text-white">
+                {isIncomingCall ? "Incoming Call" : selectedUser?.fullName || "Audio Call"}
               </p>
-              <p className="text-lg opacity-70 mt-2">{callStatus}</p>
+              <p className="text-lg text-[#b29bff]/90 mt-2">{callStatus}</p>
             </div>
           )}
 
           {/* Local Video PIP */}
           {callType === "video" && (
             <motion.div
-              className="absolute top-6 right-6 w-64 h-48 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-transparent"
+              className="absolute top-6 right-6 w-64 h-48 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-violet-500/50"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -712,8 +712,8 @@ const VideoCall = () => {
                 className="w-full h-full object-cover"
               />
               {!isVideoEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                  <VideoOff size={40} className="text-white/70" />
+                <div className="absolute inset-0 flex items-center justify-center bg-[#1e1c24]">
+                  <VideoOff size={40} className="text-violet-400/80" />
                 </div>
               )}
             </motion.div>
@@ -721,8 +721,8 @@ const VideoCall = () => {
 
           {/* Status Badge */}
           {callStatus && (
-            <div className="absolute top-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-full text-white text-sm">
-              <span className="inline-block w-2 h-2 rounded-full mr-2 bg-green-500" />
+            <div className="absolute top-6 left-6 px-4 py-2 bg-white/10 dark:bg-white/5 backdrop-blur-md rounded-full text-[#b29bff] text-sm border border-violet-500/30">
+              <span className="inline-block w-2 h-2 rounded-full mr-2 bg-violet-400 animate-pulse" />
               {callStatus}
             </div>
           )}
@@ -738,7 +738,7 @@ const VideoCall = () => {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-lg"
+                className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-lg border-2 border-red-500/30"
                 onClick={rejectCall}
               >
                 <PhoneOff size={28} className="text-white" />
@@ -746,7 +746,7 @@ const VideoCall = () => {
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-16 h-16 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center shadow-lg"
+                className="w-16 h-16 bg-violet-600 hover:bg-violet-500 rounded-full flex items-center justify-center shadow-lg shadow-violet-500/25 border-2 border-violet-400/50"
                 onClick={acceptCall}
               >
                 <Phone size={28} className="text-white" />
@@ -757,10 +757,10 @@ const VideoCall = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
+                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-2 ${
                   isAudioEnabled
-                    ? "bg-gray-700 hover:bg-gray-600"
-                    : "bg-red-600 hover:bg-red-700"
+                    ? "bg-white/10 hover:bg-white/20 border-violet-500/30 text-violet-400"
+                    : "bg-red-600 hover:bg-red-700 border-red-500/30"
                 }`}
                 onClick={toggleAudio}
               >
@@ -776,10 +776,10 @@ const VideoCall = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
+                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-2 ${
                       isVideoEnabled
-                        ? "bg-gray-700 hover:bg-gray-600"
-                        : "bg-red-600 hover:bg-red-700"
+                        ? "bg-white/10 hover:bg-white/20 border-violet-500/30 text-violet-400"
+                        : "bg-red-600 hover:bg-red-700 border-red-500/30"
                     }`}
                     onClick={toggleVideo}
                   >
@@ -793,10 +793,10 @@ const VideoCall = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg ${
+                    className={`w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-2 ${
                       isScreenSharing
-                        ? "bg-blue-600 hover:bg-blue-700"
-                        : "bg-gray-700 hover:bg-gray-600"
+                        ? "bg-violet-600 hover:bg-violet-500 border-violet-400/50"
+                        : "bg-white/10 hover:bg-white/20 border-violet-500/30 text-violet-400"
                     }`}
                     onClick={
                       isScreenSharing ? stopScreenShare : startScreenShare
@@ -814,7 +814,7 @@ const VideoCall = () => {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-14 h-14 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-lg"
+                className="w-14 h-14 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center shadow-lg border-2 border-red-500/30"
                 onClick={endCall}
               >
                 <PhoneOff size={24} className="text-white" />
@@ -825,11 +825,11 @@ const VideoCall = () => {
 
         {/* Close Button */}
         <button
-          className="absolute top-6 right-6 ..."
+          className="absolute top-6 right-6 p-2 rounded-xl hover:bg-white/10 text-white/90 hover:text-white transition-colors z-10"
           onClick={isIncomingCall ? undefined : endCall}
           disabled={isIncomingCall}
         >
-          <X size={24} className="text-white" />
+          <X size={24} />
         </button>
       </motion.div>
     </AnimatePresence>

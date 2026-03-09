@@ -1,5 +1,4 @@
 // src/components/WatchParty.jsx
-import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useWatchParty } from '../contexts/WatchPartyContext';
 import { Film, LogOut, Copy } from 'lucide-react';
@@ -19,7 +18,7 @@ const WatchParty = () => {
   };
 
   return (
-    <div className="watchparty h-screen overflow-hidden bg-base-100 text-base-content pt-14 flex flex-col">
+    <div className="watchparty w-full min-w-0 h-full min-h-0 flex-1 overflow-hidden bg-base-100 text-base-content pt-14 flex flex-col">
       {/* Top Controls - single row */}
       <header className="watchparty-header shrink-0">
         <div className="header-controls">

@@ -10,8 +10,8 @@ const NoChatSelected = () => {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="
           flex flex-col items-center text-center
-          border border-transparent rounded-xl
-          p-8 sm:p-10 max-w-sm w-full bg-base-200/80 dark:bg-base-200/60
+          border border-gray-200 dark:border-white/20 rounded-xl
+          p-8 sm:p-10 max-w-sm w-full bg-gray-50/90 dark:bg-white/5
         "
       >
         {/* Minimal geometric icon */}
@@ -31,11 +31,11 @@ const NoChatSelected = () => {
           </svg>
         </div>
 
-        <h2 className="text-lg font-semibold text-base-content mb-1">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
           Select a chat
         </h2>
 
-        <p className="text-base-content/60 text-sm leading-relaxed">
+        <p className="text-gray-600 dark:text-white/70 text-sm leading-relaxed">
           Choose a friend or group from the sidebar to start messaging.
         </p>
       </motion.div>

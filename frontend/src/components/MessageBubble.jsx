@@ -57,21 +57,21 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
     
     if (safeMsg.read) {
       return (
-        <span className="flex items-center gap-1 text-xs text-primary">
+        <span className="flex items-center gap-1 text-xs text-violet-500 dark:text-[#b29bff]">
           <CheckCheck size={12} />
           Read
         </span>
       );
     } else if (safeMsg.delivered) {
       return (
-        <span className="flex items-center gap-1 text-xs text-base-content/60">
+        <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-white/70">
           <CheckCheck size={12} />
           Delivered
         </span>
       );
     } else if (safeMsg.sent) {
       return (
-        <span className="flex items-center gap-1 text-xs text-base-content/40">
+        <span className="flex items-center gap-1 text-xs text-gray-400 dark:text-white/50">
           <Check size={12} />
           Sent
         </span>
@@ -122,9 +122,9 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
         {/* Message metadata */}
         <div className={`flex items-center gap-2 mb-1 px-1 ${isMine ? 'flex-row-reverse' : ''}`}>
           {showSenderName && safeMsg.senderName && (
-            <span className="text-xs font-medium text-primary">{safeMsg.senderName}</span>
+            <span className="text-xs font-medium text-violet-600 dark:text-[#b29bff]">{safeMsg.senderName}</span>
           )}
-          <span className="text-xs text-base-content/40">
+          <span className="text-xs text-gray-500 dark:text-white/60">
             {formatMessageTime(safeMsg.createdAt || safeMsg.timestamp)}
           </span>
           
@@ -167,8 +167,8 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
               isEmojiOnly
                 ? "bg-transparent p-0 shadow-none"
                 : isMine
-                ? "bg-gradient-to-br from-primary/20 to-primary/10 border border-primary/10"
-                : "bg-base-200 border border-transparent"
+                ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white" 
+                : "bg-gray-100 dark:bg-white/10 border border-transparent"
             }`}
           >
             {/* Text content */}
@@ -177,7 +177,9 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
                 className={`whitespace-pre-wrap break-words ${
                   isEmojiOnly
                     ? "text-4xl leading-none"
-                    : "text-sm leading-relaxed text-base-content"
+                    : isMine
+                    ? "text-sm leading-relaxed text-white"
+                    : "text-sm leading-relaxed text-gray-900 dark:text-white"
                 }`}
               >
                 {safeMsg.text}
@@ -240,14 +242,14 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
                   console.log("Downloading file:", safeMsg.file.name);
                 }}
               >
-                <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <div className="p-2 rounded-lg bg-violet-100 dark:bg-white/10 text-violet-600 dark:text-[#b29bff]">
                   {getFileIcon(safeMsg.file.name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate text-base-content">
+                  <p className="text-sm font-medium truncate text-gray-900 dark:text-white">
                     {safeMsg.file.name || "Download"}
                   </p>
-                  <p className="text-xs text-base-content/60">
+                  <p className="text-xs text-gray-500 dark:text-white/70">
                     {formatFileSize(safeMsg.file.size)}
                   </p>
                 </div>
