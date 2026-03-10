@@ -33,9 +33,9 @@ export default function GroupChatContainer() {
   if (!selectedGroup) return null;
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-white dark-mode-bg">
-      {/* HEADER */}
-      <div className="flex-shrink-0 px-3 sm:px-5 py-3.5 border-b border-transparent flex items-center justify-between bg-white dark-mode-bg dark:border-white/8">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-white dark-mode-bg">
+      {/* HEADER - sticky on mobile */}
+      <div className="flex-shrink-0 sticky top-0 z-10 px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-transparent flex items-center justify-between bg-white dark-mode-bg dark:border-white/8">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedGroup(null)}
@@ -90,9 +90,9 @@ export default function GroupChatContainer() {
         </div>
       )}
 
-      {/* MESSAGES - scrollable only when content overflows (mobile: no scroll when typing + empty) */}
+      {/* MESSAGES - scrollable when overflow, messages anchor to bottom */}
       <div
-        className={`flex-1 min-h-0 px-4 sm:px-5 py-5 space-y-4 bg-white dark-mode-bg chat-messages-scroll ${
+        className={`flex-1 min-h-0 px-4 sm:px-5 py-4 sm:py-5 flex flex-col justify-end bg-white dark-mode-bg chat-messages-scroll ${
           filteredMessages.length === 0 ? "overflow-y-hidden" : "overflow-y-auto"
         }`}
       >
@@ -102,23 +102,25 @@ export default function GroupChatContainer() {
           </div>
         ) : (
           <>
-            {filteredMessages.map((msg) => (
-              <MessageBubble
-                key={msg._id}
-                msg={msg}
-                isMine={toStr(msg.senderId) === toStr(authUser?._id)}
-                authUser={authUser}
-                selectedUser={null}
-                showSenderName={toStr(msg.senderId) !== toStr(authUser?._id)}
-              />
-            ))}
+            <div className="space-y-4">
+              {filteredMessages.map((msg) => (
+                <MessageBubble
+                  key={msg._id}
+                  msg={msg}
+                  isMine={toStr(msg.senderId) === toStr(authUser?._id)}
+                  authUser={authUser}
+                  selectedUser={null}
+                  showSenderName={toStr(msg.senderId) !== toStr(authUser?._id)}
+                />
+              ))}
+            </div>
             <div ref={endRef} />
           </>
         )}
       </div>
 
-      {/* INPUT - fixed height bottom bar */}
-      <div className="flex-shrink-0 min-h-[70px] w-full">
+      {/* INPUT - fixed at bottom on mobile */}
+      <div className="flex-shrink-0 w-full chat-input-wrapper">
         <GroupMessageInput />
       </div>
 

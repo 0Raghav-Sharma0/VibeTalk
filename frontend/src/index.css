@@ -729,16 +729,47 @@ html:not(.dark) .hover-lift:hover {
 }
 
 
-/* Chat messages - prevent unwanted scroll on mobile when typing (empty or few messages) */
+/* Chat messages - scrollable, messages anchor to bottom */
 .chat-messages-scroll {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
 }
 
+/* Mobile: fixed input at bottom so it stays visible when keyboard opens */
 @media (max-width: 768px) {
   .chat-messages-scroll {
-    overscroll-behavior-y: none;
+    overscroll-behavior-y: contain;
+    padding-bottom: 88px; /* space for fixed input above keyboard */
   }
+
+  .chat-input-wrapper {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    padding-bottom: env(safe-area-inset-bottom);
+    border-top: 1px solid rgba(0,0,0,0.08);
+  }
+
+  .dark .chat-input-wrapper,
+  [data-theme="dark"] .chat-input-wrapper,
+  [data-theme="coffee"] .chat-input-wrapper,
+  [data-theme="vibetalk"] .chat-input-wrapper {
+    border-top-color: rgba(255,255,255,0.08);
+  }
+}
+
+/* Chat input wrapper background - matches chat panel */
+html:not(.dark) .chat-input-wrapper {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06), transparent 35%), radial-gradient(circle at 80% 80%, rgba(147,51,234,0.04), transparent 35%), #ffffff;
+}
+
+.dark .chat-input-wrapper,
+[data-theme="dark"] .chat-input-wrapper,
+[data-theme="coffee"] .chat-input-wrapper,
+[data-theme="vibetalk"] .chat-input-wrapper {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.04), transparent 25%), radial-gradient(circle at 80% 80%, rgba(59,130,246,0.03), transparent 25%), #0b0b0f;
 }
 
 /* High contrast mode support */

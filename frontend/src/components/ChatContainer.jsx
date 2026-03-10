@@ -94,22 +94,22 @@ export default function ChatContainer() {
   }
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-white dark-mode-bg">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden bg-white dark-mode-bg">
 
-      {/* ================= HEADER ================= */}
-      <div className="flex-shrink-0 px-3 sm:px-5 py-3.5 border-b border-transparent flex items-center justify-between bg-white dark-mode-bg dark:border-white/8">
-        <div className="flex items-center gap-3">
+      {/* ================= HEADER - sticky on mobile so call buttons stay visible ================= */}
+      <div className="flex-shrink-0 sticky top-0 z-10 px-3 sm:px-5 py-2.5 sm:py-3.5 border-b border-transparent flex items-center justify-between bg-white dark-mode-bg dark:border-white/8">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
           <button
             onClick={() => setSelectedUser(null)}
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200"
+            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200 shrink-0"
           >
             <ChevronLeft size={20} />
           </button>
 
-          <div className="relative">
+          <div className="relative shrink-0">
             <img
               src={selectedUser.profilePic || "/boy.png"}
-              className="w-11 h-11 rounded-xl object-cover border border-transparent"
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl object-cover border border-transparent"
             />
             <div
               className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-transparent ${
@@ -118,8 +118,8 @@ export default function ChatContainer() {
             />
           </div>
 
-          <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white">
+          <div className="min-w-0">
+            <h2 className="font-semibold text-gray-900 dark:text-white truncate text-sm sm:text-base">
               {selectedUser.fullName}
             </h2>
             <p className="text-xs text-gray-600 dark:text-white/70">
@@ -128,40 +128,40 @@ export default function ChatContainer() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 hover:translate-y-[-1px]"
+            className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
           >
-            <Search size={18} />
+            <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
 
           <button
             onClick={handleAudioCall}
-            className="p-2.5 rounded-lg bg-violet-500/15 text-violet-600 hover:bg-violet-500/25 dark:bg-white/10 dark:text-[#b29bff] dark:hover:bg-white/20 transition-all duration-200 hover:translate-y-[-1px]"
+            className="p-2 sm:p-2.5 rounded-lg bg-violet-500/15 text-violet-600 hover:bg-violet-500/25 dark:bg-white/10 dark:text-[#b29bff] dark:hover:bg-white/20 transition-all"
           >
-            <Phone size={18} />
+            <Phone size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
 
           <button
             onClick={handleVideoCall}
-            className="p-2.5 rounded-lg bg-blue-500/15 text-blue-600 hover:bg-blue-500/25 dark:bg-white/10 dark:text-[#b29bff] dark:hover:bg-white/20 transition-all duration-200 hover:translate-y-[-1px]"
+            className="p-2 sm:p-2.5 rounded-lg bg-blue-500/15 text-blue-600 hover:bg-blue-500/25 dark:bg-white/10 dark:text-[#b29bff] dark:hover:bg-white/20 transition-all"
           >
-            <Video size={18} />
+            <Video size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
 
           <button
             onClick={() => setShowWhiteboard(true)}
-            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 hover:translate-y-[-1px]"
+            className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
           >
-            <Pencil size={18} />
+            <Pencil size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
 
           <button
             onClick={() => toggleMusicPlayer(true)}
-            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 hover:translate-y-[-1px]"
+            className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
           >
-            <Music2 size={18} />
+            <Music2 size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
         </div>
       </div>
@@ -179,26 +179,28 @@ export default function ChatContainer() {
         </div>
       )}
 
-      {/* ================= MESSAGES - scrollable only when content overflows (mobile: no scroll when typing + empty) ================= */}
+      {/* ================= MESSAGES - scrollable when overflow, messages anchor to bottom ================= */}
         <div
-          className={`flex-1 min-h-0 px-4 sm:px-5 py-5 space-y-4 bg-white dark-mode-bg chat-messages-scroll ${
+          className={`flex-1 min-h-0 px-4 sm:px-5 py-4 sm:py-5 flex flex-col justify-end bg-white dark-mode-bg chat-messages-scroll ${
           filteredMessages.length === 0 ? "overflow-y-hidden" : "overflow-y-auto"
         }`}
       >
-        {filteredMessages.map((msg) => (
-          <MessageBubble
-            key={msg._id}
-            msg={msg}
-            isMine={msg.senderId === authUser._id}
-            authUser={authUser}
-            selectedUser={selectedUser}
-          />
-        ))}
+        <div className="space-y-4">
+          {filteredMessages.map((msg) => (
+            <MessageBubble
+              key={msg._id}
+              msg={msg}
+              isMine={msg.senderId === authUser._id}
+              authUser={authUser}
+              selectedUser={selectedUser}
+            />
+          ))}
+        </div>
         <div ref={endRef} />
       </div>
 
-      {/* ================= INPUT - fixed height bottom bar ================= */}
-      <div className="flex-shrink-0 min-h-[70px] w-full">
+      {/* ================= INPUT - fixed at bottom, stays visible on mobile when keyboard opens ================= */}
+      <div className="flex-shrink-0 w-full chat-input-wrapper">
         <MessageInput />
       </div>
 
