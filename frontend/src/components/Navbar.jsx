@@ -6,11 +6,14 @@ import {
   Film,
 } from "lucide-react";
 import { useThemeStore } from "../store/useThemeStore";
+import { useSidebar } from "../contexts/SidebarContext";
 
 const DARK_THEMES = ["dark", "coffee", "vibetalk"];
 
-const Navbar = ({ onOpenSidebar }) => {
+const Navbar = () => {
+  const { setSidebarOpen } = useSidebar();
   const { pathname } = useLocation();
+  const isHome = pathname === "/" || pathname === "/home";
   const { theme } = useThemeStore();
   const isSettings = pathname === "/settings";
   const isDark = DARK_THEMES.includes(theme);
@@ -30,8 +33,8 @@ const Navbar = ({ onOpenSidebar }) => {
         {/* LEFT */}
         <div className="flex items-center gap-4">
           <button
-            onClick={onOpenSidebar}
-            className={`md:hidden p-2 rounded-xl transition-colors ${
+            onClick={() => setSidebarOpen(true)}
+            className={`${!isHome ? "hidden" : ""} md:hidden p-2 rounded-xl transition-colors ${
               isSettings
                 ? isDark
                   ? "text-white/90 hover:bg-white/10 hover:text-white"

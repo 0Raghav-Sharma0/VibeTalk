@@ -18,6 +18,7 @@ import { useChatStore } from "./store/useChatStore";
 
 import { SocketProvider } from "./contexts/SocketContext";
 import { WatchPartyProvider } from "./contexts/WatchPartyContext";
+import { SidebarProvider } from "./contexts/SidebarContext";
 
 import { Toaster } from "react-hot-toast";
 import "ldrs/grid";
@@ -80,6 +81,7 @@ const App = () => {
   return (
     <SocketProvider>
       <WatchPartyProvider>
+        <SidebarProvider>
         {/* DO NOT set data-theme here */}
         <div className="w-full min-h-screen dark-mode-root text-gray-900 dark:text-white">
           {/* Navbar only when logged in */}
@@ -194,6 +196,7 @@ const App = () => {
             }}
           />
         </div>
+        </SidebarProvider>
       </WatchPartyProvider>
     </SocketProvider>
   );

@@ -13,6 +13,7 @@ export default {
     "dark-mode-bg",
     "dark-mode-root",
     "call-overlay-bg",
+    "mobile-chat-root",
   ],
   theme: {
     extend: {

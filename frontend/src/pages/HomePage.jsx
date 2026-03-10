@@ -1,5 +1,5 @@
 // src/pages/HomePage.jsx
-import { useState } from "react";
+import { useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
 import ChatContainer from "../components/ChatContainer";
@@ -7,18 +7,28 @@ import GroupChatContainer from "../components/GroupChatContainer";
 import NoChatSelected from "../components/NoChatSelected";
 import { useChatStore } from "../store/useChatStore";
 import { useGroupStore } from "../store/useGroupStore";
+import { useSidebar } from "../contexts/SidebarContext";
 import { Users, X } from "lucide-react";
 
 export default function HomePage() {
   const { selectedUser } = useChatStore();
   const { selectedGroup } = useGroupStore();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { sidebarOpen, setSidebarOpen } = useSidebar();
+
+  /* Mobile: lock body scroll to prevent page-level scroll (fixes rubber-banding) */
+  useEffect(() => {
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (isMobile) {
+      document.documentElement.classList.add("mobile-chat-active");
+      return () => document.documentElement.classList.remove("mobile-chat-active");
+    }
+  }, []);
 
   return (
-    <div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark-mode-bg flex flex-col overflow-hidden">
+    <div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark-mode-bg flex flex-col overflow-hidden md:relative mobile-chat-root">
 
       {/* ==================== NAVBAR (WITH MOBILE SIDEBAR BUTTON) ==================== */}
-      <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
+      <Navbar />
 
       {/* ==================== MAIN AREA: Two-column layout, aligned top to bottom ==================== */}
       <div className="flex flex-1 min-h-0" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}>

@@ -23,6 +23,16 @@ body {
   overflow-x: hidden;
 }
 
+/* Mobile: prevent body/html scroll when chat is active */
+html.mobile-chat-active {
+  overflow: hidden !important;
+}
+
+html.mobile-chat-active body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
 *,
 *::before,
 *::after {
@@ -733,13 +743,32 @@ html:not(.dark) .hover-lift:hover {
 .chat-messages-scroll {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
 }
 
-/* Mobile: fixed input at bottom so it stays visible when keyboard opens */
+/* Mobile: lock chat to viewport, prevent body scroll, fix input */
 @media (max-width: 768px) {
+  /* Lock entire chat page to viewport - prevents scroll at page level */
+  .mobile-chat-root {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100% !important;
+    height: 100dvh !important;
+    height: -webkit-fill-available !important;
+    overflow: hidden !important;
+  }
+
   .chat-messages-scroll {
     overscroll-behavior-y: contain;
-    padding-bottom: 88px; /* space for fixed input above keyboard */
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 88px;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
   }
 
   .chat-input-wrapper {
