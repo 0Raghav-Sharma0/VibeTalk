@@ -15,7 +15,7 @@ export default function HomePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark:bg-[#1e1c24] flex flex-col overflow-hidden">
+    <div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark-mode-bg flex flex-col overflow-hidden">
 
       {/* ==================== NAVBAR (WITH MOBILE SIDEBAR BUTTON) ==================== */}
       <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
@@ -29,7 +29,7 @@ export default function HomePage() {
         </div>
 
         {/* MAIN CHAT PANEL - flex: 1, same height as sidebar */}
-        <div className="flex-1 min-h-0 h-full flex flex-col bg-white dark:bg-[#1e1c24] overflow-hidden">
+        <div className="flex-1 min-h-0 h-full flex flex-col bg-white overflow-hidden dark-mode-bg">
             {selectedUser ? (
               <ChatContainer />
             ) : selectedGroup ? (

@@ -209,9 +209,9 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
   /* ================= UI ================= */
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-violet-50 via-white to-violet-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 border-l border-transparent shadow-xl">
+    <div className="h-full flex flex-col bg-gradient-to-b from-violet-50 via-white to-violet-50 dark:from-black dark:via-black dark:to-black dark:border-white/10 border-l border-gray-200 shadow-xl">
       {/* HEADER */}
-      <div className="px-6 py-4 flex justify-between items-center border-b border-transparent bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
+      <div className="px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-white/10 bg-white/90 dark:bg-black/90 backdrop-blur-sm">
         <div className="flex items-center gap-4">
           <img 
             src={currentGif} 

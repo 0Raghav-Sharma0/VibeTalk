@@ -69,7 +69,7 @@ const WatchPartyPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-base-200 text-gray-900 dark:text-base-content flex items-center justify-center px-4">
+    <div className="min-h-screen dark-mode-root text-gray-900 dark:text-white flex items-center justify-center px-4">
 
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8">
 
@@ -77,13 +77,13 @@ const WatchPartyPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-base-100 border border-transparent rounded-2xl p-7 shadow-xl"
+          className="dark-mode-bg border border-gray-200 dark:border-white/10 rounded-2xl p-7 shadow-xl"
         >
-          <h1 className="text-2xl font-semibold text-gray-900 dark:text-base-content mb-1">
+          <h1 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
             🎬 Watch Party
           </h1>
 
-          <p className="text-sm text-gray-700 dark:text-base-content/70 mb-5">
+          <p className="text-sm text-gray-700 dark:text-white/70 mb-5">
             Watch videos together in perfect sync.
           </p>
 
@@ -93,7 +93,7 @@ const WatchPartyPage = () => {
                 ${
                   error
                     ? "bg-red-50 border-red-200 text-red-700 dark:bg-error/10 dark:border-error/30 dark:text-error"
-                    : "bg-gray-100 border-transparent text-gray-800 dark:bg-base-200 dark:border-transparent"
+                    : "bg-gray-100 border-transparent text-gray-800 dark:bg-white/10 dark:border-transparent dark:text-white/90"
                 }`}
             >
               {error || status}
@@ -112,8 +112,8 @@ const WatchPartyPage = () => {
                 className={`flex-1 py-2 rounded-lg font-medium transition
                   ${
                     videoType === id
-                      ? "bg-gray-900 text-white"
-                      : "bg-gray-100 dark:bg-base-200 border border-transparent hover:bg-gray-200 dark:hover:bg-base-300 text-gray-800 dark:text-base-content"
+                      ? "bg-[#7D3DCF] dark:bg-[#7D3DCF] text-white"
+                      : "bg-gray-100 dark:bg-white/10 border border-transparent hover:bg-gray-200 dark:hover:bg-white/20 text-gray-800 dark:text-white"
                   }`}
               >
                 <Icon size={16} className="inline mr-2" />
@@ -128,19 +128,19 @@ const WatchPartyPage = () => {
               onChange={(e) => setVideoUrl(e.target.value)}
               placeholder="Paste YouTube link…"
               className="w-full px-4 py-2 mb-4 rounded-lg
-                         bg-gray-100 dark:bg-base-200
+                         bg-gray-100 dark:bg-white/10
                          border border-transparent
-                         text-gray-900 dark:text-base-content
-                         placeholder:text-gray-500 dark:placeholder:text-base-content/50
-                         focus:ring-2 focus:ring-gray-400 dark:focus:ring-base-content/40
+                         text-gray-900 dark:text-white
+                         placeholder:text-gray-500 dark:placeholder:text-white/50
+                         focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-500/50
                          outline-none"
             />
           ) : (
             <label className="block mb-4">
               <div className="px-4 py-3 rounded-lg border border-dashed border-transparent
                               text-center cursor-pointer
-                              text-gray-700 dark:text-base-content/70
-                              hover:bg-gray-100 dark:hover:bg-base-200">
+                              text-gray-700 dark:text-white/70
+                              hover:bg-gray-100 dark:hover:bg-white/10">
                 Choose video file
               </div>
               <input type="file" accept="video/*" hidden onChange={handleFile} />
@@ -152,8 +152,8 @@ const WatchPartyPage = () => {
             onClick={handleCreateRoom}
             disabled={loading}
             className="w-full py-3 rounded-xl font-semibold
-                       bg-primary text-black
-                       hover:bg-primary/90 transition"
+                       bg-[#7D3DCF] text-white
+                       hover:bg-[#9C66CC] dark:hover:bg-[#9C66CC] transition"
           >
             {loading ? "Creating…" : "Create Watch Party"}
           </button>
@@ -164,9 +164,9 @@ const WatchPartyPage = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="bg-white dark:bg-base-100 border border-transparent rounded-2xl p-7 shadow-xl"
+          className="dark-mode-bg border border-gray-200 dark:border-white/10 rounded-2xl p-7 shadow-xl"
         >
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-base-content mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Join Existing Party
           </h2>
 
@@ -175,11 +175,11 @@ const WatchPartyPage = () => {
             onChange={(e) => setJoinRoomId(e.target.value)}
             placeholder="Enter Room ID"
             className="w-full px-4 py-2 mb-4 rounded-lg
-                       bg-gray-100 dark:bg-base-200
+                       bg-gray-100 dark:bg-white/10
                        border border-transparent
-                       text-gray-900 dark:text-base-content
-                       placeholder:text-gray-500 dark:placeholder:text-base-content/50
-                       focus:ring-2 focus:ring-gray-400 dark:focus:ring-base-content/40
+                       text-gray-900 dark:text-white
+                       placeholder:text-gray-500 dark:placeholder:text-white/50
+                       focus:ring-2 focus:ring-violet-500 dark:focus:ring-violet-500/50
                        outline-none"
           />
 
@@ -187,11 +187,11 @@ const WatchPartyPage = () => {
             onClick={handleJoinRoom}
             disabled={loading}
             className="w-full py-3 rounded-xl font-medium
-                       bg-gray-100 dark:bg-base-200
+                       bg-gray-100 dark:bg-white/10
                        border border-transparent
-                       hover:bg-gray-200 dark:hover:bg-base-300
+                       hover:bg-gray-200 dark:hover:bg-white/20
                        flex items-center justify-center gap-2
-                       text-gray-900 dark:text-base-content
+                       text-gray-900 dark:text-white
                        transition"
           >
             <Users size={18} />
@@ -211,9 +211,9 @@ const WatchPartyPage = () => {
               <span
                 key={f}
                 className="px-3 py-1 rounded-full
-                           bg-gray-100 dark:bg-base-200
+                           bg-gray-100 dark:bg-white/10
                            border border-transparent
-                           text-gray-700 dark:text-base-content/70"
+                           text-gray-700 dark:text-white/70"
               >
                 {f}
               </span>

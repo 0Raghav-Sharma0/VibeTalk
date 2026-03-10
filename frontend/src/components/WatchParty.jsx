@@ -18,13 +18,13 @@ const WatchParty = () => {
   };
 
   return (
-    <div className="watchparty w-full min-w-0 h-full min-h-0 flex-1 overflow-hidden bg-base-100 text-base-content pt-14 flex flex-col">
+    <div className="watchparty w-full min-w-0 h-full min-h-0 flex-1 overflow-hidden dark-mode-root text-gray-900 dark:text-white pt-14 flex flex-col">
       {/* Top Controls - single row */}
       <header className="watchparty-header shrink-0">
         <div className="header-controls">
           <div className="header-left">
             <div className="header-logo">
-              <Film className="w-4 h-4 text-primary" />
+              <Film className="w-4 h-4 text-[#7D3DCF] dark:text-[#b29bff]" />
               <span>Watch Party</span>
             </div>
             {roomId && (

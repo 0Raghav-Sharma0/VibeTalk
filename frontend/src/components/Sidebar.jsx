@@ -239,26 +239,29 @@ const Sidebar = ({ onClose }) => {
                 <div
                   key={group._id}
                   onClick={() => handleGroupSelect(group)}
-                  className={`relative rounded-xl cursor-pointer transition-all duration-200 overflow-hidden ${
+                  className={`relative rounded-xl cursor-pointer transition-all duration-200 overflow-hidden hover-lift ${
                     isSelected
-                      ? "bg-violet-100 dark:bg-white/20 ring-1 ring-violet-200 dark:ring-white/40"
+                      ? "bg-[#EEECF9] sidebar-friend-selected ring-1 ring-[#7D3DCF]/30 dark:ring-transparent"
                       : "bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10"
                   }`}
                 >
+                  {isSelected && (
+                    <span className="absolute left-0 top-2.5 bottom-2.5 w-[3px] bg-[#7D3DCF] dark:bg-[#7c3aed] rounded-r-full" />
+                  )}
                   <div className="flex items-center gap-2.5 px-3 py-2.5">
-                    <div className={`flex items-center justify-center w-9 h-9 rounded-xl shrink-0 ${isSelected ? "bg-violet-200 dark:bg-violet-500/30" : "bg-violet-100 dark:bg-white/10"}`}>
-                      <UsersRound className={`w-4 h-4 ${isSelected ? "text-violet-600 dark:text-violet-400" : "text-violet-600 dark:text-white/90"}`} />
+                    <div className={`flex items-center justify-center w-9 h-9 rounded-xl shrink-0 ring-2 ${isSelected ? "bg-violet-100 dark:bg-violet-500/30 ring-[#7D3DCF] dark:ring-violet-500" : "bg-violet-100 dark:bg-white/10 ring-violet-200 dark:ring-white/30"}`}>
+                      <UsersRound className={`w-4 h-4 ${isSelected ? "text-[#7D3DCF] dark:text-violet-400" : "text-violet-600 dark:text-white/90"}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold truncate ${isSelected ? "text-violet-600 dark:text-violet-400" : "text-gray-900 dark:text-white"}`}>
+                      <p className={`text-sm font-semibold truncate ${isSelected ? "text-[#7D3DCF] dark:text-violet-400" : "text-gray-900 dark:text-white"}`}>
                         {group.name}
                       </p>
-                      <p className={`text-xs font-medium ${isSelected ? "text-violet-500 dark:text-violet-400/90" : "text-gray-600 dark:text-white/80"}`}>
+                      <p className={`text-xs font-medium ${isSelected ? "text-[#9C66CC] dark:text-violet-400/90" : "text-gray-600 dark:text-white/80"}`}>
                         {group.members?.length || 0} members · {adminCount} admin{adminCount !== 1 ? "s" : ""}
                       </p>
                     </div>
                     {unread > 0 && !isSelected && (
-                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-violet-500 dark:bg-white text-white dark:text-[#1e1c24] font-bold shrink-0">
+                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-violet-500 dark:bg-white text-white dark:text-black font-bold shrink-0">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}
@@ -294,18 +297,18 @@ const Sidebar = ({ onClose }) => {
               return (
                 <div
                   key={user._id}
-                  className={`relative rounded-xl group transition-all duration-200 overflow-hidden
+                  className={`relative rounded-xl group transition-all duration-200 overflow-hidden hover-lift
                     ${
                       isSelected
-                        ? "bg-violet-100 dark:bg-white/20 ring-1 ring-violet-200 dark:ring-white/40"
+                        ? "bg-[#EEECF9] sidebar-friend-selected ring-1 ring-[#7D3DCF]/30 dark:ring-transparent"
                         : unread
-                        ? "bg-violet-50 dark:bg-white/10 ring-1 ring-violet-200/50 dark:ring-white/25"
+                        ? "bg-violet-50 dark:bg-white/10 ring-1 ring-violet-200/50 dark:ring-white/10"
                         : "bg-gray-100/80 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10"
                     }
                   `}
                 >
                   {isSelected && (
-                    <span className="absolute left-0 top-2.5 bottom-2.5 w-0.5 bg-violet-500 dark:bg-violet-400 rounded-r-full" />
+                    <span className="absolute left-0 top-2.5 bottom-2.5 w-1 bg-[#7D3DCF] dark:bg-violet-400 rounded-r-full" />
                   )}
 
                   <div
@@ -313,7 +316,7 @@ const Sidebar = ({ onClose }) => {
                     className="relative flex items-center gap-2.5 px-3 py-2.5 cursor-pointer"
                   >
                     <div className="relative shrink-0">
-                      <div className={`rounded-xl overflow-hidden ring-2 ${isSelected ? "ring-violet-400 dark:ring-violet-500" : "ring-violet-200 dark:ring-white/30"}`}>
+                      <div className={`rounded-xl overflow-hidden ring-2 ${isSelected ? "ring-[#7D3DCF] dark:ring-violet-500" : "ring-violet-200 dark:ring-white/30"}`}>
                         <img
                           src={user.profilePic || "/boy.png"}
                           alt={user.fullName}
@@ -321,7 +324,7 @@ const Sidebar = ({ onClose }) => {
                         />
                       </div>
                       {isOnline && (
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 dark:bg-emerald-400 rounded-full ring-2 ring-gray-100 dark:ring-[#1e1c24]" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 dark:bg-emerald-400 online-indicator-glow rounded-full ring-2 ring-gray-100 dark:ring-[#0b0b0f]" />
                       )}
                     </div>
 
@@ -329,14 +332,14 @@ const Sidebar = ({ onClose }) => {
                       <div className="flex items-center justify-between gap-1.5">
                         <p
                           className={`text-sm truncate ${
-                            isSelected ? "text-violet-600 dark:text-violet-400" : "text-gray-900 dark:text-white"
+                            isSelected ? "text-[#7D3DCF] dark:text-violet-400 font-semibold" : "text-gray-900 dark:text-white"
                           } ${unread && !isSelected ? "font-bold" : "font-semibold"}`}
                         >
                           {user.fullName || "Unknown User"}
                         </p>
 
                         {isTyping && (
-                          <span className="text-xs text-violet-600 dark:text-violet-400 font-semibold animate-pulse shrink-0">
+                          <span className="text-xs text-[#7D3DCF] dark:text-violet-400 font-semibold animate-pulse shrink-0">
                             typing
                           </span>
                         )}
@@ -345,7 +348,7 @@ const Sidebar = ({ onClose }) => {
                       <p
                         className={`text-xs font-semibold ${
                           isSelected
-                            ? "text-violet-500 dark:text-violet-400/90"
+                            ? "text-[#9C66CC] dark:text-violet-400/90"
                             : isOnline
                             ? "text-emerald-600 dark:text-emerald-400"
                             : "text-gray-500 dark:text-white/70"
@@ -356,7 +359,7 @@ const Sidebar = ({ onClose }) => {
                     </div>
 
                     {unread > 0 && !isSelected && (
-                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-violet-500 dark:bg-white text-white dark:text-[#1e1c24] font-bold shrink-0">
+                      <span className="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] rounded-lg bg-violet-500 dark:bg-white text-white dark:text-black font-bold shrink-0">
                         {unread > 99 ? "99+" : unread}
                       </span>
                     )}
@@ -411,7 +414,7 @@ const Sidebar = ({ onClose }) => {
                 <button
                   type="submit"
                   disabled={isSearching}
-                  className="px-4 py-2 rounded-xl bg-violet-500 dark:bg-white text-white dark:text-[#1e1c24] text-sm font-semibold disabled:opacity-50 flex items-center gap-2 transition-opacity hover:bg-violet-600 dark:hover:bg-white/90 shrink-0"
+                  className="px-4 py-2 rounded-xl bg-violet-500 dark:bg-white text-white dark:text-black text-sm font-semibold disabled:opacity-50 flex items-center gap-2 transition-opacity hover:bg-violet-600 dark:hover:bg-white/90 shrink-0"
                 >
                   {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   Search
@@ -436,7 +439,7 @@ const Sidebar = ({ onClose }) => {
                   <button
                     type="button"
                     onClick={() => sendRequest(searchResult.user.fullName)}
-                    className="shrink-0 px-3 py-2 rounded-lg bg-violet-500 dark:bg-white text-white dark:text-[#1e1c24] text-xs font-semibold hover:bg-violet-600 dark:hover:bg-white/90 transition-opacity"
+                    className="shrink-0 px-3 py-2 rounded-lg bg-violet-500 dark:bg-white text-white dark:text-black text-xs font-semibold hover:bg-violet-600 dark:hover:bg-white/90 transition-opacity"
                   >
                     Add
                   </button>

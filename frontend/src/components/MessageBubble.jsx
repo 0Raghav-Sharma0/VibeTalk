@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   File,
   Download,
@@ -105,7 +105,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
   };
 
   return (
-    <div className={`flex gap-2 mb-4 ${isMine ? "justify-end" : "justify-start"}`}>
+    <div className={`flex gap-2 mb-5 msg-animate-in ${isMine ? "justify-end" : "justify-start"}`}>
       {/* Sender avatar (left side) */}
       {!isMine && (
         <img
@@ -122,7 +122,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
         {/* Message metadata */}
         <div className={`flex items-center gap-2 mb-1 px-1 ${isMine ? 'flex-row-reverse' : ''}`}>
           {showSenderName && safeMsg.senderName && (
-            <span className="text-xs font-medium text-violet-600 dark:text-[#b29bff]">{safeMsg.senderName}</span>
+            <span className="text-xs font-medium text-[#7D3DCF] dark:text-[#b29bff]">{safeMsg.senderName}</span>
           )}
           <span className="text-xs text-gray-500 dark:text-white/60">
             {formatMessageTime(safeMsg.createdAt || safeMsg.timestamp)}
@@ -163,12 +163,12 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
 
           {/* Message content */}
           <div
-            className={`px-4 py-3 rounded-2xl shadow-sm min-w-[60px] ${
+            className={`px-4 py-3 rounded-3xl shadow-sm min-w-[60px] ${
               isEmojiOnly
                 ? "bg-transparent p-0 shadow-none"
                 : isMine
-                ? "bg-gradient-to-r from-violet-600 to-indigo-600 text-white" 
-                : "bg-gray-100 dark:bg-white/10 border border-transparent"
+                ? "bg-[#8F76B1] msg-bubble-sent text-[#F0EFF4] dark:text-white" 
+                : "bg-[#EEECF9] msg-bubble-received border border-transparent"
             }`}
           >
             {/* Text content */}
@@ -178,8 +178,8 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
                   isEmojiOnly
                     ? "text-4xl leading-none"
                     : isMine
-                    ? "text-sm leading-relaxed text-white"
-                    : "text-sm leading-relaxed text-gray-900 dark:text-white"
+                    ? "text-sm leading-relaxed text-[#F0EFF4] dark:text-white"
+                    : "text-sm leading-relaxed text-[#7D3DCF] dark:text-white"
                 }`}
               >
                 {safeMsg.text}
@@ -237,7 +237,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
                   border border-transparent hover:border-transparent
                   no-underline text-inherit
                 "
-                onClick={(e) => {
+                onClick={() => {
                   // Track download if needed
                   console.log("Downloading file:", safeMsg.file.name);
                 }}

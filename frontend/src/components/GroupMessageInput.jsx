@@ -58,7 +58,7 @@ const GroupMessageInput = () => {
   if (!selectedGroup) return null;
 
   return (
-    <div className="relative w-full bg-white dark:bg-base-100 border-t border-transparent pb-[env(safe-area-inset-bottom)]">
+    <div className="relative w-full bg-white dark-mode-bg border-t border-transparent dark:border-white/8 pb-[env(safe-area-inset-bottom)]">
       {imagePreview && (
         <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-transparent rounded-xl p-3">
           <div className="flex justify-between items-center mb-2">
@@ -95,7 +95,7 @@ const GroupMessageInput = () => {
             onKeyDown={handleKeyPress}
             placeholder="Message the group..."
             rows={isExpanded ? 4 : 1}
-            className="w-full px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-base-200 border border-transparent text-gray-900 dark:text-base-content placeholder:text-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50"
+            className="w-full px-4 py-2.5 rounded-xl dark:rounded-2xl bg-gray-100 msg-input-glass border border-transparent text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/50 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
           />
           {showEmojiPicker && (
             <div className="absolute bottom-full right-0 mb-2">

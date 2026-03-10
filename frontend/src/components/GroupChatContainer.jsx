@@ -33,9 +33,9 @@ export default function GroupChatContainer() {
   if (!selectedGroup) return null;
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-white dark:bg-[#1e1c24]">
+    <div className="h-full min-h-0 flex flex-col bg-white dark-mode-bg">
       {/* HEADER */}
-      <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent flex items-center justify-between bg-white dark:bg-[#1e1c24] dark:border-white/10">
+      <div className="flex-shrink-0 px-3 sm:px-5 py-3.5 border-b border-transparent flex items-center justify-between bg-white dark-mode-bg dark:border-white/8">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedGroup(null)}
@@ -65,7 +65,7 @@ export default function GroupChatContainer() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200"
+            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 hover:translate-y-[-1px]"
           >
             <Search size={18} />
           </button>
@@ -79,7 +79,7 @@ export default function GroupChatContainer() {
       </div>
 
       {showSearch && (
-        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent bg-white dark:bg-[#1e1c24] dark:border-white/10">
+        <div className="flex-shrink-0 px-3 sm:px-5 py-3.5 border-b border-transparent bg-white dark-mode-bg dark:border-white/8">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -92,7 +92,7 @@ export default function GroupChatContainer() {
 
       {/* MESSAGES - scrollable only when content overflows (mobile: no scroll when typing + empty) */}
       <div
-        className={`flex-1 min-h-0 px-4 py-4 space-y-3 bg-white dark:bg-[#1e1c24] chat-messages-scroll ${
+        className={`flex-1 min-h-0 px-4 sm:px-5 py-5 space-y-4 bg-white dark-mode-bg chat-messages-scroll ${
           filteredMessages.length === 0 ? "overflow-y-hidden" : "overflow-y-auto"
         }`}
       >

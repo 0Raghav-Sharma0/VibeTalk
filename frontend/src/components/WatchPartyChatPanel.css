@@ -20,11 +20,14 @@
   gap: 0.75rem;
   min-height: 0;
   scroll-behavior: smooth;
-  background: #ffffff;
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.04), transparent 35%), #ffffff;
   contain: layout;
 }
 
-.dark .wp-chat-messages {
+.dark .wp-chat-messages,
+[data-theme="dark"] .wp-chat-messages,
+[data-theme="coffee"] .wp-chat-messages,
+[data-theme="vibetalk"] .wp-chat-messages {
   background: transparent;
 }
 
@@ -41,7 +44,10 @@
   border-radius: 3px;
 }
 
-.dark .wp-chat-messages::-webkit-scrollbar-thumb {
+.dark .wp-chat-messages::-webkit-scrollbar-thumb,
+[data-theme="dark"] .wp-chat-messages::-webkit-scrollbar-thumb,
+[data-theme="coffee"] .wp-chat-messages::-webkit-scrollbar-thumb,
+[data-theme="vibetalk"] .wp-chat-messages::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -58,7 +64,10 @@
   color: rgba(0, 0, 0, 0.5);
 }
 
-.dark .wp-chat-empty {
+.dark .wp-chat-empty,
+[data-theme="dark"] .wp-chat-empty,
+[data-theme="coffee"] .wp-chat-empty,
+[data-theme="vibetalk"] .wp-chat-empty {
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -75,7 +84,10 @@
   max-width: 200px;
 }
 
-.dark .wp-chat-empty p {
+.dark .wp-chat-empty p,
+[data-theme="dark"] .wp-chat-empty p,
+[data-theme="coffee"] .wp-chat-empty p,
+[data-theme="vibetalk"] .wp-chat-empty p {
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -101,7 +113,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, hsl(var(--p) / 0.6), hsl(var(--s) / 0.6));
+  background: linear-gradient(135deg, #7D3DCF, #9C66CC);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -110,6 +122,13 @@
   color: white;
   flex-shrink: 0;
   overflow: hidden;
+}
+
+.dark .wp-chat-msg-avatar,
+[data-theme="dark"] .wp-chat-msg-avatar,
+[data-theme="coffee"] .wp-chat-msg-avatar,
+[data-theme="vibetalk"] .wp-chat-msg-avatar {
+  background: linear-gradient(135deg, #7D3DCF, #b29bff);
 }
 
 .wp-chat-msg-avatar-img {
@@ -136,7 +155,10 @@
   color: #1f2937;
 }
 
-.dark .wp-chat-msg-user {
+.dark .wp-chat-msg-user,
+[data-theme="dark"] .wp-chat-msg-user,
+[data-theme="coffee"] .wp-chat-msg-user,
+[data-theme="vibetalk"] .wp-chat-msg-user {
   color: rgba(255, 255, 255, 0.95);
 }
 
@@ -145,7 +167,10 @@
   color: #6b7280;
 }
 
-.dark .wp-chat-msg-time {
+.dark .wp-chat-msg-time,
+[data-theme="dark"] .wp-chat-msg-time,
+[data-theme="coffee"] .wp-chat-msg-time,
+[data-theme="vibetalk"] .wp-chat-msg-time {
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -161,7 +186,10 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.dark .wp-chat-msg-bubble {
+.dark .wp-chat-msg-bubble,
+[data-theme="dark"] .wp-chat-msg-bubble,
+[data-theme="coffee"] .wp-chat-msg-bubble,
+[data-theme="vibetalk"] .wp-chat-msg-bubble {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.95);
@@ -175,7 +203,10 @@
   flex-shrink: 0;
 }
 
-.dark .wp-emoji-picker-wrap {
+.dark .wp-emoji-picker-wrap,
+[data-theme="dark"] .wp-emoji-picker-wrap,
+[data-theme="coffee"] .wp-emoji-picker-wrap,
+[data-theme="vibetalk"] .wp-emoji-picker-wrap {
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -195,7 +226,10 @@
   flex-shrink: 0;
 }
 
-.dark .wp-chat-input-wrap {
+.dark .wp-chat-input-wrap,
+[data-theme="dark"] .wp-chat-input-wrap,
+[data-theme="coffee"] .wp-chat-input-wrap,
+[data-theme="vibetalk"] .wp-chat-input-wrap {
   background: rgba(0, 0, 0, 0.2);
   border-top-color: rgba(255, 255, 255, 0.08);
 }
@@ -211,7 +245,10 @@
   transition: all 0.2s;
 }
 
-.dark .wp-chat-emoji-btn {
+.dark .wp-chat-emoji-btn,
+[data-theme="dark"] .wp-chat-emoji-btn,
+[data-theme="coffee"] .wp-chat-emoji-btn,
+[data-theme="vibetalk"] .wp-chat-emoji-btn {
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -220,7 +257,10 @@
   color: #1f2937;
 }
 
-.dark .wp-chat-emoji-btn:hover {
+.dark .wp-chat-emoji-btn:hover,
+[data-theme="dark"] .wp-chat-emoji-btn:hover,
+[data-theme="coffee"] .wp-chat-emoji-btn:hover,
+[data-theme="vibetalk"] .wp-chat-emoji-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
 }
@@ -238,7 +278,10 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.dark .wp-chat-input {
+.dark .wp-chat-input,
+[data-theme="dark"] .wp-chat-input,
+[data-theme="coffee"] .wp-chat-input,
+[data-theme="vibetalk"] .wp-chat-input {
   border-color: rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.95);
@@ -249,18 +292,26 @@
   color: #9ca3af;
 }
 
-.dark .wp-chat-input::placeholder {
+.dark .wp-chat-input::placeholder,
+[data-theme="dark"] .wp-chat-input::placeholder,
+[data-theme="coffee"] .wp-chat-input::placeholder,
+[data-theme="vibetalk"] .wp-chat-input::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
 
 .wp-chat-input:focus {
-  border-color: hsl(var(--p) / 0.6);
-  box-shadow: 0 0 0 2px hsl(var(--p) / 0.2);
+  border-color: #7D3DCF;
+  box-shadow: 0 0 0 2px rgba(125, 61, 207, 0.2);
 }
 
-.dark .wp-chat-input:focus {
-  background: rgba(255, 255, 255, 0.08);
+.dark .wp-chat-input:focus,
+[data-theme="dark"] .wp-chat-input:focus,
+[data-theme="coffee"] .wp-chat-input:focus,
+[data-theme="vibetalk"] .wp-chat-input:focus {
+  border-color: #b29bff;
+  box-shadow: 0 0 0 2px rgba(178, 155, 255, 0.2);
 }
+
 
 .wp-chat-send-btn {
   display: flex;
@@ -269,15 +320,23 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: hsl(var(--p));
+  background: #7D3DCF;
   color: white;
   border: none;
   transition: all 0.2s;
 }
 
+.dark .wp-chat-send-btn {
+  background: #7D3DCF;
+}
+
 .wp-chat-send-btn:hover:not(:disabled) {
-  background: hsl(var(--p) / 0.9);
+  background: #9C66CC;
   transform: scale(1.05);
+}
+
+.dark .wp-chat-send-btn:hover:not(:disabled) {
+  background: #9C66CC;
 }
 
 .wp-chat-send-btn:disabled {
@@ -286,7 +345,10 @@
   cursor: not-allowed;
 }
 
-.dark .wp-chat-send-btn:disabled {
+.dark .wp-chat-send-btn:disabled,
+[data-theme="dark"] .wp-chat-send-btn:disabled,
+[data-theme="coffee"] .wp-chat-send-btn:disabled,
+[data-theme="vibetalk"] .wp-chat-send-btn:disabled {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.3);
 }

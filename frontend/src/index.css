@@ -95,13 +95,13 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--primary);
+  background: #7D3DCF;
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-hover);
+  background: #9C66CC;
 }
 
 ::-webkit-scrollbar-corner {
@@ -111,27 +111,27 @@ body {
 /* Firefox scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) rgba(255, 255, 255, 0.03);
+  scrollbar-color: #7D3DCF rgba(255, 255, 255, 0.03);
 }
 
 /* ================= TEXT SELECTION ================= */
 ::selection {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(125, 61, 207, 0.3);
   color: inherit;
 }
 
 ::-moz-selection {
-  background: rgba(139, 92, 246, 0.3);
+  background: rgba(125, 61, 207, 0.3);
   color: inherit;
 }
 
 .dark ::selection {
-  background: rgba(167, 139, 250, 0.4);
+  background: rgba(125, 61, 207, 0.4);
   color: white;
 }
 
 .dark ::-moz-selection {
-  background: rgba(167, 139, 250, 0.4);
+  background: rgba(125, 61, 207, 0.4);
   color: white;
 }
 
@@ -543,13 +543,189 @@ a:focus-visible {
   box-shadow: 4px 0 24px -4px rgba(0, 0, 0, 0.25);
 }
 
-/* Sidebar - matches rest of app: light bg in light mode, dark #1e1c24 in dark mode */
+/* Sidebar - premium light + dark */
 .sidebar-theme {
-  background: #f9fafb;
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06), transparent 35%), radial-gradient(circle at 80% 80%, rgba(147,51,234,0.04), transparent 35%), #f9fafb;
 }
 
-.dark .sidebar-theme {
-  background: #1e1c24;
+.dark .sidebar-theme,
+[data-theme="dark"] .sidebar-theme,
+[data-theme="coffee"] .sidebar-theme,
+[data-theme="vibetalk"] .sidebar-theme {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.04), transparent 25%), radial-gradient(circle at 80% 80%, rgba(59,130,246,0.03), transparent 25%), #0b0b0f;
+}
+
+/* ================= LIGHT MODE PREMIUM ================= */
+:root:not(.dark) .dark-mode-root,
+html:not(.dark) .dark-mode-root {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06), transparent 35%), radial-gradient(circle at 80% 80%, rgba(147,51,234,0.04), transparent 35%), #fafafa;
+}
+
+:root:not(.dark) .dark-mode-bg,
+html:not(.dark) .dark-mode-bg {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06), transparent 35%), radial-gradient(circle at 80% 80%, rgba(147,51,234,0.04), transparent 35%), #ffffff !important;
+}
+
+/* Light mode - message bubbles depth */
+:root:not(.dark) .msg-bubble-sent,
+html:not(.dark) .msg-bubble-sent {
+  background: linear-gradient(145deg, #9a7fc4, #8F76B1) !important;
+  border: 1px solid rgba(125,61,207,0.15) !important;
+  box-shadow: 0 2px 12px rgba(125,61,207,0.15) !important;
+}
+
+:root:not(.dark) .msg-bubble-received,
+html:not(.dark) .msg-bubble-received {
+  background: linear-gradient(145deg, #f5f3fa, #EEECF9) !important;
+  border: 1px solid rgba(125,61,207,0.1) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06) !important;
+}
+
+/* Light mode - message input glassmorphism */
+:root:not(.dark) .msg-input-glass,
+html:not(.dark) .msg-input-glass {
+  background: rgba(255,255,255,0.9) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(125,61,207,0.12) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 12px rgba(125,61,207,0.06) !important;
+}
+
+/* Light mode - sidebar selected friend */
+:root:not(.dark) .sidebar-friend-selected,
+html:not(.dark) .sidebar-friend-selected {
+  background: linear-gradient(90deg, rgba(124,58,237,0.2), rgba(124,58,237,0.06)) !important;
+  border-left: 3px solid #7D3DCF !important;
+}
+
+:root:not(.dark) .sidebar-friend-selected > span:first-of-type,
+html:not(.dark) .sidebar-friend-selected > span:first-of-type {
+  display: none;
+}
+
+/* Light mode - online indicator subtle glow */
+:root:not(.dark) .online-indicator-glow,
+html:not(.dark) .online-indicator-glow {
+  box-shadow: 0 0 6px #22c55e, 0 0 12px rgba(34,197,94,0.3) !important;
+}
+
+/* Light mode - hover lift */
+:root:not(.dark) .hover-lift:hover,
+html:not(.dark) .hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* Video/call overlay - always dark, gradient in dark mode */
+.call-overlay-bg {
+  background: #0f0f12;
+}
+
+.dark .call-overlay-bg,
+[data-theme="dark"] .call-overlay-bg,
+[data-theme="coffee"] .call-overlay-bg,
+[data-theme="vibetalk"] .call-overlay-bg {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.06), transparent 30%), radial-gradient(circle at 80% 80%, rgba(59,130,246,0.04), transparent 30%), #0b0b0f !important;
+}
+
+/* ================= DARK MODE PREMIUM ================= */
+.dark .dark-mode-root,
+[data-theme="dark"] .dark-mode-root,
+[data-theme="coffee"] .dark-mode-root,
+[data-theme="vibetalk"] .dark-mode-root {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.04), transparent 25%), radial-gradient(circle at 80% 80%, rgba(59,130,246,0.03), transparent 25%), #0b0b0f;
+}
+
+.dark .dark-mode-bg,
+[data-theme="dark"] .dark-mode-bg,
+[data-theme="coffee"] .dark-mode-bg,
+[data-theme="vibetalk"] .dark-mode-bg {
+  background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.04), transparent 25%), radial-gradient(circle at 80% 80%, rgba(59,130,246,0.03), transparent 25%), #0b0b0f !important;
+}
+
+/* Message bubbles - depth in dark mode */
+.dark .msg-bubble-sent,
+[data-theme="dark"] .msg-bubble-sent,
+[data-theme="coffee"] .msg-bubble-sent,
+[data-theme="vibetalk"] .msg-bubble-sent {
+  background: linear-gradient(145deg, #2d2640, #1f1b2e) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+
+.dark .msg-bubble-received,
+[data-theme="dark"] .msg-bubble-received,
+[data-theme="coffee"] .msg-bubble-received,
+[data-theme="vibetalk"] .msg-bubble-received {
+  background: linear-gradient(145deg, #1a1a22, #0f0f15) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+
+/* Message input - glassmorphism */
+.dark .msg-input-glass,
+[data-theme="dark"] .msg-input-glass,
+[data-theme="coffee"] .msg-input-glass,
+[data-theme="vibetalk"] .msg-input-glass {
+  background: rgba(255,255,255,0.03) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 16px !important;
+}
+
+/* Sidebar selected friend - gradient highlight + left accent */
+.dark .sidebar-friend-selected,
+[data-theme="dark"] .sidebar-friend-selected,
+[data-theme="coffee"] .sidebar-friend-selected,
+[data-theme="vibetalk"] .sidebar-friend-selected {
+  background: linear-gradient(90deg, rgba(124,58,237,0.25), rgba(124,58,237,0.05)) !important;
+  border-left: 3px solid #7c3aed !important;
+}
+
+.dark .sidebar-friend-selected > span:first-of-type,
+[data-theme="dark"] .sidebar-friend-selected > span:first-of-type,
+[data-theme="coffee"] .sidebar-friend-selected > span:first-of-type,
+[data-theme="vibetalk"] .sidebar-friend-selected > span:first-of-type {
+  display: none;
+}
+
+/* Online status glow - stronger visibility */
+.dark .online-indicator-glow,
+[data-theme="dark"] .online-indicator-glow,
+[data-theme="coffee"] .online-indicator-glow,
+[data-theme="vibetalk"] .online-indicator-glow {
+  box-shadow: 0 0 8px #22c55e, 0 0 16px #22c55e, 0 0 24px rgba(34,197,94,0.6) !important;
+}
+
+/* Message appear animation */
+@keyframes msg-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.msg-animate-in {
+  animation: msg-appear 0.3s ease-out forwards;
+}
+
+/* Hover lift for interactive elements */
+.hover-lift {
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dark .hover-lift:hover {
+  transform: translateY(-1px);
+}
+
+/* Softer borders in dark mode */
+.dark .sidebar-separator {
+  border-right-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 

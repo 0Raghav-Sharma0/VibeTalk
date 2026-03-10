@@ -25,7 +25,7 @@ const NoChatSelected = () => {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-primary/80 dark:text-primary/70"
+            className="text-[#7D3DCF] dark:text-violet-400"
           >
             <path d="M21 15v-8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14l4-4h10" />
           </svg>

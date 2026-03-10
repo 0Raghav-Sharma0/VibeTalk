@@ -35,16 +35,16 @@ export default function GroupMembersPanel({ group, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-sm bg-white dark:bg-base-100 shadow-xl flex flex-col">
+      <div className="relative w-full max-w-sm dark-mode-bg dark:border-l border-white/10 shadow-xl flex flex-col">
         <div className="flex items-center justify-between px-4 py-4 border-b border-transparent">
           <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-gray-900 dark:text-base-content">Group Members</h2>
+            <Users className="w-5 h-5 text-[#7D3DCF] dark:text-[#b29bff]" />
+            <h2 className="font-bold text-gray-900 dark:text-white">Group Members</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200"
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-white"
           >
             <X className="w-5 h-5" />
           </button>
@@ -60,7 +60,7 @@ export default function GroupMembersPanel({ group, onClose }) {
             return (
               <div
                 key={toStr(id)}
-                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 dark:bg-base-200/60"
+                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <img
@@ -69,11 +69,11 @@ export default function GroupMembersPanel({ group, onClose }) {
                     className="w-10 h-10 rounded-xl object-cover"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-base-content truncate">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                       {u?.fullName || "Unknown"}
                       {isMe && " (You)"}
                     </p>
-                    <p className="text-xs text-gray-600 dark:text-base-content/60">
+                    <p className="text-xs text-gray-600 dark:text-white/60">
                       {m.role === "admin" ? "Admin" : "Member"}
                     </p>
                   </div>
@@ -95,7 +95,7 @@ export default function GroupMembersPanel({ group, onClose }) {
             <div className="pt-2">
               {showAdd ? (
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-600 dark:text-base-content/60">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-white/60">
                     Add a friend
                   </p>
                   {friendsToAdd.length === 0 ? (
@@ -107,15 +107,15 @@ export default function GroupMembersPanel({ group, onClose }) {
                           key={u._id}
                           type="button"
                           onClick={() => handleAdd(u._id)}
-                          className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-primary/10 transition-colors text-left"
+                          className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-violet-100 dark:hover:bg-white/10 transition-colors text-left"
                         >
                           <img
                             src={u.profilePic || "/boy.png"}
                             alt=""
                             className="w-9 h-9 rounded-xl object-cover"
                           />
-                          <span className="flex-1 text-sm font-medium">{u.fullName}</span>
-                          <UserPlus className="w-4 h-4 text-primary" />
+                          <span className="flex-1 text-sm font-medium text-gray-900 dark:text-white">{u.fullName}</span>
+                          <UserPlus className="w-4 h-4 text-[#7D3DCF] dark:text-[#b29bff]" />
                         </button>
                       ))}
                     </div>
@@ -123,7 +123,7 @@ export default function GroupMembersPanel({ group, onClose }) {
                   <button
                     type="button"
                     onClick={() => setShowAdd(false)}
-                    className="text-sm text-gray-600 dark:text-base-content/60 hover:underline"
+                    className="text-sm text-gray-600 dark:text-white/60 hover:underline"
                   >
                     Cancel
                   </button>
@@ -132,7 +132,7 @@ export default function GroupMembersPanel({ group, onClose }) {
                 <button
                   type="button"
                   onClick={() => setShowAdd(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-primary/15 text-primary border-2 border-dashed border-primary/30 font-semibold hover:bg-primary/20 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-violet-100 dark:bg-white/10 text-[#7D3DCF] dark:text-[#b29bff] border-2 border-dashed border-violet-300 dark:border-violet-500/50 font-semibold hover:bg-violet-200 dark:hover:bg-white/20 transition-colors"
                 >
                   <UserPlus className="w-5 h-5" />
                   Add Member

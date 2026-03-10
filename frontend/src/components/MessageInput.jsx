@@ -75,7 +75,7 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="relative w-full bg-white dark:bg-[#1e1c24] border-t border-transparent dark:border-white/10 pb-[env(safe-area-inset-bottom)]">
+    <div className="relative w-full bg-white dark-mode-bg border-t border-transparent dark:border-white/8 pb-[env(safe-area-inset-bottom)]">
 
       {/* IMAGE PREVIEW */}
       {imagePreview && (
@@ -147,13 +147,13 @@ const MessageInput = () => {
         </div>
       )}
 
-      {/* INPUT BAR */}
-      <div className="px-3 py-2" data-message-input>
+      {/* INPUT BAR - px-4 to align with messages area (ChatContainer px-4) */}
+      <div className="px-4 py-2" data-message-input>
         <div className="
           flex items-center gap-2
-          bg-gray-100 dark:bg-white/10
-          border border-transparent dark:border-white/10
-          rounded-xl px-3 py-2
+          bg-gray-100 msg-input-glass
+          border border-transparent
+          rounded-xl dark:rounded-2xl px-3 py-2.5
           focus-within:border-transparent
         ">
           <button
@@ -161,7 +161,7 @@ const MessageInput = () => {
               setIsExpanded(!isExpanded);
               setShowEmojiPicker(false);
             }}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300"
+            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/20"
           >
             <Plus size={18} />
           </button>
@@ -171,7 +171,7 @@ const MessageInput = () => {
               setShowEmojiPicker(!showEmojiPicker);
               setIsExpanded(false);
             }}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300"
+            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/20"
           >
             <Smile size={18} />
           </button>

@@ -36,7 +36,7 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
   };
 
   return (
-    <header className="h-16 px-6 flex items-center justify-between border-b border-transparent bg-white dark:bg-[#1e1c24] dark:border-white/10">
+    <header className="h-16 px-6 flex items-center justify-between border-b border-transparent bg-white dark:bg-black dark:border-white/10">
       
       {/* LEFT */}
       <div className="flex items-center gap-4">

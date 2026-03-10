@@ -77,7 +77,7 @@ export default function ChatContainer() {
   /* ================= EMPTY ================= */
   if (!selectedUser) {
     return (
-      <div className="h-full flex items-center justify-center bg-white dark:bg-[#1e1c24]">
+      <div className="h-full flex items-center justify-center bg-white dark-mode-bg">
         <div className="text-center">
           <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-base-200 flex items-center justify-center mx-auto mb-4 text-3xl">
             💬
@@ -94,10 +94,10 @@ export default function ChatContainer() {
   }
 
   return (
-    <div className="h-full min-h-0 flex flex-col bg-white dark:bg-[#1e1c24]">
+    <div className="h-full min-h-0 flex flex-col bg-white dark-mode-bg">
 
       {/* ================= HEADER ================= */}
-      <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent flex items-center justify-between bg-white dark:bg-[#1e1c24] dark:border-white/10">
+      <div className="flex-shrink-0 px-3 sm:px-5 py-3.5 border-b border-transparent flex items-center justify-between bg-white dark-mode-bg dark:border-white/8">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setSelectedUser(null)}
@@ -131,35 +131,35 @@ export default function ChatContainer() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200"
+            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 hover:translate-y-[-1px]"
           >
             <Search size={18} />
           </button>
 
           <button
             onClick={handleAudioCall}
-            className="p-2.5 rounded-lg bg-violet-500/15 text-violet-600 hover:bg-violet-500/25"
+            className="p-2.5 rounded-lg bg-violet-500/15 text-violet-600 hover:bg-violet-500/25 dark:bg-white/10 dark:text-[#b29bff] dark:hover:bg-white/20 transition-all duration-200 hover:translate-y-[-1px]"
           >
             <Phone size={18} />
           </button>
 
           <button
             onClick={handleVideoCall}
-            className="p-2.5 rounded-lg bg-blue-500/15 text-blue-600 hover:bg-blue-500/25"
+            className="p-2.5 rounded-lg bg-blue-500/15 text-blue-600 hover:bg-blue-500/25 dark:bg-white/10 dark:text-[#b29bff] dark:hover:bg-white/20 transition-all duration-200 hover:translate-y-[-1px]"
           >
             <Video size={18} />
           </button>
 
           <button
             onClick={() => setShowWhiteboard(true)}
-            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200"
+            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 hover:translate-y-[-1px]"
           >
             <Pencil size={18} />
           </button>
 
           <button
             onClick={() => toggleMusicPlayer(true)}
-            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-base-200"
+            className="p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 hover:translate-y-[-1px]"
           >
             <Music2 size={18} />
           </button>
@@ -168,7 +168,7 @@ export default function ChatContainer() {
 
       {/* ================= SEARCH ================= */}
       {showSearch && (
-        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-b border-transparent bg-white dark:bg-[#1e1c24] dark:border-white/10">
+        <div className="flex-shrink-0 px-3 sm:px-5 py-3.5 border-b border-transparent bg-white dark-mode-bg dark:border-white/8">
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -180,8 +180,8 @@ export default function ChatContainer() {
       )}
 
       {/* ================= MESSAGES - scrollable only when content overflows (mobile: no scroll when typing + empty) ================= */}
-      <div
-        className={`flex-1 min-h-0 px-4 py-4 space-y-3 bg-white dark:bg-[#1e1c24] chat-messages-scroll ${
+        <div
+          className={`flex-1 min-h-0 px-4 sm:px-5 py-5 space-y-4 bg-white dark-mode-bg chat-messages-scroll ${
           filteredMessages.length === 0 ? "overflow-y-hidden" : "overflow-y-auto"
         }`}
       >
@@ -211,7 +211,7 @@ export default function ChatContainer() {
               onClick={() => setShowWhiteboard(false)}
             />
             <motion.div
-              className="fixed right-0 top-0 h-full w-full md:w-[480px] bg-white dark:bg-[#1e1c24] border-l border-transparent z-50 overflow-hidden flex flex-col"
+              className="fixed right-0 top-0 h-full w-full md:w-[480px] bg-white dark:bg-black border-l border-transparent z-50 overflow-hidden flex flex-col"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -231,7 +231,7 @@ export default function ChatContainer() {
               onClick={() => toggleMusicPlayer(false)}
             />
             <motion.div
-              className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-white dark:bg-[#1e1c24] border-l border-transparent z-50"
+              className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-white dark:bg-black border-l border-transparent z-50"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}

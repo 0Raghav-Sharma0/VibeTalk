@@ -71,7 +71,7 @@ const App = () => {
   /* ================= LOADING STATE ================= */
   if (isCheckingAuth) {
     return (
-      <div className="flex items-center justify-center h-screen w-screen bg-base-100 text-base-content">
+      <div className="flex items-center justify-center h-screen w-screen dark-mode-root text-gray-900 dark:text-white">
         <l-grid size="100" speed="1.5" color="currentColor"></l-grid>
       </div>
     );
@@ -81,7 +81,7 @@ const App = () => {
     <SocketProvider>
       <WatchPartyProvider>
         {/* DO NOT set data-theme here */}
-        <div className="w-full min-h-screen bg-white dark:bg-[#1e1c24] text-gray-900 dark:text-white">
+        <div className="w-full min-h-screen dark-mode-root text-gray-900 dark:text-white">
           {/* Navbar only when logged in */}
           {authUser && <Navbar />}
 

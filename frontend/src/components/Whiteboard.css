@@ -26,44 +26,22 @@
   --wb-status: #f3f4f6;
 }
 
-/* Dark mode - sunrise / night-to-dawn theme */
+/* Dark mode - black with purple accents */
 .dark .whiteboard-panel {
   --wb-surface: rgba(255, 255, 255, 0.06);
   --wb-border: rgba(255, 255, 255, 0.12);
   --wb-text: rgba(255, 255, 255, 0.95);
   --wb-muted: rgba(255, 255, 255, 0.6);
   --wb-hover: rgba(255, 255, 255, 0.1);
-  --wb-toolbar: rgba(15, 12, 41, 0.85);
-  --wb-status: rgba(15, 12, 41, 0.9);
-  background: linear-gradient(180deg,
-    #0f0c29 0%,
-    #1a1535 22%,
-    #2d1b4e 45%,
-    #3d2a5c 65%,
-    #4a3a6b 82%,
-    #2d2a4a 100%
-  );
+  --wb-toolbar: rgba(0, 0, 0, 0.9);
+  --wb-status: rgba(0, 0, 0, 0.9);
+  --wb-bg: #000000;
+  background: #000000;
   position: relative;
 }
 
 .dark .whiteboard-panel::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: 
-    radial-gradient(
-      ellipse 80% 50% at 50% 90%,
-      rgba(255, 140, 80, 0.14) 0%,
-      rgba(255, 100, 50, 0.07) 30%,
-      transparent 65%
-    ),
-    radial-gradient(
-      circle at 50% 92%,
-      rgba(255, 180, 100, 0.06) 0%,
-      transparent 15%
-    );
-  pointer-events: none;
-  z-index: 0;
+  content: none;
 }
 
 .dark .whiteboard-panel > * {

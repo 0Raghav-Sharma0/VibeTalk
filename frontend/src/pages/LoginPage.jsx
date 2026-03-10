@@ -36,7 +36,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-base-200 text-gray-900 dark:text-base-content flex overflow-hidden">
+    <div className="min-h-screen dark-mode-root text-gray-900 dark:text-base-content flex overflow-hidden">
 
       {/* LEFT */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-6">

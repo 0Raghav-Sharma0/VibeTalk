@@ -2,8 +2,18 @@ import defaultTheme from "tailwindcss/defaultTheme";
 import daisyui from "daisyui";
 
 export default {
-  darkMode: "class", // ✅ THIS WAS MISSING
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  safelist: [
+    "msg-bubble-sent",
+    "msg-bubble-received",
+    "sidebar-friend-selected",
+    "online-indicator-glow",
+    "msg-input-glass",
+    "dark-mode-bg",
+    "dark-mode-root",
+    "call-overlay-bg",
+  ],
   theme: {
     extend: {
       fontFamily: {

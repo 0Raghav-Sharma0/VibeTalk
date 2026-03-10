@@ -668,7 +668,7 @@ const VideoCall = () => {
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[9999] bg-[#1e1c24] flex items-center justify-center"
+        className="fixed inset-0 z-[9999] call-overlay-bg flex items-center justify-center"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -712,7 +712,7 @@ const VideoCall = () => {
                 className="w-full h-full object-cover"
               />
               {!isVideoEnabled && (
-                <div className="absolute inset-0 flex items-center justify-center bg-[#1e1c24]">
+                <div className="absolute inset-0 flex items-center justify-center bg-black">
                   <VideoOff size={40} className="text-violet-400/80" />
                 </div>
               )}

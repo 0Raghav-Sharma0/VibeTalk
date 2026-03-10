@@ -21,10 +21,11 @@ const VideoPlayer = () => {
   const [ytReady, setYtReady] = useState(false);
 
   /* ================= THEME ================= */
-  const containerClass =
-    theme === "light"
-      ? "bg-gray-200 border border-transparent"
-      : "bg-black border border-transparent";
+  const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+  const isDark = DARK_THEMES.includes(theme);
+  const containerClass = isDark
+    ? "bg-black border border-white/10"
+    : "bg-gray-200 border border-gray-300";
 
   /* ================= LOAD YT API ================= */
   useEffect(() => {
