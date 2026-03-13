@@ -10,8 +10,8 @@ const NoChatSelected = () => {
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="
           flex flex-col items-center text-center
-          border border-gray-200 dark:border-white/20 rounded-xl
-          p-8 sm:p-10 max-w-sm w-full bg-gray-50/90 dark:bg-white/5
+          border border-gray-200 dark-panel rounded-xl
+          p-8 sm:p-10 max-w-sm w-full bg-gray-50/90
         "
       >
         {/* Minimal geometric icon */}

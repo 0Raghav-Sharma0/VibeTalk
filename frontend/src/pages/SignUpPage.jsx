@@ -44,7 +44,7 @@ export default function SignUpPage() {
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full max-w-md bg-white dark:bg-base-100 border border-transparent rounded-2xl p-8 shadow-xl overflow-hidden"
+          className="relative w-full max-w-md bg-white dark-card border border-transparent rounded-2xl p-8 shadow-xl overflow-hidden"
         >
           {/* subtle glow */}
           <div className="absolute -top-24 -right-24 w-72 h-72 bg-primary/15 blur-3xl rounded-full" />
@@ -67,7 +67,7 @@ export default function SignUpPage() {
                   Full Name
                 </label>
                 <div className="relative mt-2">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50" />
                   <input
                     value={form.fullName}
                     onChange={(e) =>
@@ -75,9 +75,10 @@ export default function SignUpPage() {
                     }
                     className="
                       w-full h-11 pl-10 pr-3 rounded-lg
-                      bg-gray-100 dark:bg-base-200
+                      bg-gray-100 dark-input
                       border border-transparent
-                      text-gray-900 dark:text-base-content
+                      text-gray-900 dark:text-white
+                      placeholder:text-gray-500 dark:placeholder:text-white/50
                       focus:outline-none focus:ring-2 focus:ring-primary/40
                     "
                   />
@@ -90,7 +91,7 @@ export default function SignUpPage() {
                   Email
                 </label>
                 <div className="relative mt-2">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50" />
                   <input
                     type="email"
                     value={form.email}
@@ -99,9 +100,10 @@ export default function SignUpPage() {
                     }
                     className="
                       w-full h-11 pl-10 pr-3 rounded-lg
-                      bg-gray-100 dark:bg-base-200
+                      bg-gray-100 dark-input
                       border border-transparent
-                      text-gray-900 dark:text-base-content
+                      text-gray-900 dark:text-white
+                      placeholder:text-gray-500 dark:placeholder:text-white/50
                       focus:outline-none focus:ring-2 focus:ring-primary/40
                     "
                   />
@@ -114,7 +116,7 @@ export default function SignUpPage() {
                   Password
                 </label>
                 <div className="relative mt-2">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-white/50" />
                   <input
                     type={show ? "text" : "password"}
                     value={form.password}
@@ -123,16 +125,17 @@ export default function SignUpPage() {
                     }
                     className="
                       w-full h-11 pl-10 pr-10 rounded-lg
-                      bg-gray-100 dark:bg-base-200
+                      bg-gray-100 dark-input
                       border border-transparent
-                      text-gray-900 dark:text-base-content
+                      text-gray-900 dark:text-white
+                      placeholder:text-gray-500 dark:placeholder:text-white/50
                       focus:outline-none focus:ring-2 focus:ring-primary/40
                     "
                   />
                   <button
                     type="button"
                     onClick={() => setShow((p) => !p)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-white/50 dark:hover:text-white/80"
                   >
                     {show ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -168,7 +171,7 @@ export default function SignUpPage() {
       </div>
 
       {/* RIGHT */}
-      <div className="hidden lg:flex w-1/2 items-center justify-center bg-gray-50 dark:bg-base-200">
+      <div className="hidden lg:flex w-1/2 items-center justify-center bg-gray-50 dark:bg-transparent">
         <dotlottie-player
           src="https://lottie.host/5a4c9f68-0a91-4373-83ba-809e7d1ced57/rlqClPNnCc.lottie"
           background="transparent"

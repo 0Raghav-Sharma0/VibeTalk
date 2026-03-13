@@ -14,6 +14,14 @@ export default {
     "dark-mode-root",
     "call-overlay-bg",
     "mobile-chat-root",
+    "dark-card",
+    "dark-input",
+    "dark-panel",
+    "dark-tab-bg",
+    "dark-tab-selected",
+    "dark-tab-unselected",
+    "dark-item",
+    "dark-btn",
   ],
   theme: {
     extend: {

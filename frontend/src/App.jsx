@@ -1,6 +1,6 @@
 // src/App.jsx
 import { useEffect, lazy, Suspense } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import VideoCall from "./components/VideoCall";
@@ -23,8 +23,10 @@ import { Toaster } from "react-hot-toast";
 import "ldrs/grid";
 
 const App = () => {
+  const { pathname } = useLocation();
   const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
+  const isHome = pathname === "/" || pathname === "/home";
 
   /* ================= AUTH CHECK ================= */
   useEffect(() => {
@@ -82,8 +84,8 @@ const App = () => {
       <WatchPartyProvider>
         {/* DO NOT set data-theme here */}
         <div className="w-full min-h-screen dark-mode-root text-gray-900 dark:text-white">
-          {/* Navbar only when logged in */}
-          {authUser && <Navbar />}
+          {/* Navbar: HomePage renders its own (with sidebar toggle); other pages use global Navbar */}
+          {authUser && !isHome && <Navbar />}
 
           {/* Global listeners */}
           <CallListener />

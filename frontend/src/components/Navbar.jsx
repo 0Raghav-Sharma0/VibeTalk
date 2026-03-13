@@ -30,13 +30,14 @@ const Navbar = ({ onOpenSidebar }) => {
         {/* LEFT */}
         <div className="flex items-center gap-4">
           <button
-            onClick={onOpenSidebar}
-            className={`md:hidden p-2 rounded-xl transition-colors ${
+            type="button"
+            onClick={() => onOpenSidebar?.()}
+            className={`md:hidden p-3 -m-1 rounded-xl transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center ${
               isSettings
                 ? isDark
                   ? "text-white/90 hover:bg-white/10 hover:text-white"
                   : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#b29bff] dark:hover:bg-white/10 dark:hover:text-white"
+                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-[#b29bff] dark-icon-btn"
             }`}
             aria-label="Open sidebar"
           >
@@ -75,7 +76,7 @@ const Navbar = ({ onOpenSidebar }) => {
                 ? isDark
                   ? "text-white bg-white/15 border-white/30 hover:bg-white/20"
                   : "text-violet-600 bg-violet-50 border-violet-200 hover:bg-violet-100"
-                : "text-violet-600 bg-violet-50 border-violet-200 hover:bg-violet-100 dark:text-[#b29bff] dark:bg-transparent dark:border-white/20 dark:hover:bg-white/10"
+                : "text-violet-600 bg-violet-50 border-violet-200 hover:bg-violet-100 dark-btn"
             }`}
           >
             <Film className="w-4 h-4" />
@@ -89,7 +90,7 @@ const Navbar = ({ onOpenSidebar }) => {
                 ? isDark
                   ? "text-white/90 hover:bg-white/10 hover:text-white"
                   : "text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-                : "text-gray-700 hover:text-gray-900 hover:bg-gray-100 dark:text-[#b29bff] dark:hover:bg-white/10 dark:hover:text-white"
+                : "text-gray-700 hover:text-gray-900 hover:bg-gray-100 dark-btn"
             }`}
           >
             <Settings className="w-4 h-4" />
