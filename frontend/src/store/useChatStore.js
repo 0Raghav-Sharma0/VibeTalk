@@ -10,6 +10,9 @@ export const useChatStore = create((set, get) => ({
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
+  isLoadingOlder: false,
+  hasMoreMessages: true,
+  messagesNextCursor: null,
 
   unreadMessages: {},
   typing: {},
@@ -67,19 +70,54 @@ export const useChatStore = create((set, get) => ({
   },
 
   /* ============================================================
-        LOAD MESSAGES
+        LOAD MESSAGES (cursor-based, initial load)
   ============================================================ */
   getMessages: async (userId) => {
-    set({ isMessagesLoading: true });
+    set({ isMessagesLoading: true, hasMoreMessages: true, messagesNextCursor: null });
     try {
-      const res = await axiosInstance.get(`/messages/${userId}`);
+      const res = await axiosInstance.get(`/messages/${userId}?limit=50`);
+      const data = res.data;
+      const msgs = Array.isArray(data) ? data : (data?.messages || []);
+      const hasMore = Array.isArray(data) ? false : (data?.hasMore ?? false);
+      const nextCursor = Array.isArray(data) ? null : (data?.nextCursor ?? null);
       set({
-        messages: res.data,
+        messages: msgs,
         isMessagesLoading: false,
+        hasMoreMessages: hasMore,
+        messagesNextCursor: nextCursor,
       });
     } catch {
       toast.error("Failed to load messages");
       set({ isMessagesLoading: false });
+    }
+  },
+
+  /* ============================================================
+        LOAD OLDER MESSAGES (cursor-based pagination)
+  ============================================================ */
+  loadOlderMessages: async (userId) => {
+    const { messagesNextCursor, isLoadingOlder, hasMoreMessages } = get();
+    if (!hasMoreMessages || isLoadingOlder || !messagesNextCursor) return null;
+    set({ isLoadingOlder: true });
+    try {
+      const res = await axiosInstance.get(
+        `/messages/${userId}?limit=50&before=${messagesNextCursor}`
+      );
+      const data = res.data;
+      const older = Array.isArray(data) ? data : (data?.messages || []);
+      const hasMore = Array.isArray(data) ? false : (data?.hasMore ?? false);
+      const nextCursor = Array.isArray(data) ? null : (data?.nextCursor ?? null);
+      const { messages } = get();
+      set({
+        messages: [...older, ...messages],
+        isLoadingOlder: false,
+        hasMoreMessages: hasMore,
+        messagesNextCursor: nextCursor,
+      });
+      return older.length;
+    } catch {
+      set({ isLoadingOlder: false });
+      return null;
     }
   },
 
@@ -189,7 +227,7 @@ export const useChatStore = create((set, get) => ({
     const { authUser, socket } = useAuthStore.getState();
 
     if (!user) {
-      set({ selectedUser: null, messages: [] });
+      set({ selectedUser: null, messages: [], hasMoreMessages: true, messagesNextCursor: null });
       return;
     }
 
@@ -197,6 +235,8 @@ export const useChatStore = create((set, get) => ({
       selectedUser: user,
       messages: [],
       isMessagesLoading: true,
+      hasMoreMessages: true,
+      messagesNextCursor: null,
     });
 
     try {

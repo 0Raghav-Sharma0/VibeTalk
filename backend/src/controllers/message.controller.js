@@ -51,27 +51,42 @@ export const getUsersForSidebar = async (req, res) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* 💬  Get Chat Messages Between Two Users (paginated, latest 100)            */
+/* 💬  Get Chat Messages - Cursor-based pagination (newest first by default)  */
 /* -------------------------------------------------------------------------- */
 export const getMessages = async (req, res) => {
   try {
     const myId = req.user._id;
     const friendId = req.params.id;
-    const limit = Math.min(parseInt(req.query.limit, 10) || 100, 200);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
+    const before = req.query.before; // cursor: message _id for loading older
 
-    const messages = await Message.find({
+    const filter = {
       $or: [
         { senderId: myId, receiverId: friendId },
         { senderId: friendId, receiverId: myId }
       ],
-    })
+    };
+
+    if (before) {
+      const cursorMsg = await Message.findById(before).lean();
+      if (cursorMsg) {
+        filter.createdAt = { $lt: cursorMsg.createdAt };
+      }
+    }
+
+    const messages = await Message.find(filter)
       .sort({ createdAt: -1 })
-      .limit(limit)
+      .limit(limit + 1)
       .lean();
+    const hasMore = messages.length > limit;
+    const result = hasMore ? messages.slice(0, limit) : messages;
+    const sorted = result.reverse();
 
-    const sorted = messages.reverse();
-
-    res.status(200).json(sorted);
+    res.status(200).json({
+      messages: sorted,
+      hasMore,
+      nextCursor: hasMore ? sorted[0]?._id?.toString() : null,
+    });
   } catch (error) {
     console.error("❌ Error in getMessages:", error.message);
     res.status(500).json({ message: "Internal Server Error" });

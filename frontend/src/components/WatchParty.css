@@ -200,11 +200,12 @@
   border-color: rgba(239, 68, 68, 0.6);
 }
 
-/* ===== MAIN LAYOUT: 70% Video | 30% Right Panel ===== */
+/* ===== MAIN LAYOUT: YouTube Live style ===== */
+/* Desktop: video left | fixed chat right */
 .watchparty-main {
   flex: 1;
-  display: grid;
-  grid-template-columns: 70fr 30fr;
+  display: flex;
+  flex-direction: row;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
@@ -212,12 +213,14 @@
 }
 
 .video-section {
+  flex: 1;
   display: flex;
   align-items: stretch;
   justify-content: center;
   padding: 1rem;
   min-height: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .video-container {
@@ -238,10 +241,14 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* ===== RIGHT PANEL: Online + Chat ===== */
+/* Right panel: fixed width, chat only scrolls inside */
 .right-panel {
   display: flex;
   flex-direction: column;
+  width: 380px;
+  min-width: 320px;
+  max-width: 420px;
+  flex-shrink: 0;
   min-height: 0;
   border-left: 1px solid var(--wp-border);
   background: var(--wp-panel);
@@ -250,13 +257,10 @@
 
 .online-section {
   flex-shrink: 0;
-  flex-grow: 0;
   border-bottom: 1px solid var(--wp-border);
   max-height: 140px;
   min-height: 80px;
   background: var(--wp-panel);
-  position: relative;
-  z-index: 2;
   overflow: hidden;
 }
 
@@ -266,19 +270,17 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
-  z-index: 1;
   background: var(--wp-panel);
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== RESPONSIVE: Mobile - video top, chat below ===== */
 @media (max-width: 1024px) {
   .watchparty-main {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
+    flex-direction: column;
   }
 
   .video-section {
+    flex: 0 0 auto;
     padding: 0.75rem;
   }
 
@@ -288,9 +290,13 @@
   }
 
   .right-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    flex: 1;
+    min-height: 0;
     border-left: none;
     border-top: 1px solid var(--wp-border);
-    max-height: 45vh;
   }
 
   .online-section {
@@ -299,46 +305,42 @@
 }
 
 @media (max-width: 768px) {
-  /* Stack: Video on top, Chat + Participants below */
+  /* Mobile: video top, chat below, input fixed at screen bottom */
   .watchparty-main {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
+    flex-direction: column;
     min-height: 0;
     overflow: hidden;
   }
 
-  .right-panel {
-    display: flex !important;
-    flex-direction: column;
-    border-left: none;
-    border-top: 1px solid var(--wp-border);
-    max-height: 40vh;
-    min-height: 0;
-  }
-
-  .online-section {
-    max-height: 100px;
-    min-height: 72px;
-  }
-
   .video-section {
+    flex: 0 0 auto;
     padding: 0.5rem 0.25rem;
-    min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden;
   }
 
   .video-container {
     aspect-ratio: 16/9;
     width: 100%;
-    max-height: 100%;
+    max-height: 45vh;
     min-height: 0;
+  }
+
+  .right-panel {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    border-left: none;
+    border-top: 1px solid var(--wp-border);
+  }
+
+  .online-section {
+    max-height: 80px;
+    min-height: 60px;
   }
 }
 
 @media (max-width: 640px) {
-  /* Compact header on mobile - single row, no wrap */
+  /* Compact header on mobile */
   .watchparty-header {
     padding: 0.35rem 0.5rem;
   }
@@ -402,6 +404,7 @@
 
   .video-section {
     padding: 0.25rem 0;
+    overflow: hidden;
   }
 
   .video-container {

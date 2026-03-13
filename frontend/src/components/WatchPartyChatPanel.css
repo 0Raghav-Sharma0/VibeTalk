@@ -3,13 +3,13 @@
 .wp-chat-panel {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1;
   min-height: 0;
   background: transparent;
   overflow: hidden;
 }
 
-/* Messages area */
+/* Messages area - only this scrolls */
 .wp-chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -20,8 +20,8 @@
   gap: 0.75rem;
   min-height: 0;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.04), transparent 35%), #ffffff;
-  contain: layout;
 }
 
 .dark .wp-chat-messages,
@@ -215,7 +215,7 @@
   background: transparent !important;
 }
 
-/* Input - fixed at bottom */
+/* Input - fixed at bottom of chat panel (desktop) */
 .wp-chat-input-wrap {
   display: flex;
   align-items: center;
@@ -353,11 +353,21 @@
   color: rgba(255, 255, 255, 0.3);
 }
 
-/* Mobile: compact chat below video */
+/* Mobile: chat below video, input fixed at screen bottom */
 @media (max-width: 768px) {
+  .wp-chat-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
   .wp-chat-messages {
     padding: 0.5rem 0.75rem;
+    padding-bottom: 72px; /* space for fixed input */
     min-height: 80px;
+    overflow-y: auto;
   }
 
   .wp-chat-msg-avatar {
@@ -372,7 +382,13 @@
   }
 
   .wp-chat-input-wrap {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
     padding: 0.5rem 0.75rem;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+    z-index: 50;
   }
 
   .wp-emoji-picker-wrap {

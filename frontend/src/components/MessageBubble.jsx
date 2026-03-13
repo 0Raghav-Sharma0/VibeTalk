@@ -161,14 +161,14 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
             </div>
           )}
 
-          {/* Message content */}
+          {/* Message content - synced with theme: sent darker, received lighter */}
           <div
-            className={`px-4 py-3 rounded-3xl shadow-sm min-w-[60px] ${
+            className={`px-4 py-3 rounded-2xl shadow-sm min-w-[60px] max-w-[85%] msg-bubble ${
               isEmojiOnly
                 ? "bg-transparent p-0 shadow-none"
                 : isMine
-                ? "bg-[#8F76B1] msg-bubble-sent text-[#F0EFF4] dark:text-white" 
-                : "bg-[#EEECF9] msg-bubble-received border border-transparent"
+                ? "msg-bubble-sent rounded-br-md"
+                : "msg-bubble-received rounded-bl-md"
             }`}
           >
             {/* Text content */}
@@ -177,9 +177,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
                 className={`whitespace-pre-wrap break-words ${
                   isEmojiOnly
                     ? "text-4xl leading-none"
-                    : isMine
-                    ? "text-sm leading-relaxed text-[#F0EFF4] dark:text-white"
-                    : "text-sm leading-relaxed text-[#7D3DCF] dark:text-white"
+                    : "text-sm leading-relaxed"
                 }`}
               >
                 {safeMsg.text}

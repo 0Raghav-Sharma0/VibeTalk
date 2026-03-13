@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone,
@@ -17,10 +17,19 @@ import { useMusicStore } from "../store/musicStore";
 import MessageInput from "./MessageInput";
 import MusicPlayer from "./MusicPlayer";
 import Whiteboard from "./Whiteboard";
-import MessageBubble from "./MessageBubble";
+import ChatMessagesList from "./ChatMessagesList";
 
 export default function ChatContainer() {
-  const { messages, selectedUser, setSelectedUser } = useChatStore();
+  const {
+    messages,
+    selectedUser,
+    setSelectedUser,
+    loadOlderMessages,
+    isLoadingOlder,
+    hasMoreMessages,
+    messagesNextCursor,
+    isMessagesLoading,
+  } = useChatStore();
   const { authUser, socket } = useAuthStore();
   const { startCall } = useVideoCallStore();
   const { isMusicPlayerOpen, toggleMusicPlayer } = useMusicStore();
@@ -29,7 +38,11 @@ export default function ChatContainer() {
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const endRef = useRef(null);
+  const loadOlder = useCallback(() => {
+    if (selectedUser && messagesNextCursor && hasMoreMessages && !isLoadingOlder) {
+      loadOlderMessages(selectedUser._id);
+    }
+  }, [selectedUser, messagesNextCursor, hasMoreMessages, isLoadingOlder, loadOlderMessages]);
 
   /* ================= ROOM ID ================= */
   const roomId = React.useMemo(() => {
@@ -57,22 +70,6 @@ export default function ChatContainer() {
       callerName: authUser.fullName,
     });
   }, [authUser, selectedUser, socket, startCall]);
-
-  /* ================= AUTOSCROLL ================= */
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
-
-  /* ================= SEARCH ================= */
-  const filteredMessages = React.useMemo(() => {
-    if (!searchQuery) return messages;
-    const q = searchQuery.toLowerCase();
-    return messages.filter(
-      (m) =>
-        m.text?.toLowerCase().includes(q) ||
-        m.file?.name?.toLowerCase().includes(q)
-    );
-  }, [messages, searchQuery]);
 
   /* ================= EMPTY ================= */
   if (!selectedUser) {
@@ -179,25 +176,31 @@ export default function ChatContainer() {
         </div>
       )}
 
-      {/* ================= MESSAGES - scrollable when overflow, messages anchor to bottom ================= */}
-        <div
-          className={`flex-1 min-h-0 px-4 sm:px-5 py-4 sm:py-5 flex flex-col justify-end bg-white dark-mode-bg chat-messages-scroll ${
-          filteredMessages.length === 0 ? "overflow-y-hidden" : "overflow-y-auto"
-        }`}
-      >
-        <div className="space-y-4">
-          {filteredMessages.map((msg) => (
-            <MessageBubble
-              key={msg._id}
-              msg={msg}
-              isMine={msg.senderId === authUser._id}
+      {/* ================= MESSAGES - virtualized, infinite scroll, WhatsApp-style ================= */}
+        <div className="flex-1 min-h-0 flex flex-col bg-white dark-mode-bg">
+          {messages.length === 0 && !searchQuery ? (
+            <div className="flex-1 flex items-center justify-center">
+              {isMessagesLoading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-sm text-gray-500 dark:text-white/50">Loading messages...</span>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-white/50">No messages yet</p>
+              )}
+            </div>
+          ) : (
+            <ChatMessagesList
+              messages={messages}
               authUser={authUser}
               selectedUser={selectedUser}
+              onLoadOlder={loadOlder}
+              isLoadingOlder={isLoadingOlder}
+              hasMore={!!(hasMoreMessages && messagesNextCursor)}
+              searchQuery={searchQuery}
             />
-          ))}
+          )}
         </div>
-        <div ref={endRef} />
-      </div>
 
       {/* ================= INPUT - fixed at bottom, stays visible on mobile when keyboard opens ================= */}
       <div className="flex-shrink-0 w-full chat-input-wrapper">
