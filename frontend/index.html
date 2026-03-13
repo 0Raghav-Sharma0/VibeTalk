@@ -4,6 +4,17 @@
     <script>
       window.global = window;
     </script>
+    <!-- Apply theme before first paint to prevent grey flash on reload -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('chat-theme') || 'light';
+          var isDark = ['dark', 'coffee', 'vibetalk'].indexOf(theme) >= 0;
+          document.documentElement.setAttribute('data-theme', theme);
+          document.documentElement.classList.toggle('dark', isDark);
+        } catch (e) {}
+      })();
+    </script>
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
