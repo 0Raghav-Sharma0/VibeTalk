@@ -118,7 +118,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
         />
       )}
 
-      <div className={`flex flex-col max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
+      <div className={`flex flex-col w-full max-w-[85%] sm:max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
         {/* Message metadata */}
         <div className={`flex items-center gap-2 mb-1 px-1 ${isMine ? 'flex-row-reverse' : ''}`}>
           {showSenderName && safeMsg.senderName && (
@@ -163,7 +163,7 @@ export default function MessageBubble({ msg, isMine, authUser, selectedUser, sho
 
           {/* Message content - synced with theme: sent darker, received lighter */}
           <div
-            className={`px-4 py-3 rounded-2xl shadow-sm min-w-[60px] max-w-[85%] msg-bubble ${
+            className={`px-4 py-3 rounded-2xl shadow-sm min-w-[60px] w-fit max-w-[20rem] sm:max-w-[22rem] msg-bubble ${
               isEmojiOnly
                 ? "bg-transparent p-0 shadow-none"
                 : isMine

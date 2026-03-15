@@ -90,18 +90,16 @@ export default function GroupChatContainer() {
         </div>
       )}
 
-      {/* MESSAGES - scrollable when overflow, messages anchor to bottom */}
-      <div
-        className={`flex-1 min-h-0 px-4 sm:px-5 py-4 sm:py-5 flex flex-col justify-end bg-white dark-mode-bg chat-messages-scroll ${
-          filteredMessages.length === 0 ? "overflow-y-hidden" : "overflow-y-auto"
-        }`}
-      >
+      {/* MESSAGES - scroll area with absolute fill so it always has a bounded height and scrolls reliably */}
+      <div className="flex-1 min-h-0 relative bg-white dark-mode-bg">
         {isGroupMessagesLoading ? (
-          <div className="flex justify-center py-8">
+          <div className="absolute inset-0 flex items-center justify-center py-8">
             <div className="w-8 h-8 border-2 border-violet-500 dark:border-[#b29bff] border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <>
+          <div
+            className="absolute inset-0 overflow-y-auto overflow-x-hidden chat-messages-scroll px-4 sm:px-5 py-4 sm:py-5 hardware-accelerate"
+          >
             <div className="space-y-4">
               {filteredMessages.map((msg) => (
                 <MessageBubble
@@ -115,7 +113,7 @@ export default function GroupChatContainer() {
               ))}
             </div>
             <div ref={endRef} />
-          </>
+          </div>
         )}
       </div>
 

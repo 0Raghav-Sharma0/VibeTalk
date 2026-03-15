@@ -23,6 +23,27 @@ export default function HomePage() {
     }
   }, []);
 
+  /* Mobile: WhatsApp-style keyboard — resize chat area when keyboard opens so messages stay scrollable and input stays above keyboard */
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return;
+    const mq = window.matchMedia("(max-width: 768px)");
+    const setViewportHeight = () => {
+      if (!mq.matches) {
+        document.documentElement.style.removeProperty("--chat-viewport-height");
+        return;
+      }
+      const h = window.visualViewport.height;
+      document.documentElement.style.setProperty("--chat-viewport-height", `${h}px`);
+    };
+    setViewportHeight();
+    window.visualViewport.addEventListener("resize", setViewportHeight);
+    window.visualViewport.addEventListener("scroll", setViewportHeight);
+    return () => {
+      window.visualViewport.removeEventListener("resize", setViewportHeight);
+      window.visualViewport.removeEventListener("scroll", setViewportHeight);
+    };
+  }, []);
+
   return (
     <div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark-mode-bg flex flex-col overflow-hidden md:relative mobile-chat-root">
 

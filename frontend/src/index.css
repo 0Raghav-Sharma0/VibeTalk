@@ -858,18 +858,17 @@ html:not(.dark) .hover-lift:hover {
   scroll-behavior: auto;
 }
 
-/* Mobile: lock chat to viewport, prevent body scroll, fix input */
+/* Mobile: lock chat to viewport, prevent body scroll, fix input, WhatsApp-style keyboard */
 @media (max-width: 768px) {
-  /* Lock entire chat page to viewport - prevents scroll at page level */
+  /* Lock chat to viewport; WhatsApp-style: --chat-viewport-height shrinks layout when keyboard opens */
   .mobile-chat-root {
     position: fixed !important;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 100% !important;
-    height: 100dvh !important;
-    height: -webkit-fill-available !important;
+    height: var(--chat-viewport-height, 100dvh) !important;
+    min-height: var(--chat-viewport-height, 100dvh) !important;
     overflow: hidden !important;
   }
 
