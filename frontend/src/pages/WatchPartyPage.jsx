@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWatchParty } from "../contexts/WatchPartyContext";
 import WatchParty from "../components/WatchParty";
 import { Youtube, Upload, Users, ArrowRight } from "lucide-react";
@@ -14,6 +14,17 @@ const WatchPartyPage = () => {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  /* On mobile: scroll to top when entering watch party (after join/create) so video is visible first */
+  useEffect(() => {
+    if (!roomId) return;
+    const isMobile = window.matchMedia("(max-width: 1024px)").matches;
+    if (isMobile) {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [roomId]);
 
   if (roomId) {
     return (
