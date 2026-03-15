@@ -255,15 +255,6 @@
   overflow: hidden;
 }
 
-.online-section {
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--wp-border);
-  max-height: 140px;
-  min-height: 80px;
-  background: var(--wp-panel);
-  overflow: hidden;
-}
-
 .chat-section {
   flex: 1;
   min-height: 0;
@@ -298,10 +289,6 @@
     border-left: none;
     border-top: 1px solid var(--wp-border);
   }
-
-  .online-section {
-    max-height: 100px;
-  }
 }
 
 @media (max-width: 768px) {
@@ -331,11 +318,6 @@
     min-height: 0;
     border-left: none;
     border-top: 1px solid var(--wp-border);
-  }
-
-  .online-section {
-    max-height: 80px;
-    min-height: 60px;
   }
 }
 

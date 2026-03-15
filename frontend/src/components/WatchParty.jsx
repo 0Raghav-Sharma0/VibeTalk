@@ -5,7 +5,6 @@ import { Film, LogOut, Copy } from 'lucide-react';
 import VideoPlayer from './VideoPlayer';
 import ReactionOverlay from './ReactionOverlay';
 import WatchPartyChatPanel from './WatchPartyChatPanel';
-import ParticipantsList from './ParticipantsList';
 import './WatchParty.css';
 
 const WatchParty = () => {
@@ -67,9 +66,6 @@ const WatchParty = () => {
         </section>
 
         <aside className="right-panel">
-          <div className="online-section">
-            <ParticipantsList />
-          </div>
           <div className="chat-section">
             <WatchPartyChatPanel />
           </div>
