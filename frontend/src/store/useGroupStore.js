@@ -104,16 +104,19 @@ export const useGroupStore = create((set, get) => ({
       const { groupMessages, selectedGroup, unreadGroupMessages } = get();
       const { authUser } = useAuthStore.getState();
 
+      const msgSenderId = msg.senderId?._id ?? msg.senderId;
+      const isFromMe = String(msgSenderId) === String(authUser?._id);
+
       const cleaned = groupMessages.filter(
         (m) =>
           !(
             m._id?.startsWith?.("temp-g-") &&
             m.text === msg.text &&
-            m.senderId === msg.senderId
+            String(m.senderId) === String(msgSenderId)
           )
       );
 
-      if (msg.senderId === authUser._id) {
+      if (isFromMe) {
         set({ groupMessages: [...cleaned, msg] });
         return;
       }

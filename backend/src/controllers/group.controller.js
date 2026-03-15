@@ -51,6 +51,13 @@ export const createGroup = async (req, res) => {
       .populate("members.userId", "fullName profilePic")
       .populate("createdBy", "fullName profilePic");
 
+    // Notify all members (including creator) so other devices/tabs see the new group without refresh
+    for (const m of populated.members) {
+      const memberId = m.userId?._id ?? m.userId;
+      const sid = getReceiverSocketId(toStr(memberId));
+      if (sid) getIO().to(sid).emit("group-updated", { group: populated });
+    }
+
     res.status(201).json(populated);
   } catch (error) {
     console.error("❌ createGroup:", error.message);

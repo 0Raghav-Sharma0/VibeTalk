@@ -222,14 +222,15 @@ export function createSocketServer(server) {
           ...populated.toObject(),
           senderName: populated.senderId?.fullName || "Unknown",
           senderAvatar: populated.senderId?.profilePic || null,
+          // Ensure senderId is string so frontend can match optimistic message and avoid duplicates
+          senderId: populated.senderId?._id?.toString() ?? populated.senderId?.toString?.() ?? populated.senderId,
         };
 
         for (const m of group.members) {
           const sid = getReceiverSocketId(m.userId.toString());
           if (sid) io.to(sid).emit("newGroupMessage", enriched);
         }
-
-        socket.emit("newGroupMessage", enriched);
+        // Do NOT emit again to sender - they are already in group.members and got it above
       } catch (err) {
         console.error("❌ sendGroupMessage error:", err);
       }
