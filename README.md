@@ -114,7 +114,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="380" height="420"/>
 
 <br>
 
@@ -124,7 +124,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg"  width="380" height="420" />
 
 <br>
 
@@ -209,19 +209,33 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <div align="center">
 
-## 🎨 Collaborative Whiteboard
+## 🎨 Collaboration & Shared Media
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="420"/>
+<table>
+<tr>
 
-</div>
+<td align="center">
 
----
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="360"/>
 
-<div align="center">
+<br>
 
-## 🎵 Shared Music Player
+<b>Collaborative Whiteboard</b>
+
+</td>
+
+<td align="center">
 
 <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="360"/>
+
+<br>
+
+<b>Shared Music Player</b>
+
+</td>
+
+</tr>
+</table>
 
 </div>
 
