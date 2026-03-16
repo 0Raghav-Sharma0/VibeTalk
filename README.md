@@ -115,7 +115,7 @@ A quick visual walkthrough of <b>VibeTalk</b> showcasing the real-time communica
 
 | Video Call                                                                                 | Voice Call                                                                          |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| <img src="https://via.placeholder.com/600x350.png?text=WebRTC+Video+Calling" width="420"/> | <img src="https://via.placeholder.com/600x350.png?text=Audio+Calling" width="420"/> |
+| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013509.png" width="420"/> | <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013549.png" width="420"/> |
 
 </div>
 
