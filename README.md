@@ -26,12 +26,12 @@ A modern **full-stack real-time communication platform** designed to simulate **
 
 <div align="center">
 
-| 💬 Real-Time Messaging        | 👥 Friends & Groups           | 📞 Voice & Video Calls      |
-| ----------------------------- | ----------------------------- | --------------------------- |
-| Instant chat using WebSockets | Username-based friend system  | Peer-to-peer WebRTC calls   |
-| Real-time message sync        | Send / accept friend requests | Low-latency media streaming |
-| Online / offline presence     | Create chat groups            | Audio + video support       |
-| Chat history persistence      | Group messaging               | Secure peer connections     |
+| 💬 Real-Time Messaging             | 👥 Friends & Groups           | 📞 Voice & Video Calls        |
+| ---------------------------------- | ----------------------------- | ----------------------------- |
+| Instant chat using **WebSockets**  | Username-based friend system  | Peer-to-peer **WebRTC calls** |
+| Real-time message synchronization  | Send / accept friend requests | Low-latency media streaming   |
+| Online / offline presence tracking | Create chat groups            | Audio & video support         |
+| Chat history persistence           | Group messaging               | Secure peer connections       |
 
 </div>
 
@@ -39,12 +39,12 @@ A modern **full-stack real-time communication platform** designed to simulate **
 
 <div align="center">
 
-| 🖼 Media Sharing    | 🎬 Watch Party         | 🎨 Whiteboard         |
-| ------------------- | ---------------------- | --------------------- |
-| Send images in chat | Watch YouTube together | Collaborative drawing |
-| Instant preview     | Synced playback        | Multiple tools        |
-| Cloudinary storage  | Host control           | Real-time updates     |
-| Optimized uploads   | Live chat              | Socket synced board   |
+| 🖼 Media Sharing        | 🎬 Watch Party            | 🎨 Collaborative Whiteboard     |
+| ----------------------- | ------------------------- | ------------------------------- |
+| Send images inside chat | Watch YouTube together    | Real-time collaborative drawing |
+| Instant media preview   | Synchronized playback     | Multiple drawing tools          |
+| Cloudinary storage      | Host control system       | Live canvas updates             |
+| Optimized uploads       | Live chat during playback | Socket-synchronized board       |
 
 </div>
 
@@ -52,11 +52,11 @@ A modern **full-stack real-time communication platform** designed to simulate **
 
 <div align="center">
 
-| 🎵 Music Sync       | 🌙 Theme System     | ⚡ Real-Time Sync          |
-| ------------------- | ------------------- | ------------------------- |
-| Shared music player | Dark / light mode   | Event-driven system       |
-| Synced playback     | Persistent settings | Instant UI updates        |
-| Integrated audio UI | Smooth transitions  | Low latency communication |
+| 🎵 Shared Music       | 🌙 Theme System          | ⚡ Real-Time Sync          |
+| --------------------- | ------------------------ | ------------------------- |
+| Shared music player   | Dark / light mode        | Event-driven architecture |
+| Synchronized playback | Persistent user settings | Instant UI updates        |
+| Integrated player UI  | Smooth transitions       | Low latency communication |
 
 </div>
 
@@ -84,7 +84,7 @@ A modern **full-stack real-time communication platform** designed to simulate **
 # 📸 Application Gallery
 
 <p align="center">
-A visual walkthrough of the core features of <b>VibeTalk</b>.
+A quick visual walkthrough of <b>VibeTalk</b> showcasing the real-time communication and collaboration features.
 </p>
 
 ---
@@ -92,116 +92,73 @@ A visual walkthrough of the core features of <b>VibeTalk</b>.
 ## 💬 Chat Experience
 
 <p align="center">
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="85%">
-</p>
-
-<p align="center">
-Modern messaging interface with instant message delivery and presence indicators.
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="80%">
 </p>
 
 ---
 
 ## 👥 Social System
 
-<table align="center">
-<tr>
+<div align="center">
 
-<td align="center" width="50%">
+| Friends Panel                                                                                                       | Group Chat                                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="420"/> | <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg" width="420"/> |
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="100%">
-
-**Friends Panel**
-
-Manage friends and send requests.
-
-</td>
-
-<td align="center" width="50%">
-
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg" width="100%">
-
-**Group Chat**
-
-Collaborate with multiple users.
-
-</td>
-
-</tr>
-</table>
+</div>
 
 ---
 
-## 📞 Video Calling
+## 📞 Audio & Video Calling
 
-<p align="center">
-<img src="https://via.placeholder.com/900x480.png?text=WebRTC+Video+Calling" width="85%">
-</p>
+<div align="center">
 
-<p align="center">
-Peer-to-peer WebRTC video calls with low latency streaming.
-</p>
+| Video Call                                                                                 | Voice Call                                                                          |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| <img src="https://via.placeholder.com/600x350.png?text=WebRTC+Video+Calling" width="420"/> | <img src="https://via.placeholder.com/600x350.png?text=Audio+Calling" width="420"/> |
+
+</div>
 
 ---
 
 ## 🎬 Watch Party
 
-<table align="center">
-<tr>
+<div align="center">
 
-<td align="center" width="50%">
+| Create Party                                                                                                                            | Watch Together                                                                                                                    |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="420"/> | <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="420"/> |
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="100%">
-
-**Create Party**
-
-Host synchronized watch sessions.
-
-</td>
-
-<td align="center" width="50%">
-
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="100%">
-
-**Watch Together**
-
-Playback stays synced for all users.
-
-</td>
-
-</tr>
-</table>
+</div>
 
 ---
 
 ## 🎨 Collaborative Whiteboard
 
 <p align="center">
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="85%">
-</p>
-
-<p align="center">
-Draw and collaborate in real time using socket-synchronized canvas events.
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="80%">
 </p>
 
 ---
 
 ## 🎵 Shared Music Player
 
-<p align="center">
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="85%">
-</p>
+<div align="center">
 
-<p align="center">
-Listen to music together with synchronized playback.
-</p>
+| Music Player                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="420"/> |
+
+</div>
 
 ---
+
 # ⚡ Real-Time Architecture
 
 ```mermaid
 flowchart LR
 
-A[Client A - React App] 
+A[Client A - React App]
 B[Client B - React App]
 C[Client C - React App]
 
@@ -224,11 +181,11 @@ WS --> REDIS
 
 ### Explanation
 
-* Clients connect to the **WebSocket server**
-* Messages and events are sent as **socket events**
-* Server processes and **broadcasts updates**
-* MongoDB stores persistent data (messages, users, groups)
-* Redis handles **caching and performance optimization**
+• Clients connect to the **WebSocket server**
+• Messages and events are emitted as **socket events**
+• Server processes events and **broadcasts updates**
+• MongoDB stores persistent data
+• Redis improves performance via caching
 
 ---
 
@@ -256,16 +213,7 @@ A-->>B: Video Stream
 B-->>A: Video Stream
 ```
 
-### Explanation
-
-1. User A creates a **WebRTC offer**
-2. Offer is sent through the **signaling server**
-3. User B responds with an **answer**
-4. Both exchange **ICE candidates**
-5. A **peer-to-peer media connection** is established
-6. Video/audio stream flows directly between users
-
-
+---
 
 # ⚙️ Local Development
 
@@ -282,7 +230,7 @@ cd vibetalk
 npm install
 ```
 
-### Setup environment variables
+### Configure environment variables
 
 Create `.env`
 
@@ -313,12 +261,12 @@ npm run dev
 
 # 🔮 Future Improvements
 
-* Message reactions
-* File sharing
-* Screen sharing
-* End-to-end encryption
-* Push notifications
-* Mobile application
+• Message reactions
+• File sharing
+• Screen sharing
+• End-to-end encryption
+• Push notifications
+• Mobile application
 
 ---
 
