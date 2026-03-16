@@ -1,213 +1,330 @@
-<!-- ========================== INTRODUCTION ========================== -->
+<div align="center">
 
-<h1 align="center">💬 Blah-Blah</h1>
+# 💬 VibeTalk
+
+### ⚡ Next-Generation Real-Time Communication Platform
+
+Real-time Chat • WebRTC Video Calls • Watch Parties • Collaborative Whiteboard • Shared Music
+
+<br>
+
+<img src="https://img.shields.io/badge/Frontend-React-blue?style=for-the-badge&logo=react"/>
+<img src="https://img.shields.io/badge/Backend-Node.js-green?style=for-the-badge&logo=node.js"/>
+<img src="https://img.shields.io/badge/Realtime-WebSockets-orange?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/VideoCalls-WebRTC-purple?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/Database-MongoDB-darkgreen?style=for-the-badge&logo=mongodb"/>
+
+<br><br>
+
+A modern **full-stack real-time communication platform** designed to simulate **production-grade messaging systems** with low latency and scalable architecture.
+
+</div>
+
+---
+
+# 🚀 Core Features
+
+<div align="center">
+
+| 💬 Real-Time Messaging        | 👥 Friends & Groups           | 📞 Voice & Video Calls      |
+| ----------------------------- | ----------------------------- | --------------------------- |
+| Instant chat using WebSockets | Username-based friend system  | Peer-to-peer WebRTC calls   |
+| Real-time message sync        | Send / accept friend requests | Low-latency media streaming |
+| Online / offline presence     | Create chat groups            | Audio + video support       |
+| Chat history persistence      | Group messaging               | Secure peer connections     |
+
+</div>
+
+<br>
+
+<div align="center">
+
+| 🖼 Media Sharing    | 🎬 Watch Party         | 🎨 Whiteboard         |
+| ------------------- | ---------------------- | --------------------- |
+| Send images in chat | Watch YouTube together | Collaborative drawing |
+| Instant preview     | Synced playback        | Multiple tools        |
+| Cloudinary storage  | Host control           | Real-time updates     |
+| Optimized uploads   | Live chat              | Socket synced board   |
+
+</div>
+
+<br>
+
+<div align="center">
+
+| 🎵 Music Sync       | 🌙 Theme System     | ⚡ Real-Time Sync          |
+| ------------------- | ------------------- | ------------------------- |
+| Shared music player | Dark / light mode   | Event-driven system       |
+| Synced playback     | Persistent settings | Instant UI updates        |
+| Integrated audio UI | Smooth transitions  | Low latency communication |
+
+</div>
+
+---
+
+# 🛠 Tech Stack
+
+| Category                    | Technology              |
+| --------------------------- | ----------------------- |
+| **Frontend**                | React + Vite            |
+| **Language**                | JavaScript / TypeScript |
+| **Styling**                 | TailwindCSS             |
+| **Animations**              | Framer Motion           |
+| **State Management**        | Zustand + Context API   |
+| **Real-Time Communication** | WebSockets              |
+| **Video Calls**             | WebRTC                  |
+| **Backend**                 | Node.js + Express       |
+| **Database**                | MongoDB                 |
+| **Caching**                 | Redis                   |
+| **File Storage**            | Cloudinary              |
+| **Deployment**              | Vercel + Render         |
+
+---
+
+# 📸 Application Gallery
 
 <p align="center">
-  <strong>A real-time chat, watch-party, and collaboration platform</strong>
+A visual walkthrough of the core features of <b>VibeTalk</b>.
+</p>
+
+---
+
+## 💬 Chat Experience
+
+<p align="center">
+<img src="https://via.placeholder.com/900x480.png?text=Real-Time+Chat+Interface" width="85%">
 </p>
 
 <p align="center">
-  Blah-Blah is a production-style real-time communication platform that allows users to
-  chat instantly, track online presence, watch media together in sync, and collaborate
-  using shared interactive tools.
+Modern messaging interface with instant message delivery and presence indicators.
 </p>
 
-<p align="center">
-  The project focuses on real-world real-time system design, smooth UI/UX,
-  and scalable event-driven communication rather than demo-level chat features.
-</p>
+---
 
-<hr/>
+## 👥 Social System
 
-<!-- ========================== SCREENSHOTS ========================== -->
+<table align="center">
+<tr>
 
-<h2>📸 Screenshots</h2>
+<td align="center" width="50%">
 
-<p>
-  Below are key screens from the Blah-Blah application highlighting core user flows
-  such as authentication, real-time chat, watch parties, theme switching,
-  and collaborative tools.
-</p>
+<img src="https://via.placeholder.com/500x300.png?text=Friends+Panel" width="100%">
 
-<p align="center">
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230807.png"
-    alt="Login Screen"
-    height="260"
-  />
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230858.png"
-    alt="Chat Dashboard"
-    height="260"
-  />
-</p>
+**Friends Panel**
 
-<p align="center">
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230940.png"
-    alt="Real-Time Chat"
-    height="260"
-  />
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20231016.png"
-    alt="Watch Party"
-    height="260"
-  />
-</p>
+Manage friends and send requests.
 
-<p align="center">
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230958.png"
-    alt="Collaborative Drawing Board"
-    height="320"
-  />
-</p>
+</td>
 
-<hr/>
+<td align="center" width="50%">
 
+<img src="https://via.placeholder.com/500x300.png?text=Group+Chat+System" width="100%">
 
-<!-- ========================== TECH STACK ========================== -->
+**Group Chat**
 
-<h2>🛠️ Tech Stack</h2>
+Collaborate with multiple users.
 
-<table>
-  <thead>
-    <tr>
-      <th align="left">Layer</th>
-      <th align="left">Technologies</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Frontend</strong></td>
-      <td>React, TypeScript, Tailwind CSS</td>
-    </tr>
-    <tr>
-      <td><strong>UI & Animations</strong></td>
-      <td>Framer Motion, Lucide Icons</td>
-    </tr>
-    <tr>
-      <td><strong>State Management</strong></td>
-      <td>Context API, TanStack Query</td>
-    </tr>
-    <tr>
-      <td><strong>Real-Time</strong></td>
-      <td>WebSockets</td>
-    </tr>
-    <tr>
-      <td><strong>Backend</strong></td>
-      <td>Node.js, Express, TypeScript</td>
-    </tr>
-    <tr>
-      <td><strong>Authentication</strong></td>
-      <td>Secure token-based sessions</td>
-    </tr>
-    <tr>
-      <td><strong>Deployment</strong></td>
-      <td>Production-ready cloud setup</td>
-    </tr>
-  </tbody>
+</td>
+
+</tr>
 </table>
 
-<hr/>
+---
 
+## 📞 Video Calling
 
-<!-- ========================== CORE FEATURES ========================== -->
-
-<h2>✨ Core Features</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th align="left">Feature</th>
-      <th align="left">Description</th>
-      <th align="center">Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>User Authentication</strong></td>
-      <td>Secure login with protected routes and sessions</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Real-Time Chat</strong></td>
-      <td>Instant messaging with delivery indicators</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>User Presence</strong></td>
-      <td>Online and offline presence tracking</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Watch Party</strong></td>
-      <td>Synchronized media playback with shared controls</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Collaborative Drawing</strong></td>
-      <td>Shared drawing board for real-time interaction</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Theme Switching</strong></td>
-      <td>Light & dark mode with persisted user preference</td>
-      <td align="center">✅</td>
-    </tr>
-  </tbody>
-</table>
-
-<hr/>
-
-
-<!-- ========================== SYSTEM FLOW ========================== -->
-
-<h2>🏗️ System Flow</h2>
-
-<ul>
-  <li>
-    <strong>Frontend:</strong> React application handles UI rendering, routing,
-    and real-time updates based on socket events.
-  </li>
-  <li>
-    <strong>Backend API:</strong> Express server manages authentication, core logic,
-    and secure session handling.
-  </li>
-  <li>
-    <strong>Real-Time Layer:</strong> WebSockets power chat messages, presence updates,
-    watch party synchronization, and drawing events.
-  </li>
-  <li>
-    <strong>State Sync:</strong> Clients react to server-emitted events to keep
-    all participants in sync without polling.
-  </li>
-</ul>
-
-<hr/>
-
-
-<!-- ========================== DEPLOYMENT ========================== -->
-
-<h2>🚀 Deployment</h2>
-
-<ul>
-  <li>
-    <strong>Frontend:</strong> Deployed on a CDN-backed platform for fast global access - Vecel.
-  </li>
-  <li>
-    <strong>Backend:</strong> Hosted as a long-running real-time service with
-    environment-based configuration  - Render.
-  </li>
-  <li>
-    <strong>Configuration:</strong> Separate development and production environments
-    using environment variables - in environment file.
-  </li>
-</ul>
-
-<p>
-  The deployment setup prioritizes simplicity, reliability, and real-world usability
-  while supporting real-time communication at scale.
+<p align="center">
+<img src="https://via.placeholder.com/900x480.png?text=WebRTC+Video+Calling" width="85%">
 </p>
 
-<hr/>
+<p align="center">
+Peer-to-peer WebRTC video calls with low latency streaming.
+</p>
+
+---
+
+## 🎬 Watch Party
+
+<table align="center">
+<tr>
+
+<td align="center" width="50%">
+
+<img src="https://via.placeholder.com/500x300.png?text=Create+Watch+Party" width="100%">
+
+**Create Party**
+
+Host synchronized watch sessions.
+
+</td>
+
+<td align="center" width="50%">
+
+<img src="https://via.placeholder.com/500x300.png?text=Watch+Party+Room" width="100%">
+
+**Watch Together**
+
+Playback stays synced for all users.
+
+</td>
+
+</tr>
+</table>
+
+---
+
+## 🎨 Collaborative Whiteboard
+
+<p align="center">
+<img src="https://via.placeholder.com/900x480.png?text=Real-Time+Whiteboard" width="85%">
+</p>
+
+<p align="center">
+Draw and collaborate in real time using socket-synchronized canvas events.
+</p>
+
+---
+
+## 🎵 Shared Music Player
+
+<p align="center">
+<img src="https://via.placeholder.com/900x480.png?text=Shared+Music+Player" width="85%">
+</p>
+
+<p align="center">
+Listen to music together with synchronized playback.
+</p>
+
+---
+
+# ⚡ Real-Time Architecture
+
+```
+Client (React)
+       │
+       │ Socket Events
+       ▼
+WebSocket Server
+       │
+       │ Broadcast Updates
+       ▼
+Connected Clients
+       │
+       ▼
+Real-Time UI Updates
+```
+
+### WebRTC Call Flow
+
+```
+User A
+  │
+  │ Signaling via Server
+  ▼
+Signaling Server
+  │
+  ▼
+User B
+
+Peer-to-Peer Media Stream
+```
+
+---
+
+# 📁 Project Structure
+
+```text
+VibeTalk
+│
+├── backend
+│   ├── controllers
+│   ├── models
+│   ├── routes
+│   ├── middleware
+│   ├── lib
+│   │   ├── socket.js
+│   │   ├── redis.js
+│   │   ├── db.js
+│   │   └── cloudinary.js
+│   └── index.js
+│
+├── frontend
+│   ├── src
+│   │   ├── components
+│   │   ├── contexts
+│   │   ├── pages
+│   │   ├── store
+│   │   └── utils
+│   │
+│   ├── App.jsx
+│   └── main.jsx
+│
+└── README.md
+```
+
+---
+
+# ⚙️ Local Development
+
+### Clone repository
+
+```bash
+git clone https://github.com/your-username/vibetalk.git
+cd vibetalk
+```
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Setup environment variables
+
+Create `.env`
+
+```
+PORT=5000
+JWT_SECRET=your_secret
+DATABASE_URL=your_database_url
+```
+
+### Start development server
+
+```bash
+npm run dev
+```
+
+---
+
+# 🚀 Deployment
+
+| Service  | Platform   |
+| -------- | ---------- |
+| Frontend | Vercel     |
+| Backend  | Render     |
+| Storage  | Cloudinary |
+| Cache    | Redis      |
+
+---
+
+# 🔮 Future Improvements
+
+* Message reactions
+* File sharing
+* Screen sharing
+* End-to-end encryption
+* Push notifications
+* Mobile application
+
+---
+
+<div align="center">
+
+# 👨‍💻 Author
+
+**Raghav Sharma**
+
+⭐ If you like this project, consider giving it a star!
+
+</div>
