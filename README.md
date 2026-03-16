@@ -314,18 +314,7 @@ npm run dev
 | Backend  | Render     |
 | Storage  | Cloudinary |
 | Cache    | Redis      |
-
----
-
-# 🔮 Future Improvements
-
-• Message reactions
-• File sharing
-• Screen sharing
-• End-to-end encryption
-• Push notifications
-• Mobile application
-
+</div>
 ---
 
 <div align="center">
