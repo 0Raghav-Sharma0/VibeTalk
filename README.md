@@ -176,7 +176,7 @@ Playback stays synced for all users.
 ## 🎨 Collaborative Whiteboard
 
 <p align="center">
-<img src="https://via.placeholder.com/900x480.png?text=Real-Time+Whiteboard" width="85%">
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="85%">
 </p>
 
 <p align="center">
