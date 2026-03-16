@@ -92,7 +92,7 @@ A visual walkthrough of the core features of <b>VibeTalk</b>.
 ## 💬 Chat Experience
 
 <p align="center">
-<img src="https://via.placeholder.com/900x480.png?text=Real-Time+Chat+Interface" width="85%">
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="85%">
 </p>
 
 <p align="center">
@@ -108,7 +108,7 @@ Modern messaging interface with instant message delivery and presence indicators
 
 <td align="center" width="50%">
 
-<img src="https://via.placeholder.com/500x300.png?text=Friends+Panel" width="100%">
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="100%">
 
 **Friends Panel**
 
@@ -118,7 +118,7 @@ Manage friends and send requests.
 
 <td align="center" width="50%">
 
-<img src="https://via.placeholder.com/500x300.png?text=Group+Chat+System" width="100%">
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg" width="100%">
 
 **Group Chat**
 
@@ -150,7 +150,7 @@ Peer-to-peer WebRTC video calls with low latency streaming.
 
 <td align="center" width="50%">
 
-<img src="https://via.placeholder.com/500x300.png?text=Create+Watch+Party" width="100%">
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="100%">
 
 **Create Party**
 
@@ -160,7 +160,7 @@ Host synchronized watch sessions.
 
 <td align="center" width="50%">
 
-<img src="https://via.placeholder.com/500x300.png?text=Watch+Party+Room" width="100%">
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="100%">
 
 **Watch Together**
 
@@ -188,7 +188,7 @@ Draw and collaborate in real time using socket-synchronized canvas events.
 ## 🎵 Shared Music Player
 
 <p align="center">
-<img src="https://via.placeholder.com/900x480.png?text=Shared+Music+Player" width="85%">
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="85%">
 </p>
 
 <p align="center">
@@ -196,73 +196,76 @@ Listen to music together with synchronized playback.
 </p>
 
 ---
-
 # ⚡ Real-Time Architecture
 
-```
-Client (React)
-       │
-       │ Socket Events
-       ▼
-WebSocket Server
-       │
-       │ Broadcast Updates
-       ▼
-Connected Clients
-       │
-       ▼
-Real-Time UI Updates
+```mermaid
+flowchart LR
+
+A[Client A - React App] 
+B[Client B - React App]
+C[Client C - React App]
+
+WS[WebSocket Server]
+
+DB[(MongoDB Database)]
+REDIS[(Redis Cache)]
+
+A -- Socket Events --> WS
+B -- Socket Events --> WS
+C -- Socket Events --> WS
+
+WS -- Broadcast Updates --> A
+WS -- Broadcast Updates --> B
+WS -- Broadcast Updates --> C
+
+WS --> DB
+WS --> REDIS
 ```
 
-### WebRTC Call Flow
+### Explanation
 
-```
-User A
-  │
-  │ Signaling via Server
-  ▼
-Signaling Server
-  │
-  ▼
-User B
-
-Peer-to-Peer Media Stream
-```
+* Clients connect to the **WebSocket server**
+* Messages and events are sent as **socket events**
+* Server processes and **broadcasts updates**
+* MongoDB stores persistent data (messages, users, groups)
+* Redis handles **caching and performance optimization**
 
 ---
 
-# 📁 Project Structure
+# 📞 WebRTC Video Call Flow
 
-```text
-VibeTalk
-│
-├── backend
-│   ├── controllers
-│   ├── models
-│   ├── routes
-│   ├── middleware
-│   ├── lib
-│   │   ├── socket.js
-│   │   ├── redis.js
-│   │   ├── db.js
-│   │   └── cloudinary.js
-│   └── index.js
-│
-├── frontend
-│   ├── src
-│   │   ├── components
-│   │   ├── contexts
-│   │   ├── pages
-│   │   ├── store
-│   │   └── utils
-│   │
-│   ├── App.jsx
-│   └── main.jsx
-│
-└── README.md
+```mermaid
+sequenceDiagram
+
+participant A as User A
+participant S as Signaling Server
+participant B as User B
+
+A->>S: Create Offer (SDP)
+S->>B: Forward Offer
+
+B->>S: Send Answer (SDP)
+S->>A: Forward Answer
+
+A->>B: ICE Candidates
+B->>A: ICE Candidates
+
+Note over A,B: Peer-to-Peer Connection Established
+
+A-->>B: Video Stream
+B-->>A: Video Stream
 ```
 
----
+### Explanation
+
+1. User A creates a **WebRTC offer**
+2. Offer is sent through the **signaling server**
+3. User B responds with an **answer**
+4. Both exchange **ICE candidates**
+5. A **peer-to-peer media connection** is established
+6. Video/audio stream flows directly between users
+
+
 
 # ⚙️ Local Development
 
