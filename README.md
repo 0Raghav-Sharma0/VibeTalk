@@ -62,6 +62,8 @@ A modern **full-stack real-time communication platform** designed to simulate **
 
 ---
 
+<div align="center">
+
 # 🛠 Tech Stack
 
 | Category                    | Technology              |
@@ -79,75 +81,147 @@ A modern **full-stack real-time communication platform** designed to simulate **
 | **File Storage**            | Cloudinary              |
 | **Deployment**              | Vercel + Render         |
 
+</div>
+
 ---
 
 # 📸 Application Gallery
 
-<p align="center">
-A quick visual walkthrough of <b>VibeTalk</b> showcasing the real-time communication and collaboration features.
-</p>
+<div align="center">
+
+A quick visual walkthrough of **VibeTalk** showcasing the real-time communication and collaboration features.
+
+</div>
 
 ---
+
+<div align="center">
 
 ## 💬 Chat Experience
 
-<p align="center">
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="80%">
-</p>
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="420"/>
+
+</div>
 
 ---
+
+<div align="center">
 
 ## 👥 Social System
 
-<div align="center">
+<table>
+<tr>
 
-| Friends Panel                                                                                                       | Group Chat                                                                                                                              |
-| ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="420"/> | <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg" width="420"/> |
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="360"/>
+
+<br>
+
+<b>Friends Panel</b>
+
+</td>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg" width="360"/>
+
+<br>
+
+<b>Group Chat</b>
+
+</td>
+
+</tr>
+</table>
 
 </div>
 
 ---
+
+<div align="center">
 
 ## 📞 Audio & Video Calling
 
-<div align="center">
+<table>
+<tr>
 
-| Video Call                                                                                 | Voice Call                                                                          |
-| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013509.png" width="420"/> | <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013549.png" width="420"/> |
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013509.png" width="360"/>
+
+<br>
+
+<b>Video Call</b>
+
+</td>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013549.png" width="360"/>
+
+<br>
+
+<b>Voice Call</b>
+
+</td>
+
+</tr>
+</table>
 
 </div>
 
 ---
+
+<div align="center">
 
 ## 🎬 Watch Party
 
-<div align="center">
+<table>
+<tr>
 
-| Create Party                                                                                                                            | Watch Together                                                                                                                    |
-| --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="420"/> | <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="420"/> |
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="360"/>
+
+<br>
+
+<b>Create Party</b>
+
+</td>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="360"/>
+
+<br>
+
+<b>Watch Together</b>
+
+</td>
+
+</tr>
+</table>
 
 </div>
 
 ---
 
+<div align="center">
+
 ## 🎨 Collaborative Whiteboard
 
-<p align="center">
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="80%">
-</p>
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="420"/>
+
+</div>
 
 ---
 
-## 🎵 Shared Music Player
-
 <div align="center">
 
-| Music Player                                                                                                                            |
-| --------------------------------------------------------------------------------------------------------------------------------------- |
-| <img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="420"/> |
+## 🎵 Shared Music Player
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="360"/>
 
 </div>
 
@@ -179,14 +253,6 @@ WS --> DB
 WS --> REDIS
 ```
 
-### Explanation
-
-• Clients connect to the **WebSocket server**
-• Messages and events are emitted as **socket events**
-• Server processes events and **broadcasts updates**
-• MongoDB stores persistent data
-• Redis improves performance via caching
-
 ---
 
 # 📞 WebRTC Video Call Flow
@@ -217,32 +283,10 @@ B-->>A: Video Stream
 
 # ⚙️ Local Development
 
-### Clone repository
-
 ```bash
 git clone https://github.com/your-username/vibetalk.git
 cd vibetalk
-```
-
-### Install dependencies
-
-```bash
 npm install
-```
-
-### Configure environment variables
-
-Create `.env`
-
-```
-PORT=5000
-JWT_SECRET=your_secret
-DATABASE_URL=your_database_url
-```
-
-### Start development server
-
-```bash
 npm run dev
 ```
 
