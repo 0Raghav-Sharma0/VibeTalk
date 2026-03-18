@@ -1,213 +1,328 @@
-<!-- ========================== INTRODUCTION ========================== -->
+<div align="center">
 
-<h1 align="center">💬 Blah-Blah</h1>
+# 💬 VibeTalk
 
-<p align="center">
-  <strong>A real-time chat, watch-party, and collaboration platform</strong>
-</p>
+### ⚡ Next-Generation Real-Time Communication Platform
 
-<p align="center">
-  Blah-Blah is a production-style real-time communication platform that allows users to
-  chat instantly, track online presence, watch media together in sync, and collaborate
-  using shared interactive tools.
-</p>
+Real-time Chat • WebRTC Video Calls • Watch Parties • Collaborative Whiteboard • Shared Music
 
-<p align="center">
-  The project focuses on real-world real-time system design, smooth UI/UX,
-  and scalable event-driven communication rather than demo-level chat features.
-</p>
+<br>
 
-<hr/>
+<img src="https://img.shields.io/badge/Frontend-React-blue?style=for-the-badge&logo=react"/>
+<img src="https://img.shields.io/badge/Backend-Node.js-green?style=for-the-badge&logo=node.js"/>
+<img src="https://img.shields.io/badge/Realtime-WebSockets-orange?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/VideoCalls-WebRTC-purple?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/Database-MongoDB-darkgreen?style=for-the-badge&logo=mongodb"/>
 
-<!-- ========================== SCREENSHOTS ========================== -->
+<br><br>
 
-<h2>📸 Screenshots</h2>
+A modern **full-stack real-time communication platform** designed to simulate **production-grade messaging systems** with low latency and scalable architecture.
 
-<p>
-  Below are key screens from the Blah-Blah application highlighting core user flows
-  such as authentication, real-time chat, watch parties, theme switching,
-  and collaborative tools.
-</p>
+</div>
 
-<p align="center">
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230807.png"
-    alt="Login Screen"
-    height="260"
-  />
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230858.png"
-    alt="Chat Dashboard"
-    height="260"
-  />
-</p>
+---
 
-<p align="center">
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230940.png"
-    alt="Real-Time Chat"
-    height="260"
-  />
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20231016.png"
-    alt="Watch Party"
-    height="260"
-  />
-</p>
+# 🚀 Core Features
 
-<p align="center">
-  <img 
-    src="https://github.com/0Raghav-Sharma0/Blah-Blah/blob/main/Screenshot%202025-12-25%20230958.png"
-    alt="Collaborative Drawing Board"
-    height="320"
-  />
-</p>
+<div align="center">
 
-<hr/>
+| 💬 Real-Time Messaging             | 👥 Friends & Groups           | 📞 Voice & Video Calls        |
+| ---------------------------------- | ----------------------------- | ----------------------------- |
+| Instant chat using **WebSockets**  | Username-based friend system  | Peer-to-peer **WebRTC calls** |
+| Real-time message synchronization  | Send / accept friend requests | Low-latency media streaming   |
+| Online / offline presence tracking | Create chat groups            | Audio & video support         |
+| Chat history persistence           | Group messaging               | Secure peer connections       |
 
+</div>
 
-<!-- ========================== TECH STACK ========================== -->
+<br>
 
-<h2>🛠️ Tech Stack</h2>
+<div align="center">
 
-<table>
-  <thead>
-    <tr>
-      <th align="left">Layer</th>
-      <th align="left">Technologies</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>Frontend</strong></td>
-      <td>React, TypeScript, Tailwind CSS</td>
-    </tr>
-    <tr>
-      <td><strong>UI & Animations</strong></td>
-      <td>Framer Motion, Lucide Icons</td>
-    </tr>
-    <tr>
-      <td><strong>State Management</strong></td>
-      <td>Context API, TanStack Query</td>
-    </tr>
-    <tr>
-      <td><strong>Real-Time</strong></td>
-      <td>WebSockets</td>
-    </tr>
-    <tr>
-      <td><strong>Backend</strong></td>
-      <td>Node.js, Express, TypeScript</td>
-    </tr>
-    <tr>
-      <td><strong>Authentication</strong></td>
-      <td>Secure token-based sessions</td>
-    </tr>
-    <tr>
-      <td><strong>Deployment</strong></td>
-      <td>Production-ready cloud setup</td>
-    </tr>
-  </tbody>
-</table>
+| 🖼 Media Sharing        | 🎬 Watch Party            | 🎨 Collaborative Whiteboard     |
+| ----------------------- | ------------------------- | ------------------------------- |
+| Send images inside chat | Watch YouTube together    | Real-time collaborative drawing |
+| Instant media preview   | Synchronized playback     | Multiple drawing tools          |
+| Cloudinary storage      | Host control system       | Live canvas updates             |
+| Optimized uploads       | Live chat during playback | Socket-synchronized board       |
 
-<hr/>
+</div>
 
+<br>
 
-<!-- ========================== CORE FEATURES ========================== -->
+<div align="center">
 
-<h2>✨ Core Features</h2>
+| 🎵 Shared Music       | 🌙 Theme System          | ⚡ Real-Time Sync          |
+| --------------------- | ------------------------ | ------------------------- |
+| Shared music player   | Dark / light mode        | Event-driven architecture |
+| Synchronized playback | Persistent user settings | Instant UI updates        |
+| Integrated player UI  | Smooth transitions       | Low latency communication |
+
+</div>
+
+---
+
+<div align="center">
+
+# 🛠 Tech Stack
+
+| Category                    | Technology              |
+| --------------------------- | ----------------------- |
+| **Frontend**                | React + Vite            |
+| **Language**                | JavaScript / TypeScript |
+| **Styling**                 | TailwindCSS             |
+| **Animations**              | Framer Motion           |
+| **State Management**        | Zustand + Context API   |
+| **Real-Time Communication** | WebSockets              |
+| **Video Calls**             | WebRTC                  |
+| **Backend**                 | Node.js + Express       |
+| **Database**                | MongoDB                 |
+| **Caching**                 | Redis                   |
+| **File Storage**            | Cloudinary              |
+| **Deployment**              | Vercel + Render         |
+
+</div>
+
+---
+
+# 📸 Application Gallery
+
+<div align="center">
+
+A quick visual walkthrough of **VibeTalk** showcasing the real-time communication and collaboration features.
+
+</div>
+
+---
+
+<div align="center">
+
+## 💬 Chat Experience
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="420"/>
+
+</div>
+
+---
+
+<div align="center">
+
+## 👥 Social System
 
 <table>
-  <thead>
-    <tr>
-      <th align="left">Feature</th>
-      <th align="left">Description</th>
-      <th align="center">Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><strong>User Authentication</strong></td>
-      <td>Secure login with protected routes and sessions</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Real-Time Chat</strong></td>
-      <td>Instant messaging with delivery indicators</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>User Presence</strong></td>
-      <td>Online and offline presence tracking</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Watch Party</strong></td>
-      <td>Synchronized media playback with shared controls</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Collaborative Drawing</strong></td>
-      <td>Shared drawing board for real-time interaction</td>
-      <td align="center">✅</td>
-    </tr>
-    <tr>
-      <td><strong>Theme Switching</strong></td>
-      <td>Light & dark mode with persisted user preference</td>
-      <td align="center">✅</td>
-    </tr>
-  </tbody>
+<tr>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="380" height="420"/>
+
+<br>
+
+<b>Friends Panel</b>
+
+</td>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg"  width="380" height="420" />
+
+<br>
+
+<b>Group Chat</b>
+
+</td>
+
+</tr>
 </table>
 
-<hr/>
+</div>
 
+---
 
-<!-- ========================== SYSTEM FLOW ========================== -->
+<div align="center">
 
-<h2>🏗️ System Flow</h2>
+## 📞 Audio & Video Calling
 
-<ul>
-  <li>
-    <strong>Frontend:</strong> React application handles UI rendering, routing,
-    and real-time updates based on socket events.
-  </li>
-  <li>
-    <strong>Backend API:</strong> Express server manages authentication, core logic,
-    and secure session handling.
-  </li>
-  <li>
-    <strong>Real-Time Layer:</strong> WebSockets power chat messages, presence updates,
-    watch party synchronization, and drawing events.
-  </li>
-  <li>
-    <strong>State Sync:</strong> Clients react to server-emitted events to keep
-    all participants in sync without polling.
-  </li>
-</ul>
+<table>
+<tr>
 
-<hr/>
+<td align="center">
 
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013509.png" width="360"/>
 
-<!-- ========================== DEPLOYMENT ========================== -->
+<br>
 
-<h2>🚀 Deployment</h2>
+<b>Video Call</b>
 
-<ul>
-  <li>
-    <strong>Frontend:</strong> Deployed on a CDN-backed platform for fast global access - Vecel.
-  </li>
-  <li>
-    <strong>Backend:</strong> Hosted as a long-running real-time service with
-    environment-based configuration  - Render.
-  </li>
-  <li>
-    <strong>Configuration:</strong> Separate development and production environments
-    using environment variables - in environment file.
-  </li>
-</ul>
+</td>
 
-<p>
-  The deployment setup prioritizes simplicity, reliability, and real-world usability
-  while supporting real-time communication at scale.
-</p>
+<td align="center">
 
-<hr/>
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013549.png" width="360"/>
+
+<br>
+
+<b>Voice Call</b>
+
+</td>
+
+</tr>
+</table>
+
+</div>
+
+---
+
+<div align="center">
+
+## 🎬 Watch Party
+
+<table>
+<tr>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="360"/>
+
+<br>
+
+<b>Create Party</b>
+
+</td>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="360"/>
+
+<br>
+
+<b>Watch Together</b>
+
+</td>
+
+</tr>
+</table>
+
+</div>
+
+---
+
+<div align="center">
+
+## 🎨 Collaboration & Shared Media
+
+<table>
+<tr>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="360"/>
+
+<br>
+
+<b>Collaborative Whiteboard</b>
+
+</td>
+
+<td align="center">
+
+<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="360"/>
+
+<br>
+
+<b>Shared Music Player</b>
+
+</td>
+
+</tr>
+</table>
+
+</div>
+
+---
+
+# ⚡ Real-Time Architecture
+
+```mermaid
+flowchart LR
+
+A[Client A - React App]
+B[Client B - React App]
+C[Client C - React App]
+
+WS[WebSocket Server]
+
+DB[(MongoDB Database)]
+REDIS[(Redis Cache)]
+
+A -- Socket Events --> WS
+B -- Socket Events --> WS
+C -- Socket Events --> WS
+
+WS -- Broadcast Updates --> A
+WS -- Broadcast Updates --> B
+WS -- Broadcast Updates --> C
+
+WS --> DB
+WS --> REDIS
+```
+
+---
+
+# 📞 WebRTC Video Call Flow
+
+```mermaid
+sequenceDiagram
+
+participant A as User A
+participant S as Signaling Server
+participant B as User B
+
+A->>S: Create Offer (SDP)
+S->>B: Forward Offer
+
+B->>S: Send Answer (SDP)
+S->>A: Forward Answer
+
+A->>B: ICE Candidates
+B->>A: ICE Candidates
+
+Note over A,B: Peer-to-Peer Connection Established
+
+A-->>B: Video Stream
+B-->>A: Video Stream
+```
+
+---
+
+# ⚙️ Local Development
+
+```bash
+git clone https://github.com/your-username/vibetalk.git
+cd vibetalk
+npm install
+npm run dev
+```
+
+---
+
+# 🚀 Deployment
+
+| Service  | Platform   |
+| -------- | ---------- |
+| Frontend | Vercel     |
+| Backend  | Render     |
+| Storage  | Cloudinary |
+| Cache    | Redis      |
+</div>
+---
+
+<div align="center">
+
+# 👨‍💻 Author
+
+**Raghav Sharma**
+
+⭐ If you like this project, consider giving it a star!
+
+</div>
