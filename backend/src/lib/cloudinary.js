@@ -1,34 +1,20 @@
 import { v2 as cloudinary } from "cloudinary";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
+import { env, isCloudinaryConfigured } from "../config/env.js";
 
-// Fix __dirname for ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export { isCloudinaryConfigured };
 
-// Load environment variables from /backend/.env
-dotenv.config({
-  path: path.resolve(__dirname, "../../.env"),
-});
-
-console.log("🧩 Loading .env from:", path.resolve(__dirname, "../../.env"));
-
-if (
-  !process.env.CLOUDINARY_CLOUD_NAME ||
-  !process.env.CLOUDINARY_API_KEY ||
-  !process.env.CLOUDINARY_API_SECRET
-) {
-  console.error("❌ Cloudinary config missing in .env");
+if (isCloudinaryConfigured) {
+  cloudinary.config({
+    cloud_name: env.cloudinary.cloudName,
+    api_key: env.cloudinary.apiKey,
+    api_secret: env.cloudinary.apiSecret,
+    secure: true,
+  });
+  console.log("✅ Cloudinary configured");
 } else {
-  console.log("✅ Cloudinary environment variables loaded successfully");
+  console.warn(
+    "⚠️ Cloudinary not configured — media uploads disabled until env vars are set"
+  );
 }
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME.trim(),
-  api_key: process.env.CLOUDINARY_API_KEY.trim(),
-  api_secret: process.env.CLOUDINARY_API_SECRET.trim(),
-  secure: true,
-});
 
 export default cloudinary;

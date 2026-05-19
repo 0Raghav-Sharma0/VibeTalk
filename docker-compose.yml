@@ -1,0 +1,23 @@
+# Local WhatsApp-style stack for VibeTalk (final-year demo)
+# Usage: docker compose up -d
+# Then set backend/.env REDIS_URL=redis://localhost:6379
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # Optional: run MongoDB locally instead of Atlas
+  # mongo:
+  #   image: mongo:7
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo_data:/data/db
+
+volumes:
+  redis_data:

@@ -66,7 +66,7 @@
   margin-bottom: 1.5rem;
   color: #1a1a1a;
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -167,7 +167,7 @@
   font-size: 1.05rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-weight: 700;
+  font-weight: 600;
   margin-top: 0.5rem;
 }
 
@@ -216,7 +216,7 @@
   padding: 0.75rem 1.5rem;
   border-radius: 2rem;
   color: #666;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 0.9rem;
   position: relative;
   z-index: 1;
@@ -234,7 +234,7 @@
   margin-bottom: 1.25rem;
   color: #1a1a1a;
   font-size: 1.4rem;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 

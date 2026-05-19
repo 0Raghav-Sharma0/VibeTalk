@@ -1,14 +1,23 @@
 // src/components/WatchParty.jsx
 import toast from 'react-hot-toast';
 import { useWatchParty } from '../contexts/WatchPartyContext';
+import { useNavigate } from 'react-router-dom';
 import { Film, LogOut, Copy } from 'lucide-react';
+import BackButton from './BackButton';
+import { ROUTES } from '../constants/routes';
 import VideoPlayer from './VideoPlayer';
 import ReactionOverlay from './ReactionOverlay';
 import WatchPartyChatPanel from './WatchPartyChatPanel';
 import './WatchParty.css';
 
 const WatchParty = () => {
+  const navigate = useNavigate();
   const { roomId, leaveRoom, isHost } = useWatchParty();
+
+  const handleLeaveAndExit = () => {
+    leaveRoom();
+    navigate(ROUTES.home);
+  };
 
   const handleCopyRoomId = () => {
     if (!roomId) return;
@@ -22,6 +31,15 @@ const WatchParty = () => {
       <header className="watchparty-header shrink-0">
         <div className="header-controls">
           <div className="header-left">
+            <BackButton
+              to={ROUTES.watchParty}
+              label="Lobby"
+              preferHistory={false}
+              variant="ghost"
+              className="!min-h-9 !min-w-9 !px-1.5 mr-1"
+              showLabel={false}
+              onClick={() => leaveRoom()}
+            />
             <div className="header-logo">
               <Film className="w-4 h-4 text-[#7D3DCF] dark:text-[#b29bff]" />
               <span>Watch Party</span>
@@ -47,11 +65,12 @@ const WatchParty = () => {
           </div>
           <button
             type="button"
-            onClick={leaveRoom}
+            onClick={handleLeaveAndExit}
             className="leave-btn"
+            title="Leave room and return to chats"
           >
             <LogOut className="w-4 h-4" />
-            Leave
+            Exit
           </button>
         </div>
       </header>

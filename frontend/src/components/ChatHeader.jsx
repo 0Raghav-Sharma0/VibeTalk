@@ -1,5 +1,5 @@
 import React from "react";
-import { Phone, Video, Music2, Pencil, X } from "lucide-react";
+import { Phone, Video, Music2, Pencil, X, ChevronLeft } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useAuthStore } from "../store/useAuthStore";
@@ -39,9 +39,17 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
     <header className="h-16 px-6 flex items-center justify-between border-b border-transparent bg-white dark:bg-black dark:border-white/10">
       
       {/* LEFT */}
-      <div className="flex items-center gap-4">
-        {/* Avatar */}
-        <div className="relative">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+        <button
+          type="button"
+          onClick={() => setSelectedUser(null)}
+          className="md:hidden p-2 -ml-1 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-[#b29bff] shrink-0"
+          aria-label="Back to chats"
+        >
+          <ChevronLeft size={22} strokeWidth={2.25} />
+        </button>
+
+        <div className="relative shrink-0">
           <div className="w-12 h-12 rounded-xl overflow-hidden border border-transparent dark:border-white/20">
             <img
               src={selectedUser.profilePic || "/boy.png"}
@@ -58,8 +66,8 @@ const ChatHeader = ({ showWhiteboard, setShowWhiteboard }) => {
         </div>
 
         {/* User Info */}
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-violet-400">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-violet-400 truncate">
             {selectedUser.fullName}
           </h2>
           <p

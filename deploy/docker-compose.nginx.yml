@@ -1,0 +1,35 @@
+# Nginx reverse proxy in front of API (+ optional static frontend mount)
+#
+#   cp backend/.env.example backend/.env   # configure MONGODB_URI, CLERK, etc.
+#   cd frontend && npm run build
+#   docker compose -f docker-compose.prod.yml -f docker-compose.nginx.yml up --build
+#
+# For 10k scale, also use docker-compose.scale.yml and point upstream to multiple api services.
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./deploy/nginx/snippets:/etc/nginx/snippets/vibetalk:ro
+      - ./frontend/dist:/var/www/vibetalk/frontend/dist:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_certs:/etc/letsencrypt:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - certbot_www:/var/www/certbot
+      - certbot_certs:/etc/letsencrypt
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  certbot_www:
+  certbot_certs:

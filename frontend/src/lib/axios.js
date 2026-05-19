@@ -1,23 +1,26 @@
 import axios from "axios";
-
-// ✅ Automatically pick the correct backend
-const BACKEND_URL =
-  import.meta.env.MODE === "development"
-    ? "http://localhost:5001/api"
-    : `${import.meta.env.VITE_BACKEND_URL}/api`;
+import { getClerkToken } from "./tokenBridge.js";
+import { env } from "../config/env.js";
 
 export const axiosInstance = axios.create({
-  baseURL: BACKEND_URL,
-  withCredentials: true, // send cookies and auth headers
+  baseURL: env.apiBaseUrl,
+  withCredentials: true,
 });
 
-// ✅ Attach Bearer token automatically to all requests
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token && token !== "null" && token.trim() !== "") {
+axiosInstance.interceptors.request.use(async (config) => {
+  const token = await getClerkToken();
+  if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-console.log("🌍 Axios connected to backend:", BACKEND_URL);
+axiosInstance.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    if (error.response?.status === 401) {
+      console.warn("API unauthorized — session may have expired");
+    }
+    return Promise.reject(error);
+  }
+);

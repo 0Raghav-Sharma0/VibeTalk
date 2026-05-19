@@ -1,15 +1,17 @@
-// src/App.jsx
 import { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import PageTransition from "./components/transitions/PageTransition";
 
 import Navbar from "./components/Navbar";
 import VideoCall from "./components/VideoCall";
 import CallListener from "./components/CallListener";
 
 const HomePage = lazy(() => import("./pages/HomePage"));
-const SignUpPage = lazy(() => import("./pages/SignUpPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignupPage = lazy(() => import("./pages/SignupPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const WatchPartyPage = lazy(() => import("./pages/WatchPartyPage"));
 
 import { useAuthStore } from "./store/useAuthStore";
@@ -20,29 +22,21 @@ import { SocketProvider } from "./contexts/SocketContext";
 import { WatchPartyProvider } from "./contexts/WatchPartyContext";
 
 import { Toaster } from "react-hot-toast";
+import { isAuthRoute } from "./constants/routes";
 import "ldrs/grid";
 
 const App = () => {
-  const { pathname } = useLocation();
-  const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
+  const location = useLocation();
+  const { pathname } = location;
+  const { authUser, isCheckingAuth, socket } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
   const isHome = pathname === "/" || pathname === "/home";
 
-  /* ================= AUTH CHECK ================= */
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  /* ================= APPLY THEME ONCE =================
-     Theme logic MUST live in store only.
-     This just initializes it on app load.
-  */
   useEffect(() => {
     setTheme(theme);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* ================= THEME-COLOR META (light/dark) ================= */
   useEffect(() => {
     const meta = document.getElementById("theme-color-meta");
     if (meta) {
@@ -51,7 +45,6 @@ const App = () => {
     }
   }, [theme]);
 
-  /* ================= CHAT SOCKET LISTENER ================= */
   useEffect(() => {
     if (!socket) return;
 
@@ -70,8 +63,9 @@ const App = () => {
     };
   }, [socket]);
 
-  /* ================= LOADING STATE ================= */
-  if (isCheckingAuth) {
+  const onAuthScreen = isAuthRoute(pathname);
+
+  if (isCheckingAuth && !onAuthScreen) {
     return (
       <div className="flex items-center justify-center h-screen w-screen dark-mode-root text-gray-900 dark:text-white">
         <l-grid size="100" speed="1.5" color="currentColor"></l-grid>
@@ -82,15 +76,11 @@ const App = () => {
   return (
     <SocketProvider>
       <WatchPartyProvider>
-        {/* DO NOT set data-theme here */}
         <div className="w-full min-h-screen dark-mode-root text-gray-900 dark:text-white">
-          {/* Navbar: HomePage renders its own (with sidebar toggle); other pages use global Navbar */}
           {authUser && !isHome && <Navbar />}
 
-          {/* Global listeners */}
           <CallListener />
 
-          {/* Routes - lazy loaded for faster initial load */}
           <Suspense
             fallback={
               <div className="flex items-center justify-center min-h-[60vh]">
@@ -98,69 +88,107 @@ const App = () => {
               </div>
             }
           >
-            <Routes>
-            <Route
-              path="/"
-              element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
-            />
-
-            <Route
-              path="/home"
-              element={authUser ? <HomePage /> : <Navigate to="/login" replace />}
-            />
-
-            <Route
-              path="/watch-party"
-              element={
-                authUser ? <WatchPartyPage /> : <Navigate to="/login" replace />
-              }
-            />
-
-            {/* Auth routes */}
-            <Route
-              path="/signup"
-              element={!authUser ? <SignUpPage /> : <Navigate to="/" replace />}
-            />
-
-            <Route
-              path="/login"
-              element={!authUser ? <LoginPage /> : <Navigate to="/" replace />}
-            />
-
-            {/* Protected routes */}
-            <Route
-              path="/settings"
-              element={
-                authUser ? <SettingsPage /> : <Navigate to="/login" replace />
-              }
-            />
-
-            <Route
-              path="/profile"
-              element={<Navigate to="/settings" replace />}
-            />
-
-            {/* Fallback */}
-            <Route
-              path="*"
-              element={<Navigate to={authUser ? "/" : "/login"} replace />}
-            />
-          </Routes>
+            <AnimatePresence mode="wait" initial={false}>
+              <Routes location={location} key={location.pathname}>
+                <Route
+                  path="/"
+                  element={
+                    authUser ? (
+                      <PageTransition className="h-screen">
+                        <HomePage />
+                      </PageTransition>
+                    ) : (
+                      <Navigate to="/login" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/home"
+                  element={
+                    authUser ? (
+                      <PageTransition className="h-screen">
+                        <HomePage />
+                      </PageTransition>
+                    ) : (
+                      <Navigate to="/login" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/watch-party"
+                  element={
+                    authUser ? (
+                      <PageTransition className="min-h-screen">
+                        <WatchPartyPage />
+                      </PageTransition>
+                    ) : (
+                      <Navigate to="/login" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/login/*"
+                  element={
+                    !authUser ? (
+                      <PageTransition className="min-h-screen overflow-x-hidden">
+                        <LoginPage />
+                      </PageTransition>
+                    ) : (
+                      <Navigate to="/" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/signup/*"
+                  element={
+                    !authUser ? (
+                      <PageTransition className="min-h-screen overflow-x-hidden">
+                        <SignupPage />
+                      </PageTransition>
+                    ) : (
+                      <Navigate to="/" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    authUser ? (
+                      <PageTransition className="h-screen">
+                        <SettingsPage />
+                      </PageTransition>
+                    ) : (
+                      <Navigate to="/login" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    authUser ? (
+                      <PageTransition className="min-h-screen">
+                        <ProfilePage />
+                      </PageTransition>
+                    ) : (
+                      <Navigate to="/login" replace />
+                    )
+                  }
+                />
+                <Route
+                  path="*"
+                  element={<Navigate to={authUser ? "/" : "/login"} replace />}
+                />
+              </Routes>
+            </AnimatePresence>
           </Suspense>
 
-          {/* Video call UI */}
           <VideoCall />
 
-          {/* Toasts - positioned below navbar, theme-aware, polished UI */}
           <Toaster
             position="top-center"
             reverseOrder={false}
             gutter={12}
-            containerStyle={{
-              top: 72,
-              left: 16,
-              right: 16,
-            }}
+            containerStyle={{ top: 72, left: 16, right: 16 }}
             toastOptions={{
               duration: 4000,
               className: "toast-notification",
@@ -169,29 +197,12 @@ const App = () => {
                 color: "var(--bc)",
                 border: "1px solid var(--b3)",
                 borderRadius: "14px",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+                boxShadow:
+                  "0 10px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
                 padding: "14px 18px",
-                fontSize: "0.9375rem",
+                fontSize: "0.875rem",
                 fontWeight: 500,
                 maxWidth: "min(400px, calc(100vw - 32px))",
-              },
-              success: {
-                iconTheme: {
-                  primary: "var(--success, #8b5cf6)",
-                  secondary: "var(--b2)",
-                },
-              },
-              error: {
-                iconTheme: {
-                  primary: "var(--error, #ef4444)",
-                  secondary: "var(--b2)",
-                },
-              },
-              loading: {
-                iconTheme: {
-                  primary: "var(--p)",
-                  secondary: "var(--b2)",
-                },
               },
             }}
           />

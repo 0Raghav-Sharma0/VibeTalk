@@ -3,19 +3,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { SkipBack, SkipForward, Play, Pause, X } from "lucide-react";
 import { useMusicStore } from "../store/musicStore";
 import { motion } from "framer-motion";
-import { io } from "socket.io-client";
 import axios from "axios";
+import { useAuthStore } from "../store/useAuthStore";
 import lottie from "lottie-web";
 import { defineElement } from "@lordicon/element";
 
 defineElement(lottie.loadAnimation);
-
-/* ================= SOCKET ================= */
-const socket = io(
-  import.meta.env.MODE === "development"
-    ? "http://localhost:5001"
-    : import.meta.env.VITE_BACKEND_URL || "https://blah-blah-3.onrender.com"
-);
 
 /* ================= GLOBAL AUDIO (🔥 FIX) ================= */
 const globalAudio =
@@ -34,6 +27,7 @@ const truncateText = (t, m = 30) =>
 
 /* ================= COMPONENT ================= */
 const MusicPlayer = ({ roomId, onClose }) => {
+  const socket = useAuthStore((s) => s.socket);
   const {
     currentSong,
     songName,
@@ -57,11 +51,13 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
   /* ================= JOIN ROOM ================= */
   useEffect(() => {
-    if (roomId) socket.emit("join-room", roomId);
-  }, [roomId]);
+    if (roomId && socket?.connected) socket.emit("join-room", roomId);
+  }, [roomId, socket]);
 
   /* ================= SOCKET SYNC ================= */
   useEffect(() => {
+    if (!socket) return;
+
     const handler = ({ action, songUrl, songName, currentTime }) => {
       const audio = audioRef.current;
 
@@ -86,7 +82,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
     socket.on("music-sync", handler);
     return () => socket.off("music-sync", handler);
-  }, [setCurrentSong, setIsPlaying]);
+  }, [socket, setCurrentSong, setIsPlaying]);
 
   /* ================= AUDIO EVENTS ================= */
   useEffect(() => {

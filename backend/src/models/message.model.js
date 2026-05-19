@@ -37,6 +37,13 @@ const messageSchema = new mongoose.Schema(
       type: { type: String, default: null },
     },
 
+    /** Client-generated id for idempotent sends (WhatsApp-style dedup) */
+    clientMessageId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
+
     delivered: {
       type: Boolean,
       default: false,

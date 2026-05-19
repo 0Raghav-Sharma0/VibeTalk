@@ -8,12 +8,9 @@ const CallListener = () => {
   const { setIncomingCall } = useVideoCallStore();
 
   useEffect(() => {
-    if (!socket || !authUser) return;
-
-    console.log("🎧 Setting up global call listener");
+    if (!socket?.connected || !authUser) return;
 
     const handleIncomingCall = (data) => {
-      console.log("📞 INCOMING CALL EVENT RECEIVED:", data);
 
       const { from, callType, callerName } = data;
 
@@ -55,10 +52,9 @@ const CallListener = () => {
     socket.on("incoming-call", handleIncomingCall);
 
     return () => {
-      console.log("🎧 Removing global call listener");
       socket.off("incoming-call", handleIncomingCall);
     };
-  }, [socket, authUser, setIncomingCall]);
+  }, [socket?.id, authUser?._id, setIncomingCall]);
 
   return null;
 };

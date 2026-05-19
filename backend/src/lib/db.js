@@ -1,10 +1,20 @@
 import mongoose from "mongoose";
+import { env } from "../config/env.js";
+import { scaleConfig } from "../config/scale.config.js";
 
-export const connectDB = async()=>{
-    try{
-        const conn = await mongoose.connect("mongodb+srv://Raghav010101:Bambambhole007@cluster0.p6uis.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0");
-        console.log(`MongoDB connected : ${conn.connection.host}`);
-    } catch(error){
-        console.log("MongoDB connection error: ", error);
-    }
+export const connectDB = async () => {
+  if (!env.mongodbUri) {
+    throw new Error("MONGODB_URI is not set");
+  }
+  const { maxPoolSize, minPoolSize, serverSelectionTimeoutMS } =
+    scaleConfig.mongodb;
+
+  const conn = await mongoose.connect(env.mongodbUri, {
+    maxPoolSize,
+    minPoolSize,
+    serverSelectionTimeoutMS,
+  });
+  console.log(
+    `MongoDB connected: ${conn.connection.host} (pool ${minPoolSize}-${maxPoolSize})`
+  );
 };
