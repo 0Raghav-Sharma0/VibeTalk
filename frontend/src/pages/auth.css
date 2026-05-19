@@ -13,7 +13,7 @@
 .dark .auth-page,
 [data-theme="dark"] .auth-page,
 [data-theme="coffee"] .auth-page,
-[data-theme="vibetalk"] .auth-page {
+[data-theme="nexaura"] .auth-page {
   background: linear-gradient(
     165deg,
     #0e0c18 0%,
@@ -86,6 +86,64 @@
 
 .auth-form-inner > * {
   max-width: 100%;
+}
+
+/* Full-page loader until Lottie illustration is ready (desktop) */
+.auth-page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    165deg,
+    #0e0c18 0%,
+    #12101f 30%,
+    #151228 60%,
+    #0f0d16 100%
+  );
+}
+
+.auth-page-loader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.auth-page-loader__spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 3px solid rgba(124, 58, 237, 0.2);
+  border-top-color: #a78bfa;
+  animation: auth-loader-spin 0.75s linear infinite;
+}
+
+@keyframes auth-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.auth-page-loader__text {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
+}
+
+.auth-page-content {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.auth-page-content--visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .auth-brand-col {

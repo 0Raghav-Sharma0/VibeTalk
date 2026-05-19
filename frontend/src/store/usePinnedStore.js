@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { normId } from "../utils/messageHelpers.js";
 
-const STORAGE_PREFIX = "vibetalk:pinned:";
+const STORAGE_PREFIX = "nexaura:pinned:";
 
 function loadPinned(ownerId) {
   if (!ownerId || typeof window === "undefined") return [];

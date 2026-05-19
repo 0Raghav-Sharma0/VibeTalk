@@ -3,7 +3,7 @@ import { useThemeStore } from "../store/useThemeStore";
 import { useAuthStore } from "../store/useAuthStore";
 import ProfilePanel from "../components/ProfilePanel";
 
-const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+const DARK_THEMES = ["dark", "coffee", "nexaura"];
 
 export default function ProfilePage() {
   const { theme, setTheme } = useThemeStore();

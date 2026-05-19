@@ -82,28 +82,28 @@ router.get("/metrics/prometheus", async (_req, res) => {
   const mem = process.memoryUsage();
   const q = await getQueueMetrics();
   const lines = [
-    "# HELP vibetalk_uptime_seconds Process uptime",
-    "# TYPE vibetalk_uptime_seconds gauge",
-    `vibetalk_uptime_seconds ${process.uptime()}`,
-    "# HELP vibetalk_heap_used_bytes Node heap used",
-    "# TYPE vibetalk_heap_used_bytes gauge",
-    `vibetalk_heap_used_bytes ${mem.heapUsed}`,
-    "# HELP vibetalk_queue_failed_total Failed BullMQ jobs",
-    "# TYPE vibetalk_queue_failed_total gauge",
+    "# HELP nexaura_uptime_seconds Process uptime",
+    "# TYPE nexaura_uptime_seconds gauge",
+    `nexaura_uptime_seconds ${process.uptime()}`,
+    "# HELP nexaura_heap_used_bytes Node heap used",
+    "# TYPE nexaura_heap_used_bytes gauge",
+    `nexaura_heap_used_bytes ${mem.heapUsed}`,
+    "# HELP nexaura_queue_failed_total Failed BullMQ jobs",
+    "# TYPE nexaura_queue_failed_total gauge",
   ];
 
   lines.push(
-    "# HELP vibetalk_socket_clients Connected Socket.IO clients on this pod",
-    "# TYPE vibetalk_socket_clients gauge",
-    `vibetalk_socket_clients ${getSocketClientCount()}`
+    "# HELP nexaura_socket_clients Connected Socket.IO clients on this pod",
+    "# TYPE nexaura_socket_clients gauge",
+    `nexaura_socket_clients ${getSocketClientCount()}`
   );
 
   if (q.enabled) {
     for (const [name, m] of Object.entries(q.queues)) {
-      lines.push(`vibetalk_queue_waiting{queue="${name}"} ${m.waiting}`);
-      lines.push(`vibetalk_queue_active{queue="${name}"} ${m.active}`);
-      lines.push(`vibetalk_queue_failed{queue="${name}"} ${m.failed}`);
-      lines.push(`vibetalk_queue_completed{queue="${name}"} ${m.completed}`);
+      lines.push(`nexaura_queue_waiting{queue="${name}"} ${m.waiting}`);
+      lines.push(`nexaura_queue_active{queue="${name}"} ${m.active}`);
+      lines.push(`nexaura_queue_failed{queue="${name}"} ${m.failed}`);
+      lines.push(`nexaura_queue_completed{queue="${name}"} ${m.completed}`);
     }
   }
 

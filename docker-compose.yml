@@ -1,4 +1,4 @@
-# Local WhatsApp-style stack for VibeTalk (final-year demo)
+# Local WhatsApp-style stack for NexAura (final-year demo)
 # Usage: docker compose up -d
 # Then set backend/.env REDIS_URL=redis://localhost:6379
 

@@ -41,7 +41,7 @@ async function main() {
     healthOk = false;
   }
 
-  console.log("\n🚀 VibeTalk FAANG verification gate\n");
+  console.log("\n🚀 NexAura FAANG verification gate\n");
 
   for (const [cmd, args] of steps) {
     console.log(`\n▶ ${cmd} ${args.join(" ")}`);

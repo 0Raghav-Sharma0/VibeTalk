@@ -5,7 +5,7 @@ import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "../store/useThemeStore";
 
-const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+const DARK_THEMES = ["dark", "coffee", "nexaura"];
 const TYPING_DEBOUNCE_MS = 1200;
 
 const MessageInput = () => {

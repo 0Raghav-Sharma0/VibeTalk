@@ -1,5 +1,5 @@
 /**
- * Clerk UI theme — matches VibeTalk violet palette without changing app colors.
+ * Clerk UI theme — matches NexAura violet palette without changing app colors.
  * Enable in Clerk Dashboard: Google OAuth + Email with password (sign-in/up).
  */
 export const clerkAppearance = {

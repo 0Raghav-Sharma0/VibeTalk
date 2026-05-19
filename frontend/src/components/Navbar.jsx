@@ -7,10 +7,11 @@ import {
   User,
 } from "lucide-react";
 import { useThemeStore } from "../store/useThemeStore";
+import { APP_NAME } from "../constants/brand";
 import { getPageMeta, ROUTES } from "../constants/routes";
 import BackButton from "./BackButton";
 
-const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+const DARK_THEMES = ["dark", "coffee", "nexaura"];
 
 const Navbar = ({ onOpenSidebar }) => {
   const { pathname } = useLocation();
@@ -78,7 +79,7 @@ const Navbar = ({ onOpenSidebar }) => {
                   <MessageSquare className="w-5 h-5" />
                 </div>
                 <span className="text-xl font-semibold tracking-tight text-gray-900 dark:text-[#b29bff] truncate sm:inline">
-                  VibeTalk
+                  {APP_NAME}
                 </span>
               </Link>
             </>

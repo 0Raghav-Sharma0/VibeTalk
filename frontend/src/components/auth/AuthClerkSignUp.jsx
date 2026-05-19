@@ -3,7 +3,7 @@ import { SignUp } from "@clerk/clerk-react";
 import { useThemeStore } from "../../store/useThemeStore";
 import { clerkAppearance, clerkSignUpOptions } from "../../lib/clerkAppearance";
 
-const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+const DARK_THEMES = ["dark", "coffee", "nexaura"];
 
 export default function AuthClerkSignUp() {
   const theme = useThemeStore((s) => s.theme);

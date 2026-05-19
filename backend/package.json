@@ -15,7 +15,8 @@
     "load-test": "node scripts/load-test.mjs",
     "verify": "node scripts/verify-all.mjs",
     "verify:loop": "node scripts/verify-loop.mjs",
-    "migrate:drop-legacy-friendrequest-index": "node scripts/drop-legacy-friendrequest-index.js"
+    "migrate:drop-legacy-friendrequest-index": "node scripts/drop-legacy-friendrequest-index.js",
+    "db:clear": "node scripts/clear-database.js"
   },
   "dependencies": {
     "@socket.io/redis-adapter": "^8.3.0",

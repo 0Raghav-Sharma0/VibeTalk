@@ -40,7 +40,7 @@ const App = () => {
   useEffect(() => {
     const meta = document.getElementById("theme-color-meta");
     if (meta) {
-      const isDark = ["dark", "coffee", "vibetalk"].includes(theme);
+      const isDark = ["dark", "coffee", "nexaura"].includes(theme);
       meta.setAttribute("content", isDark ? "#0e1512" : "#f5faf7");
     }
   }, [theme]);

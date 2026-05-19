@@ -12,7 +12,7 @@ function formatMessage(level, msg, meta) {
     ts: new Date().toISOString(),
     level,
     msg,
-    service: "vibetalk-api",
+    service: "nexaura-api",
     env: env.nodeEnv,
   };
   if (meta && Object.keys(meta).length) Object.assign(base, meta);

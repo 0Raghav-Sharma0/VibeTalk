@@ -14,8 +14,8 @@ services:
       - "443:443"
     volumes:
       - ./deploy/nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./deploy/nginx/snippets:/etc/nginx/snippets/vibetalk:ro
-      - ./frontend/dist:/var/www/vibetalk/frontend/dist:ro
+      - ./deploy/nginx/snippets:/etc/nginx/snippets/nexaura:ro
+      - ./frontend/dist:/var/www/nexaura/frontend/dist:ro
       - certbot_www:/var/www/certbot:ro
       - certbot_certs:/etc/letsencrypt:ro
     depends_on:

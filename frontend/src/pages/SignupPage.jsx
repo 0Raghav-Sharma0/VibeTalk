@@ -5,7 +5,7 @@ export default function SignupPage() {
   return (
     <AuthLayout
       mode="sign-up"
-      subtitle="Create your account and start vibing"
+      subtitle="Create your account and join the aura"
     >
       <AuthClerkSignUp />
     </AuthLayout>

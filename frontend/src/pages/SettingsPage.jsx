@@ -7,7 +7,7 @@ import BackButton from "../components/BackButton";
 import { ROUTES } from "../constants/routes";
 import "./SettingsPage.css";
 
-const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+const DARK_THEMES = ["dark", "coffee", "nexaura"];
 
 /** Window grids per building: lit | dim (night); day mode renders all as blue */
 const BUILDING_WINDOWS = {

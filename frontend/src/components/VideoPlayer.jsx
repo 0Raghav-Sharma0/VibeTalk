@@ -21,7 +21,7 @@ const VideoPlayer = () => {
   const [ytReady, setYtReady] = useState(false);
 
   /* ================= THEME ================= */
-  const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+  const DARK_THEMES = ["dark", "coffee", "nexaura"];
   const isDark = DARK_THEMES.includes(theme);
   const containerClass = isDark
     ? "bg-black border border-white/10"

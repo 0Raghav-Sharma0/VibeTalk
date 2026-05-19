@@ -4,7 +4,7 @@ import { useThemeStore } from "../../store/useThemeStore";
 import { clerkAppearance, clerkSignInOptions } from "../../lib/clerkAppearance";
 import EmailPasswordSignInForm from "./EmailPasswordSignInForm";
 
-const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+const DARK_THEMES = ["dark", "coffee", "nexaura"];
 
 export default function AuthClerkSignIn() {
   const theme = useThemeStore((s) => s.theme);

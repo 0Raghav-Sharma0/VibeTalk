@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * VibeTalk load probe — run with API + Redis up.
+ * NexAura load probe — run with API + Redis up.
  *
  *   node scripts/load-test.mjs
  *   BASE_URL=http://localhost:5001 CONCURRENCY=50 DURATION_SEC=10 node scripts/load-test.mjs
@@ -35,7 +35,7 @@ async function worker(until, latencies, errors) {
 }
 
 async function main() {
-  console.log(`\n🔬 VibeTalk load probe`);
+  console.log(`\n🔬 NexAura load probe`);
   console.log(`   ${BASE_URL} | concurrency=${CONCURRENCY} | ${DURATION_SEC}s\n`);
 
   const warmup = await oneHealthFetch();
