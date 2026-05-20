@@ -735,23 +735,33 @@
   max-height: 100dvh;
 }
 
-/* Footer floats over ground — pinned on mobile so logout is always reachable */
+/* Footer at bottom — sticky in-flow on mobile (same pattern as chat input) */
 .settings-footer {
   width: 100%;
   background: transparent !important;
   border: none;
   backdrop-filter: none;
-  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
 }
 
 @media (max-width: 768px) {
+  .settings-page {
+    height: var(--chat-viewport-height, 100dvh) !important;
+    min-height: var(--chat-viewport-height, 100dvh) !important;
+    max-height: var(--chat-viewport-height, 100dvh) !important;
+  }
+
   .settings-footer {
-    position: fixed;
+    position: sticky;
+    bottom: 0;
     left: 0;
     right: 0;
-    bottom: 0;
     z-index: 30;
+    flex-shrink: 0;
     padding-top: 0.75rem;
+    padding-bottom: calc(
+      max(1rem, env(safe-area-inset-bottom, 0px)) + var(--vv-bottom-inset, 0px)
+    );
     background: linear-gradient(
       to top,
       rgba(15, 13, 26, 0.92) 0%,

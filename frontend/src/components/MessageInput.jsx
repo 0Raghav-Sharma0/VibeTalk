@@ -78,7 +78,7 @@ const MessageInput = () => {
   return (
     <div
       data-message-input
-      className="relative w-full bg-white dark-mode-bg border-t border-gray-200/80 dark:border-white/8 pb-[env(safe-area-inset-bottom)]"
+      className="relative w-full bg-transparent border-t-0 md:border-t md:border-gray-200/80 md:dark:border-white/8 md:pb-[env(safe-area-inset-bottom)]"
     >
       {imagePreview && (
         <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 rounded-xl p-3">

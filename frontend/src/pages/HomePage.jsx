@@ -12,6 +12,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import MusicPlayerDrawer from "../components/MusicPlayerDrawer";
 import { getMusicRoomId } from "../utils/musicRoom";
 import { useReducedMotion } from "../hooks/useReducedMotion";
+import { useMobileViewportInsets } from "../hooks/useMobileViewportInsets";
 import { DURATION, drawerTransition } from "../lib/motionPresets";
 import { Users, X } from "lucide-react";
 
@@ -34,28 +35,10 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.visualViewport) return;
-    const mq = window.matchMedia("(max-width: 768px)");
-    const setViewportHeight = () => {
-      if (!mq.matches) {
-        document.documentElement.style.removeProperty("--chat-viewport-height");
-        return;
-      }
-      const h = window.visualViewport.height;
-      document.documentElement.style.setProperty("--chat-viewport-height", `${h}px`);
-    };
-    setViewportHeight();
-    window.visualViewport.addEventListener("resize", setViewportHeight);
-    window.visualViewport.addEventListener("scroll", setViewportHeight);
-    return () => {
-      window.visualViewport.removeEventListener("resize", setViewportHeight);
-      window.visualViewport.removeEventListener("scroll", setViewportHeight);
-    };
-  }, []);
+  useMobileViewportInsets();
 
   return (
-    <motion.div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark-mode-bg flex flex-col overflow-hidden md:relative mobile-chat-root">
+    <div className="h-screen w-full min-h-[100dvh] bg-gray-50 dark-mode-bg flex flex-col overflow-hidden md:relative mobile-chat-root">
 
       <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
 
@@ -132,6 +115,6 @@ export default function HomePage() {
       </AnimatePresence>
 
       <MusicPlayerDrawer roomId={musicRoomId} />
-    </motion.div>
+    </div>
   );
 }
