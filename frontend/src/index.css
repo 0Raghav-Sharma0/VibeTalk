@@ -1144,21 +1144,25 @@ html:not(.dark) .hover-lift:hover {
   .chat-messages-scroll {
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 88px;
+    padding-bottom: 0.5rem;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
   }
 
+  /* Sticky in-flow bar — avoids fixed + transform clipping and browser chrome overlap */
   .chat-input-wrapper {
-    position: fixed;
+    position: sticky;
+    bottom: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    z-index: 20;
-    padding-bottom: env(safe-area-inset-bottom);
-    border-top: 1px solid rgba(0,0,0,0.08);
+    z-index: 30;
+    flex-shrink: 0;
+    width: 100%;
+    padding-bottom: calc(
+      max(12px, env(safe-area-inset-bottom, 0px)) + var(--vv-bottom-inset, 0px)
+    );
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
   }
 
   .dark .chat-input-wrapper,

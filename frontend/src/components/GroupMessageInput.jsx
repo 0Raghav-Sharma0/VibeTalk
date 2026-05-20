@@ -58,7 +58,7 @@ const GroupMessageInput = () => {
   if (!selectedGroup) return null;
 
   return (
-    <div className="relative w-full bg-white dark-mode-bg border-t border-transparent dark:border-white/8 pb-[env(safe-area-inset-bottom)]">
+    <div className="relative w-full bg-transparent border-t-0 md:border-t md:border-transparent md:dark:border-white/8 md:pb-[env(safe-area-inset-bottom)]">
       {imagePreview && (
         <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-transparent rounded-xl p-3">
           <div className="flex justify-between items-center mb-2">

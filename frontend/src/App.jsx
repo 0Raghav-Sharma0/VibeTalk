@@ -154,7 +154,7 @@ const App = () => {
                   path="/settings"
                   element={
                     authUser ? (
-                      <PageTransition className="h-screen">
+                      <PageTransition className="h-[100dvh] min-h-0 max-h-[100dvh] overflow-hidden max-md:h-[var(--chat-viewport-height,100dvh)] max-md:max-h-[var(--chat-viewport-height,100dvh)]">
                         <SettingsPage />
                       </PageTransition>
                     ) : (
