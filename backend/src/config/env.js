@@ -35,12 +35,20 @@ export const env = {
     process.env.TRUST_PROXY === "true" || process.env.NODE_ENV === "production",
 };
 
-export function assertRequiredEnv() {
+export function getMissingRequiredEnv() {
   const missing = [];
   if (!env.mongodbUri) missing.push("MONGODB_URI");
   if (!env.clerkJwtIssuer) missing.push("CLERK_JWT_ISSUER");
+  return missing;
+}
+
+export function assertRequiredEnv() {
+  const missing = getMissingRequiredEnv();
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+    throw new Error(
+      `Missing required environment variables: ${missing.join(", ")}. ` +
+        "On Render: Dashboard → your Web Service → Environment → add them, then redeploy."
+    );
   }
 }
 

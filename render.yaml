@@ -1,0 +1,34 @@
+# Render Blueprint — Web Service (backend API)
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: vibetalk-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5001
+      - key: TRUST_PROXY
+        value: "true"
+      - key: RUN_WORKERS_IN_API
+        value: "true"
+      # Set real values in Render Dashboard (never commit secrets):
+      - key: MONGODB_URI
+        sync: false
+      - key: CLERK_JWT_ISSUER
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false

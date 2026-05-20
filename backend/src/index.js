@@ -17,7 +17,20 @@ import { initRealtimeBus, closeRealtimeBus } from "./infrastructure/realtime/rea
 import { closeAllQueues } from "./infrastructure/queue/queueRegistry.js";
 import { closeBullConnection } from "./infrastructure/redis/bullConnection.js";
 
-assertRequiredEnv();
+try {
+  assertRequiredEnv();
+} catch (err) {
+  console.error("❌ Startup failed:", err.message);
+  process.exit(1);
+}
+
+console.log("📋 Env check:", {
+  MONGODB_URI: Boolean(env.mongodbUri),
+  CLERK_JWT_ISSUER: Boolean(env.clerkJwtIssuer),
+  REDIS_URL: Boolean(env.redisUrl),
+  CLOUDINARY: isCloudinaryConfigured,
+  RUN_WORKERS_IN_API: process.env.RUN_WORKERS_IN_API ?? "(default)",
+});
 
 const app = createApp();
 const server = http.createServer(app);
@@ -34,10 +47,11 @@ if (env.isProduction || process.env.SOCKET_METRICS_LOG === "true") {
   }, interval);
 }
 
-server.listen(env.port, async () => {
+async function boot() {
   console.log(`🚀 Server running on port ${env.port}`);
   console.log(`🌍 Environment: ${env.nodeEnv}`);
   console.log(`📐 Scale plan:`, getScaleSummary());
+
   await connectDB();
   await connectRedis();
   await initRealtimeBus();
@@ -51,6 +65,14 @@ server.listen(env.port, async () => {
       "ℹ️  API-only mode: run `npm run dev:worker` for delivery workers (production pattern)"
     );
   }
+}
+
+server.listen(env.port, () => {
+  boot().catch((err) => {
+    console.error("❌ Startup failed during init:", err.message);
+    if (err.stack) console.error(err.stack);
+    process.exit(1);
+  });
 });
 
 if (isCloudinaryConfigured) {
