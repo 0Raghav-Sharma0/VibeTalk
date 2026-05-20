@@ -330,6 +330,13 @@
   }
 }
 
+.auth-clerk-captcha {
+  min-height: 4rem;
+  margin-top: 0.25rem;
+  display: flex;
+  justify-content: center;
+}
+
 .auth-hint {
   margin-top: 1rem;
   font-size: 0.75rem;

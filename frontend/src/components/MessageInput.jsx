@@ -76,7 +76,10 @@ const MessageInput = () => {
   };
 
   return (
-    <div className="relative w-full bg-white dark-mode-bg border-t border-transparent dark:border-white/8 pb-[env(safe-area-inset-bottom)]">
+    <div
+      data-message-input
+      className="relative w-full bg-white dark-mode-bg border-t border-gray-200/80 dark:border-white/8 pb-[env(safe-area-inset-bottom)]"
+    >
       {imagePreview && (
         <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 rounded-xl p-3">
           <div className="flex justify-between items-center mb-2">
@@ -120,12 +123,22 @@ const MessageInput = () => {
         </div>
       )}
 
-      <div className="px-4 py-2">
-        <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5">
-          <button type="button" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="px-3 py-2 sm:px-4">
+        <div className="flex items-center gap-2 rounded-xl px-3 py-2.5 bg-gray-100 msg-input-glass border border-gray-200/60 dark:border-white/10">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="shrink-0 p-1 text-gray-600 dark:text-white/70 hover:text-violet-600 dark:hover:text-violet-300"
+            aria-label="Attach"
+          >
             <Plus size={18} />
           </button>
-          <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="shrink-0 p-1 text-gray-600 dark:text-white/70 hover:text-violet-600 dark:hover:text-violet-300"
+            aria-label="Emoji"
+          >
             <Smile size={18} />
           </button>
           <input
@@ -134,7 +147,7 @@ const MessageInput = () => {
             onChange={(e) => handleTyping(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Type your message..."
-            className="flex-1 bg-transparent outline-none text-sm md:text-base"
+            className="flex-1 min-w-0 bg-transparent outline-none text-base text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/50 caret-violet-600 dark:caret-violet-400"
           />
           <button
             type="button"

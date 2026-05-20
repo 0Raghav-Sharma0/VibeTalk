@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone,
@@ -15,7 +15,6 @@ import { useVideoCallStore } from "../store/useVideoCallStore";
 import { useMusicStore } from "../store/musicStore";
 
 import MessageInput from "./MessageInput";
-import MusicPlayer from "./MusicPlayer";
 import Whiteboard from "./Whiteboard";
 import ChatMessagesList from "./ChatMessagesList";
 
@@ -32,12 +31,11 @@ export default function ChatContainer() {
   } = useChatStore();
   const { authUser, socket } = useAuthStore();
   const { startCall } = useVideoCallStore();
-  const { isMusicPlayerOpen, toggleMusicPlayer } = useMusicStore();
+  const { toggleMusicPlayer } = useMusicStore();
 
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
   const loadOlder = useCallback(() => {
     if (selectedUser && messagesNextCursor && hasMoreMessages && !isLoadingOlder) {
       loadOlderMessages(selectedUser._id);
@@ -157,6 +155,8 @@ export default function ChatContainer() {
           <button
             onClick={() => toggleMusicPlayer(true)}
             className="p-2 sm:p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-all"
+            title="Music player"
+            aria-label="Open music player"
           >
             <Music2 size={16} className="sm:w-[18px] sm:h-[18px]" />
           </button>
@@ -227,25 +227,6 @@ export default function ChatContainer() {
         )}
       </AnimatePresence>
 
-      {/* ================= MUSIC ================= */}
-      <AnimatePresence>
-        {isMusicPlayerOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/40 z-40"
-              onClick={() => toggleMusicPlayer(false)}
-            />
-            <motion.div
-              className="fixed right-0 top-0 h-full w-full md:w-[400px] bg-white dark:bg-black border-l border-transparent z-50"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-            >
-              <MusicPlayer roomId={roomId} onClose={() => toggleMusicPlayer(false)} />
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

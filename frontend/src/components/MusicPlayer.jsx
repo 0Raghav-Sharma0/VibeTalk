@@ -205,17 +205,17 @@ const MusicPlayer = ({ roomId, onClose }) => {
 
   /* ================= UI ================= */
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-violet-50 via-white to-violet-50 dark:from-black dark:via-black dark:to-black dark:border-white/10 border-l border-gray-200 shadow-xl">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-violet-50 via-white to-violet-50 dark:from-[#0b0b0f] dark:via-[#0b0b0f] dark:to-[#0b0b0f]">
       {/* HEADER */}
-      <div className="px-6 py-4 flex justify-between items-center border-b border-gray-200 dark:border-white/10 bg-white/90 dark:bg-black/90 backdrop-blur-sm">
-        <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white/90 px-4 py-3 backdrop-blur-sm dark:border-white/10 dark:bg-black/90 sm:px-6 sm:py-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <img 
             src={currentGif} 
-            className="w-14 h-14 rounded-xl object-cover ring-2 ring-violet-500/20 dark:ring-violet-500/30" 
+            className="h-11 w-11 shrink-0 rounded-xl object-cover ring-2 ring-violet-500/20 dark:ring-violet-500/30 sm:h-14 sm:w-14" 
             alt="Album cover"
           />
-          <div>
-            <h3 className="font-semibold truncate text-violet-900 dark:text-violet-100">
+          <div className="min-w-0">
+            <h3 className="truncate font-semibold text-violet-900 dark:text-violet-100">
               {songName || "No song selected"}
             </h3>
             <p className="text-xs text-violet-600 dark:text-violet-400">
@@ -250,17 +250,19 @@ const MusicPlayer = ({ roomId, onClose }) => {
         </div>
       </div>
 
-      {/* ART */}
-      <div className="p-6">
-        <img 
-          src={currentGif} 
-          className="w-full h-56 rounded-2xl object-cover shadow-lg ring-2 ring-violet-500/10 dark:ring-violet-500/20" 
-          alt="Album art"
-        />
+      {/* Visual — full width on mobile */}
+      <div className="flex min-h-0 w-full flex-1 flex-col justify-center pt-2 pb-2 md:px-6 md:pt-5">
+        <div className="flex w-full min-h-[min(42dvh,280px)] max-h-[min(52dvh,420px)] flex-1 items-stretch justify-center">
+          <img
+            src={currentGif}
+            className="h-full w-full object-contain md:rounded-2xl md:shadow-lg md:ring-2 md:ring-violet-500/10 dark:md:ring-violet-500/20"
+            alt="Album art"
+          />
+        </div>
       </div>
 
       {/* CONTROLS */}
-      <div className="px-6">
+      <div className="shrink-0 px-4 pb-3 sm:px-6 sm:pb-4">
         <div className="flex justify-center gap-6 items-center">
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -335,7 +337,7 @@ const MusicPlayer = ({ roomId, onClose }) => {
       </div>
 
       {/* FOOTER - VOLUME */}
-      <div className="mt-auto px-6 py-4 border-t border-transparent">
+      <div className="shrink-0 border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-white/10 sm:px-6 sm:py-4">
         <div className="flex items-center gap-3">
           <span className="text-sm text-violet-700 dark:text-violet-300">🔈</span>
           <input
