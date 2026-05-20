@@ -18,7 +18,16 @@ export const env = {
 };
 
 export function assertFrontendEnv() {
+  const problems = [];
   if (!env.clerkPublishableKey) {
-    console.error("Missing VITE_CLERK_PUBLISHABLE_KEY in frontend/.env");
+    problems.push("VITE_CLERK_PUBLISHABLE_KEY is missing (Clerk login will not work)");
+  }
+  if (!isDev && !env.backendUrl) {
+    problems.push(
+      "VITE_BACKEND_URL is missing on this deployment (API calls will fail after login)"
+    );
+  }
+  if (problems.length) {
+    console.error("[NexAura] Environment misconfigured:\n- " + problems.join("\n- "));
   }
 }

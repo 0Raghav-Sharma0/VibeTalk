@@ -8,6 +8,9 @@ import GroupChatContainer from "../components/GroupChatContainer";
 import NoChatSelected from "../components/NoChatSelected";
 import { useChatStore } from "../store/useChatStore";
 import { useGroupStore } from "../store/useGroupStore";
+import { useAuthStore } from "../store/useAuthStore";
+import MusicPlayerDrawer from "../components/MusicPlayerDrawer";
+import { getMusicRoomId } from "../utils/musicRoom";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { DURATION, drawerTransition } from "../lib/motionPresets";
 import { Users, X } from "lucide-react";
@@ -15,7 +18,10 @@ import { Users, X } from "lucide-react";
 export default function HomePage() {
   const { selectedUser } = useChatStore();
   const { selectedGroup } = useGroupStore();
+  const { authUser } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const musicRoomId = getMusicRoomId(authUser, selectedUser, selectedGroup);
   const reducedMotion = useReducedMotion();
 
   const drawerVariants = drawerTransition(reducedMotion, "left");
@@ -124,6 +130,8 @@ export default function HomePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <MusicPlayerDrawer roomId={musicRoomId} />
     </motion.div>
   );
 }

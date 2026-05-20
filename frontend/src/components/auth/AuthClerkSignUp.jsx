@@ -30,6 +30,8 @@ export default function AuthClerkSignUp() {
         <SignUp {...clerkSignUpOptions} appearance={appearance} />
       </div>
 
+      <div id="clerk-captcha" className="auth-clerk-captcha" />
+
       <div className="auth-or-divider" aria-hidden="true">
         <span>or</span>
       </div>

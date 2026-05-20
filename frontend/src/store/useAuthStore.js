@@ -38,7 +38,15 @@ export const useAuthStore = create((set, get) => ({
       console.warn("syncUser failed", err);
       set({ authUser: null });
       const msg = err.response?.data?.message;
-      if (msg) toast.error(msg);
+      if (msg) {
+        toast.error(msg);
+      } else if (!err.response) {
+        toast.error(
+          "Signed in with Clerk but the API is unreachable. Check VITE_BACKEND_URL and that Render is running."
+        );
+      } else {
+        toast.error("Could not sync your account with the server.");
+      }
     }
   },
 

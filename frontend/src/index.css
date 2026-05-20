@@ -668,6 +668,31 @@ a:focus-visible {
   outline: none !important;
 }
 
+[data-message-input] input {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+.dark [data-message-input] input,
+[data-theme="dark"] [data-message-input] input,
+[data-theme="coffee"] [data-message-input] input,
+[data-theme="nexaura"] [data-message-input] input {
+  color: #f5f3ff !important;
+  -webkit-text-fill-color: #f5f3ff !important;
+}
+
+[data-message-input] input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1;
+}
+
+.dark [data-message-input] input::placeholder,
+[data-theme="dark"] [data-message-input] input::placeholder,
+[data-theme="coffee"] [data-message-input] input::placeholder,
+[data-theme="nexaura"] [data-message-input] input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
 /* Sidebar / main content segregation */
 .sidebar-separator {
   border-right: 1px solid rgba(0, 0, 0, 0.1);

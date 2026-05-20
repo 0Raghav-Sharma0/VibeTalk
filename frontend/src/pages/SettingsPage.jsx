@@ -57,7 +57,7 @@ export default function SettingsPage() {
   if (!authUser) return null;
 
   return (
-    <div className="settings-page h-screen w-full overflow-hidden flex flex-col relative pt-14">
+    <div className="settings-page h-[100dvh] min-h-[100dvh] w-full overflow-hidden flex flex-col relative pt-14">
       {/* Street lamp background */}
       <div className={`settings-lamp-bg ${lampOn ? "lamp-on" : ""}`}>
         <div className="settings-sky" aria-hidden="true">
@@ -112,7 +112,7 @@ export default function SettingsPage() {
         </div>
 
         <div
-          className={`settings-footer shrink-0 p-4 flex flex-col items-center gap-2 pointer-events-auto ${
+          className={`settings-footer shrink-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-2 pointer-events-auto ${
             isDark ? "settings-footer--night" : "settings-footer--day"
           }`}
         >

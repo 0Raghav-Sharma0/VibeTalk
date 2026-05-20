@@ -20,8 +20,10 @@ export const useMusicStore = create((set) => ({
         })),
     setIsPlaying: (isPlaying) => set({ isPlaying }),
     setIsMusicPlayerOpen: (isOpen) => set({ isMusicPlayerOpen: isOpen }),
-    toggleMusicPlayer: () => {
-        set((state) => ({ isMusicPlayerOpen: !state.isMusicPlayerOpen}))
-    },
+    toggleMusicPlayer: (force) =>
+      set((state) => ({
+        isMusicPlayerOpen:
+          typeof force === "boolean" ? force : !state.isMusicPlayerOpen,
+      })),
     setCloseMusicPlayer: () => set({ isMusicPlayerOpen: false, isPlaying: false, currentSong: null }),
 }));

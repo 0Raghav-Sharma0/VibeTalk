@@ -732,15 +732,56 @@
 
 .settings-page {
   background: transparent;
+  max-height: 100dvh;
 }
 
-/* Footer floats over ground — no white panel */
+/* Footer floats over ground — pinned on mobile so logout is always reachable */
 .settings-footer {
   width: 100%;
   background: transparent !important;
   border: none;
   backdrop-filter: none;
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 768px) {
+  .settings-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    padding-top: 0.75rem;
+    background: linear-gradient(
+      to top,
+      rgba(15, 13, 26, 0.92) 0%,
+      rgba(15, 13, 26, 0.75) 55%,
+      transparent 100%
+    ) !important;
+  }
+
+  .settings-page .settings-footer--night {
+    background: linear-gradient(
+      to top,
+      rgba(10, 10, 26, 0.94) 0%,
+      rgba(10, 10, 26, 0.7) 50%,
+      transparent 100%
+    ) !important;
+  }
+
+  .settings-page .settings-footer--day {
+    background: linear-gradient(
+      to top,
+      rgba(255, 245, 214, 0.95) 0%,
+      rgba(255, 245, 214, 0.65) 55%,
+      transparent 100%
+    ) !important;
+  }
+
+  .settings-lamp-content {
+    transform: scale(0.82);
+    transform-origin: bottom center;
+  }
 }
 
 .settings-footer-hint {
