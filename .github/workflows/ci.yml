@@ -52,4 +52,5 @@ jobs:
         working-directory: frontend
         env:
           VITE_CLERK_PUBLISHABLE_KEY: pk_test_placeholder_for_ci_build
+          VITE_BACKEND_URL: https://blah-blah-3.onrender.com
         run: npm run build
