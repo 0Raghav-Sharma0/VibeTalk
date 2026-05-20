@@ -78,7 +78,7 @@ export default function AuthLayout({ mode, subtitle, children }) {
                 speed="1"
                 loop
                 autoplay
-                style={{ width: 320, height: 320, maxWidth: "100%" }}
+                className="auth-lottie-player"
               />
             ) : null}
           </aside>

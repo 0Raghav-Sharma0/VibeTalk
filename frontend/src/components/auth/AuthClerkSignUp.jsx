@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { SignUp } from "@clerk/clerk-react";
 import { useThemeStore } from "../../store/useThemeStore";
 import { clerkAppearance, clerkSignUpOptions } from "../../lib/clerkAppearance";
+import EmailPasswordSignUpForm from "./EmailPasswordSignUpForm";
 
 const DARK_THEMES = ["dark", "coffee", "nexaura"];
 
@@ -23,5 +24,17 @@ export default function AuthClerkSignUp() {
     [isDark]
   );
 
-  return <SignUp {...clerkSignUpOptions} appearance={appearance} />;
+  return (
+    <div className="auth-signin-stack">
+      <div className="auth-oauth-only">
+        <SignUp {...clerkSignUpOptions} appearance={appearance} />
+      </div>
+
+      <div className="auth-or-divider" aria-hidden="true">
+        <span>or</span>
+      </div>
+
+      <EmailPasswordSignUpForm />
+    </div>
+  );
 }

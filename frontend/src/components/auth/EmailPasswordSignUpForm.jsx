@@ -1,55 +1,20 @@
 import { useState } from "react";
-import { useSignIn } from "@clerk/clerk-react";
+import { useSignUp } from "@clerk/clerk-react";
 import { isClerkAPIResponseError } from "@clerk/clerk-react/errors";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Loader2 } from "lucide-react";
 
-function clerkErrorMessage(err, fallback) {
-  if (!isClerkAPIResponseError(err)) return fallback;
-  const first = err.errors[0];
-  return first?.longMessage || first?.message || fallback;
-}
-
-function clerkErrorCode(err) {
-  if (!isClerkAPIResponseError(err)) return null;
-  return err.errors[0]?.code ?? null;
-}
-
-export default function EmailPasswordSignInForm() {
-  const { isLoaded, signIn, setActive } = useSignIn();
+export default function EmailPasswordSignUpForm() {
+  const { isLoaded, signUp, setActive } = useSignUp();
   const navigate = useNavigate();
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const finishSignIn = async (sessionId) => {
-    await setActive({ session: sessionId });
-    navigate("/", { replace: true });
-  };
-
-  const startSecondFactor = async (attempt) => {
-    const emailCodeFactor = attempt.supportedSecondFactors?.find(
-      (factor) => factor.strategy === "email_code"
-    );
-
-    if (!emailCodeFactor) {
-      setError(
-        "Extra verification is required. Use Continue with Google, or try again from another device."
-      );
-      return false;
-    }
-
-    await signIn.prepareSecondFactor({
-      strategy: "email_code",
-      emailAddressId: emailCodeFactor.emailAddressId,
-    });
-    setVerifying(true);
-    setCode("");
-    return true;
-  };
 
   const handleVerify = async (e) => {
     e.preventDefault();
@@ -59,19 +24,25 @@ export default function EmailPasswordSignInForm() {
     setError("");
 
     try {
-      const attempt = await signIn.attemptSecondFactor({
-        strategy: "email_code",
-        code,
-      });
+      const attempt = await signUp.attemptEmailAddressVerification({ code });
 
       if (attempt.status === "complete") {
-        await finishSignIn(attempt.createdSessionId);
+        await setActive({ session: attempt.createdSessionId });
+        navigate("/", { replace: true });
         return;
       }
 
       setError("Verification could not be completed. Please try again.");
     } catch (err) {
-      setError(clerkErrorMessage(err, "Invalid verification code."));
+      if (isClerkAPIResponseError(err)) {
+        setError(
+          err.errors[0]?.longMessage ||
+            err.errors[0]?.message ||
+            "Invalid verification code."
+        );
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -81,61 +52,56 @@ export default function EmailPasswordSignInForm() {
     e.preventDefault();
     if (!isLoaded) return;
 
+    const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setError("Please enter your email address.");
+
+    if (!trimmedName) {
+      setError("Please enter your name.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
 
     setLoading(true);
     setError("");
 
+    const [firstName, ...rest] = trimmedName.split(/\s+/);
+    const lastName = rest.join(" ");
+
     try {
-      await signIn.create({ identifier: trimmedEmail });
-
-      const supportsPassword = signIn.supportedFirstFactors?.some(
-        (factor) => factor.strategy === "password"
-      );
-
-      if (!supportsPassword) {
-        setError(
-          "This email uses Google sign-in only. Tap Continue with Google above, or sign up with email on the Sign up tab using a different address."
-        );
-        return;
-      }
-
-      const attempt = await signIn.attemptFirstFactor({
-        strategy: "password",
+      await signUp.create({
+        emailAddress: trimmedEmail,
         password,
+        firstName,
+        ...(lastName ? { lastName } : {}),
       });
 
-      if (attempt.status === "complete") {
-        await finishSignIn(attempt.createdSessionId);
+      if (signUp.status === "complete") {
+        await setActive({ session: signUp.createdSessionId });
+        navigate("/", { replace: true });
         return;
       }
 
-      if (attempt.status === "needs_second_factor") {
-        await startSecondFactor(attempt);
-        return;
-      }
-
-      setError("Sign-in could not be completed. Please try again.");
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setVerifying(true);
     } catch (err) {
-      const code = clerkErrorCode(err);
-
-      if (code === "strategy_for_user_invalid") {
+      if (isClerkAPIResponseError(err)) {
         setError(
-          "This email uses Google sign-in only. Tap Continue with Google above, or create a password account on the Sign up tab."
+          err.errors[0]?.longMessage ||
+            err.errors[0]?.message ||
+            "Could not create account. Please try again."
         );
-        return;
+      } else {
+        setError("Something went wrong. Please try again.");
       }
-
-      if (code === "form_password_incorrect" || code === "form_password_or_identifier_incorrect") {
-        setError("Incorrect email or password.");
-        return;
-      }
-
-      setError(clerkErrorMessage(err, "Invalid email or password."));
     } finally {
       setLoading(false);
     }
@@ -149,9 +115,9 @@ export default function EmailPasswordSignInForm() {
         </p>
 
         <div className="auth-field">
-          <label htmlFor="signin-code">Verification code</label>
+          <label htmlFor="signup-code">Verification code</label>
           <input
-            id="signin-code"
+            id="signup-code"
             name="code"
             type="text"
             inputMode="numeric"
@@ -175,7 +141,7 @@ export default function EmailPasswordSignInForm() {
             <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
           ) : (
             <>
-              Verify and continue
+              Verify email
               <ArrowRight className="w-4 h-4" aria-hidden />
             </>
           )}
@@ -191,7 +157,7 @@ export default function EmailPasswordSignInForm() {
             setError("");
           }}
         >
-          Back to password sign-in
+          Use a different email
         </button>
       </form>
     );
@@ -200,9 +166,24 @@ export default function EmailPasswordSignInForm() {
   return (
     <form className="auth-email-form" onSubmit={handleSubmit} noValidate>
       <div className="auth-field">
-        <label htmlFor="signin-email">Email address</label>
+        <label htmlFor="signup-name">Full name</label>
         <input
-          id="signin-email"
+          id="signup-name"
+          name="fullName"
+          type="text"
+          autoComplete="name"
+          placeholder="Enter your full name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+          disabled={loading}
+        />
+      </div>
+
+      <div className="auth-field">
+        <label htmlFor="signup-email">Email address</label>
+        <input
+          id="signup-email"
           name="email"
           type="email"
           autoComplete="email"
@@ -215,16 +196,33 @@ export default function EmailPasswordSignInForm() {
       </div>
 
       <div className="auth-field">
-        <label htmlFor="signin-password">Password</label>
+        <label htmlFor="signup-password">Password</label>
         <input
-          id="signin-password"
+          id="signup-password"
           name="password"
           type="password"
-          autoComplete="current-password"
-          placeholder="Enter your password"
+          autoComplete="new-password"
+          placeholder="Create a password (min. 8 characters)"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          minLength={8}
+          disabled={loading}
+        />
+      </div>
+
+      <div className="auth-field">
+        <label htmlFor="signup-confirm-password">Confirm password</label>
+        <input
+          id="signup-confirm-password"
+          name="confirmPassword"
+          type="password"
+          autoComplete="new-password"
+          placeholder="Confirm your password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          minLength={8}
           disabled={loading}
         />
       </div>
@@ -240,7 +238,7 @@ export default function EmailPasswordSignInForm() {
           <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
         ) : (
           <>
-            Continue
+            Create account
             <ArrowRight className="w-4 h-4" aria-hidden />
           </>
         )}

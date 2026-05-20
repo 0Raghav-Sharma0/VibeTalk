@@ -44,6 +44,7 @@
   position: relative;
   z-index: 1;
   flex: 1;
+  width: 100%;
   display: grid;
   grid-template-columns: 1fr;
   min-height: 0;
@@ -53,7 +54,11 @@
 
 @media (min-width: 1024px) {
   .auth-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    max-width: 1280px;
+    width: 100%;
+    margin-inline: auto;
+    align-self: center;
   }
 }
 
@@ -77,11 +82,17 @@
 
 .auth-form-inner {
   width: 100%;
-  max-width: 400px;
+  max-width: 520px;
   margin-inline: auto;
   min-width: 0;
   box-sizing: border-box;
   padding-inline: 0;
+}
+
+@media (min-width: 1280px) {
+  .auth-form-inner {
+    max-width: 560px;
+  }
 }
 
 .auth-form-inner > * {
@@ -136,6 +147,14 @@
 }
 
 .auth-page-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 3rem);
+  box-sizing: border-box;
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -151,15 +170,23 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 2rem 2.5rem;
   background: transparent;
   border: none;
+  min-height: 0;
 }
 
 @media (min-width: 1024px) {
   .auth-brand-col {
     display: flex;
   }
+}
+
+.auth-lottie-player {
+  width: min(100%, 480px);
+  height: min(72vh, 480px);
+  max-width: 100%;
+  aspect-ratio: 1;
 }
 
 .auth-logo-row {
@@ -261,7 +288,7 @@
   width: 100%;
   max-width: 100%;
   border-radius: 1.25rem;
-  padding-block: 1rem;
+  padding-block: 1.25rem;
   padding-inline: 0;
   background: rgba(255, 255, 255, 0.85);
   border: 1px solid rgba(124, 58, 237, 0.1);
@@ -294,12 +321,12 @@
   min-width: 0;
   overflow: hidden;
   box-sizing: border-box;
-  padding-inline: 1rem;
+  padding-inline: 1.25rem;
 }
 
 @media (min-width: 480px) {
   .auth-clerk-shell {
-    padding-inline: 1.25rem;
+    padding-inline: 1.5rem;
   }
 }
 
@@ -660,6 +687,56 @@
 .dark .auth-submit-btn:hover:not(:disabled),
 [data-theme="dark"] .auth-submit-btn:hover:not(:disabled) {
   background: #7c3aed;
+}
+
+.auth-verify-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.auth-verify-hint strong {
+  color: #374151;
+  font-weight: 600;
+}
+
+.dark .auth-verify-hint,
+[data-theme="dark"] .auth-verify-hint {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.dark .auth-verify-hint strong,
+[data-theme="dark"] .auth-verify-hint strong {
+  color: #f5f3ff;
+}
+
+.auth-text-btn {
+  margin-top: 0.25rem;
+  padding: 0.35rem 0;
+  border: none;
+  background: transparent;
+  color: #7c3aed;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  width: 100%;
+}
+
+.auth-text-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.auth-text-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dark .auth-text-btn,
+[data-theme="dark"] .auth-text-btn {
+  color: #c4b5fd;
 }
 
 /* Clerk — hide footer branding */
