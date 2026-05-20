@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💬 VibeTalk
+# 💬 NexAura
 
 ### ⚡ Next-Generation Real-Time Communication Platform
 
@@ -85,11 +85,50 @@ A modern **full-stack real-time communication platform** designed to simulate **
 
 ---
 
+# 🧪 Development & production
+
+| Task | Command |
+|------|---------|
+| **Tests** | `cd backend && npm test` |
+| **Quality gate** | `cd backend && npm run verify` |
+| **Load probe** | `cd backend && npm run load-test` |
+| **Dev (API + workers)** | `cd backend && npm run dev` |
+| **Prod split** | `npm run dev:api` + `npm run dev:worker` |
+| **Docker** | `docker compose -f docker-compose.prod.yml up` |
+| **Scale stack** | `docker compose -f docker-compose.scale.yml up` |
+| **Nginx configs** | `deploy/nginx/conf.d/` |
+| **Health** | `GET /health` · `GET /ready` |
+
+Message pipeline: persist → ACK → BullMQ → worker → Socket.IO `user:{id}` room.
+
+---
+
+# 🔐 Authentication
+
+NexAura uses **[Clerk](https://clerk.com)** for authentication and authorization (industry-standard JWT sessions, OAuth, and email/password). The backend verifies Clerk JWTs on every protected route and socket connection.
+
+| Method | Route |
+|--------|--------|
+| Sign in | `/login` |
+| Sign up | `/signup` |
+| Google OAuth | Enabled in Clerk Dashboard |
+| Email + password | Sign-in (custom form) and sign-up (Clerk UI) |
+
+**Clerk Dashboard setup** (required once):
+
+1. Create an application and copy `VITE_CLERK_PUBLISHABLE_KEY` → `frontend/.env`
+2. Copy **JWT issuer** → `CLERK_JWT_ISSUER` in `backend/.env`
+3. **User & authentication** → enable **Google** (Social connections)
+4. Enable **Email address** → **Password** tab: turn on sign-up and sign-in with password (disable email-code sign-in if you do not want OTP on login)
+5. Set redirect URLs: `http://localhost:5173` (dev) and your production URL
+
+---
+
 # 📸 Application Gallery
 
 <div align="center">
 
-A quick visual walkthrough of **VibeTalk** showcasing the real-time communication and collaboration features.
+A quick visual walkthrough of **NexAura** showcasing the real-time communication and collaboration features.
 
 </div>
 
@@ -99,7 +138,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 ## 💬 Chat Experience
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="420"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(1).jpeg" width="420"/>
 
 </div>
 
@@ -114,7 +153,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20005120.png" width="380" height="420"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/Screenshot%202026-03-17%20005120.png" width="380" height="420"/>
 
 <br>
 
@@ -124,7 +163,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg"  width="380" height="420" />
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(2).jpeg"  width="380" height="420" />
 
 <br>
 
@@ -148,7 +187,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013509.png" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/Screenshot%202026-03-17%20013509.png" width="360"/>
 
 <br>
 
@@ -158,7 +197,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20013549.png" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/Screenshot%202026-03-17%20013549.png" width="360"/>
 
 <br>
 
@@ -182,7 +221,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(4).jpeg" width="360"/>
 
 <br>
 
@@ -192,7 +231,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.07.jpeg" width="360"/>
 
 <br>
 
@@ -216,7 +255,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/Screenshot%202026-03-17%20011437.png" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/Screenshot%202026-03-17%20011437.png" width="360"/>
 
 <br>
 
@@ -226,7 +265,7 @@ A quick visual walkthrough of **VibeTalk** showcasing the real-time communicatio
 
 <td align="center">
 
-<img src="https://github.com/0Raghav-Sharma0/VibeTalk/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="360"/>
+<img src="https://github.com/0Raghav-Sharma0/NexAura/blob/main/WhatsApp%20Image%202026-03-16%20at%2023.57.06%20(3).jpeg" width="360"/>
 
 <br>
 
@@ -298,8 +337,8 @@ B-->>A: Video Stream
 # ⚙️ Local Development
 
 ```bash
-git clone https://github.com/your-username/vibetalk.git
-cd vibetalk
+git clone https://github.com/your-username/nexaura.git
+cd nexaura
 npm install
 npm run dev
 ```

@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.6",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@lordicon/element": "^1.10.1",
@@ -21,7 +22,6 @@
     "axios": "^1.7.9",
     "daisyui": "^4.12.24",
     "emoji-picker-react": "^4.12.0",
-    "first-big-project": "file:..",
     "framer-motion": "^10.18.0",
     "ldrs": "^1.0.2",
     "lord-icon-element": "^4.1.2",

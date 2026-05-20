@@ -7,7 +7,7 @@ import { useThemeStore } from '../store/useThemeStore';
 import { useAuthStore } from '../store/useAuthStore';
 import './WatchPartyChatPanel.css';
 
-const DARK_THEMES = ['dark', 'coffee', 'vibetalk'];
+const DARK_THEMES = ['dark', 'coffee', 'nexaura'];
 
 const WatchPartyChatPanel = () => {
   const { chatMessages, sendChatMessage } = useWatchParty();

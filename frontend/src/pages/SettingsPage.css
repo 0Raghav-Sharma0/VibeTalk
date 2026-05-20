@@ -33,23 +33,19 @@
   position: absolute;
   inset: 0;
   background: radial-gradient(
-    circle 25vmin at 50% 25%,
-    rgba(255, 255, 200, 0.5) 0%,
-    rgba(255, 240, 150, 0.2) 30%,
-    transparent 55%
+    circle 22vmin at 72% 18%,
+    rgba(255, 248, 200, 0.45) 0%,
+    rgba(255, 235, 160, 0.15) 35%,
+    transparent 58%
   );
   pointer-events: none;
   z-index: 0;
+  opacity: 1;
+  transition: opacity 0.6s ease;
 }
 
 .settings-lamp-bg::before {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: repeating-conic-gradient(#fff9 0%, #fff0 0.000075%, #fff0 0.0005%, #fff0 0.12345%);
-  filter: blur(0.5px) drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);
-  pointer-events: none;
+  content: none;
 }
 
 /* Night mode (lamp ON): dark sky, lamp lit */
@@ -66,15 +62,200 @@
 
 .settings-lamp-bg.lamp-on::after {
   background: radial-gradient(
-    ellipse 100% 70% at 50% 96%,
-    rgba(255, 200, 120, 0.08) 0%,
-    transparent 50%
+    ellipse 80% 50% at 72% 88%,
+    rgba(255, 200, 120, 0.06) 0%,
+    transparent 55%
   );
+  opacity: 1;
 }
 
-.settings-lamp-bg.lamp-on::before {
-  background: repeating-conic-gradient(rgba(255,255,255,0.02) 0%, transparent 0.000075%, transparent 0.0005%, transparent 0.12345%);
-  filter: blur(0.3px);
+/* Sky layer: clouds (day) and stars (night) — above building silhouettes */
+.settings-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.settings-sun {
+  position: absolute;
+  top: 10%;
+  right: 18%;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff9c4 0%, #ffd54f 45%, #ffb300 100%);
+  box-shadow:
+    0 0 40px rgba(255, 213, 79, 0.65),
+    0 0 80px rgba(255, 193, 7, 0.35);
+  opacity: 1;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.settings-lamp-bg.lamp-on .settings-sun {
+  opacity: 0;
+  transform: translateY(-12px) scale(0.85);
+}
+
+.settings-clouds {
+  position: absolute;
+  inset: 0;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.settings-lamp-bg.lamp-on .settings-clouds {
+  opacity: 0;
+}
+
+.settings-cloud {
+  position: absolute;
+  display: block;
+  background: #ffffff;
+  border-radius: 50%;
+  filter: drop-shadow(0 6px 14px rgba(70, 120, 190, 0.35));
+  box-shadow: inset -4px -3px 0 rgba(180, 200, 230, 0.35);
+}
+
+.settings-cloud--1 {
+  width: 88px;
+  height: 34px;
+  top: 12%;
+  left: 5%;
+  box-shadow:
+    28px 6px 0 -4px rgba(255, 255, 255, 0.95),
+    56px 2px 0 -6px rgba(255, 255, 255, 0.88),
+    14px -10px 0 -6px rgba(255, 255, 255, 0.9);
+  animation: settings-cloud-drift 52s linear infinite;
+}
+
+.settings-cloud--2 {
+  width: 112px;
+  height: 40px;
+  top: 12%;
+  left: 36%;
+  opacity: 0.92;
+  box-shadow:
+    34px 8px 0 -5px rgba(255, 255, 255, 0.9),
+    68px 4px 0 -8px rgba(255, 255, 255, 0.85),
+    18px -12px 0 -8px rgba(255, 255, 255, 0.88);
+  animation: settings-cloud-drift 68s linear infinite reverse;
+}
+
+.settings-cloud--3 {
+  width: 58px;
+  height: 22px;
+  top: 8%;
+  right: 28%;
+  opacity: 0.88;
+  box-shadow:
+    22px 5px 0 -3px rgba(255, 255, 255, 0.9),
+    44px 1px 0 -5px rgba(255, 255, 255, 0.82);
+  animation: settings-cloud-drift 44s linear infinite;
+  animation-delay: -12s;
+}
+
+.settings-cloud--4 {
+  width: 110px;
+  height: 36px;
+  top: 14%;
+  right: 4%;
+  opacity: 0.9;
+  box-shadow:
+    38px 10px 0 -6px rgba(255, 255, 255, 0.92),
+    76px 5px 0 -9px rgba(255, 255, 255, 0.86),
+    20px -14px 0 -9px rgba(255, 255, 255, 0.88);
+  animation: settings-cloud-drift 58s linear infinite reverse;
+  animation-delay: -20s;
+}
+
+@keyframes settings-cloud-drift {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(18px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.settings-stars {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.settings-lamp-bg.lamp-on .settings-stars {
+  opacity: 1;
+}
+
+.settings-stars::before,
+.settings-stars::after {
+  content: "";
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.settings-stars::before {
+  top: 8%;
+  left: 10%;
+  opacity: 1;
+  box-shadow:
+    4vw 3vh 0 0 rgba(255, 255, 255, 0.95),
+    12vw 8vh 0 0 rgba(255, 255, 255, 0.75),
+    18vw 4vh 0 0.5px rgba(255, 255, 255, 0.9),
+    26vw 14vh 0 0 rgba(255, 255, 255, 0.6),
+    34vw 6vh 0 0 rgba(255, 255, 255, 0.85),
+    42vw 18vh 0 0.5px rgba(255, 255, 255, 0.7),
+    52vw 10vh 0 0 rgba(255, 255, 255, 0.9),
+    62vw 5vh 0 0 rgba(255, 255, 255, 0.55),
+    72vw 16vh 0 0.5px rgba(255, 255, 255, 0.8),
+    82vw 9vh 0 0 rgba(255, 255, 255, 0.65),
+    8vw 22vh 0 0 rgba(255, 255, 255, 0.7),
+    16vw 28vh 0 0.5px rgba(255, 255, 255, 0.85),
+    28vw 24vh 0 0 rgba(255, 255, 255, 0.5),
+    48vw 26vh 0 0 rgba(255, 255, 255, 0.75),
+    58vw 32vh 0 0.5px rgba(255, 255, 255, 0.9),
+    76vw 28vh 0 0 rgba(255, 255, 255, 0.6),
+    88vw 20vh 0 0 rgba(255, 255, 255, 0.8);
+  animation: settings-star-twinkle 4s ease-in-out infinite;
+}
+
+.settings-stars::after {
+  top: 12%;
+  left: 22%;
+  width: 3px;
+  height: 3px;
+  box-shadow:
+    6vw 12vh 0 0 rgba(255, 255, 255, 0.8),
+    14vw 20vh 0 0 rgba(255, 255, 255, 0.55),
+    22vw 15vh 0 0.5px rgba(255, 255, 255, 0.9),
+    38vw 22vh 0 0 rgba(255, 255, 255, 0.65),
+    46vw 12vh 0 0 rgba(255, 255, 255, 0.85),
+    54vw 30vh 0 0 rgba(255, 255, 255, 0.5),
+    66vw 18vh 0 0.5px rgba(255, 255, 255, 0.75),
+    78vw 24vh 0 0 rgba(255, 255, 255, 0.9),
+    10vw 34vh 0 0 rgba(255, 255, 255, 0.6),
+    32vw 36vh 0 0 rgba(255, 255, 255, 0.7),
+    70vw 34vh 0 0.5px rgba(255, 255, 255, 0.55);
+  animation: settings-star-twinkle 5.5s ease-in-out infinite reverse;
+}
+
+@keyframes settings-star-twinkle {
+  0%,
+  100% {
+    opacity: 0.75;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .settings-lamp-content {
@@ -84,95 +265,258 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  z-index: 1; /* Above sun glow so buildings don't get overlapped */
+  z-index: 1;
 }
 
 .settings-lamp-buildings {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  clip-path: polygon(0% 41%, 15% 26%, 27% 42%, 32% 42%, 33% 40%, 29% 40%, 46% 16%, 63% 39%, 59% 39%, 61% 42%, 68% 41.5%, 70% 27%, 89% 27%, 92% 41%, 100% 40%, 100% 100%, 0% 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  clip-path: polygon(
+    0% 41%,
+    15% 26%,
+    27% 42%,
+    32% 42%,
+    46% 16%,
+    63% 39%,
+    68% 41.5%,
+    70% 27%,
+    89% 27%,
+    92% 41%,
+    100% 40%,
+    100% 100%,
+    0% 100%
+  );
+  background: linear-gradient(180deg, #2a4a62 0%, #3d6278 45%, #4a7088 100%);
+  --pane-w: 1.85vmin;
+  --pane-h: 2.35vmin;
 }
 
-.settings-lamp-buildings {
-  background: linear-gradient(180deg, #1a2a3a, #2d3a45);
-}
-
-/* Night (lamp on): darker buildings */
 .settings-lamp-bg.lamp-on .settings-lamp-buildings {
-  background: linear-gradient(180deg,
-    #021023 0%,
-    #0a1525 25%,
-    #151a2e 50%,
-    #1e1a2e 75%,
-    #252030 100%
+  background: linear-gradient(
+    180deg,
+    #020306 0%,
+    #04060c 30%,
+    #060910 65%,
+    #080b12 100%
+  );
+  filter: drop-shadow(0 -1px 0 rgba(130, 155, 200, 0.28))
+    drop-shadow(0 8px 24px rgba(0, 0, 0, 0.55));
+}
+
+/* Subtle lit edge along rooftops — separates silhouette from purple sky */
+.settings-lamp-bg.lamp-on .settings-lamp-buildings::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(110, 135, 180, 0.35) 0%,
+    rgba(60, 75, 110, 0.12) 14%,
+    transparent 32%
   );
 }
 
-.settings-lamp-window {
-  background:
-    linear-gradient(88deg, #fff0 0 calc(50% - 0.2vw), #111 calc((50% - 0.2vw) + 1px) calc(50% + 0.2vw), #fff0 calc((50% + 0.2vw) + 1px) 100%),
-    repeating-linear-gradient(182deg, #fff0 0 calc(30% - 0.2vw), #111 calc((30% - 0.2vw) + 1px) calc(30% + 0.2vw), #fff0 calc((30% + 0.2vw) + 1px) 37%), #e7d09a;
-  width: 5vmin;
-  height: 7vmin;
+/* Castle door — warm wood + light trim so it reads off the silhouette */
+.settings-building-door {
   position: absolute;
-  left: 5vw;
-  transform: scale(0.8);
-  margin-top: 3vmin;
-  clip-path: polygon(0 0, 100% 0, 85% 100%, 10% 100%);
+  z-index: 3;
+  left: 49%;
+  top: auto;
+  bottom: calc(28vh + 0.75vmin);
+  width: 5.5vmin;
+  height: 8.5vmin;
+  transform: translateX(-50%);
+  border-radius: 2.75vmin 2.75vmin 0.2vmin 0.2vmin;
+  background: linear-gradient(90deg, #c9a06a 0%, #e8d4b0 50%, #c9a06a 100%);
+  border: 0.32vmin solid #5c3d18;
+  box-shadow:
+    0 0 0 0.22vmin #f5ecd8,
+    0 0.35vmin 1.2vmin rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }
 
-.settings-lamp-window:nth-child(2) {
-  left: 16vw;
-  margin-top: 3.25vmin;
+.settings-building-door::before {
+  content: "";
+  position: absolute;
+  left: 0.5vmin;
+  right: 0.5vmin;
+  top: 0.55vmin;
+  bottom: 0.4vmin;
+  border-radius: 2.1vmin 2.1vmin 0.12vmin 0.12vmin;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #e8b45a 0 0.35vmin,
+      #f5d08a 0.35vmin 0.7vmin,
+      #d49a3c 0.7vmin 1.05vmin,
+      #ecc06e 1.05vmin 1.4vmin
+    ),
+    linear-gradient(180deg, #f8e0a8 0%, #e8b45a 48%, #c8862e 100%);
+  box-shadow: inset 0 0.15vmin 0.4vmin rgba(255, 255, 255, 0.25);
 }
 
-.settings-lamp-window:nth-child(3) {
-  left: 12vw;
-  margin-top: -26vmin;
-  clip-path: polygon(5% 0%, 97% 1%, 85% 65%, 10% 63%);
+.settings-building-door::after {
+  content: "";
+  position: absolute;
+  bottom: 0.85vmin;
+  right: 0.9vmin;
+  width: 0.65vmin;
+  height: 0.65vmin;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff4c4 0%, #e8b830 50%, #b8860b 100%);
+  box-shadow:
+    0 0 0 0.12vmin #5c3d18,
+    0 0.15vmin 0.3vmin rgba(0, 0, 0, 0.35);
 }
 
-.settings-lamp-window:nth-child(4) {
-  right: 12vw;
-  margin-top: -4vmin;
-  left: auto;
+/* Day: honey oak against blue-gray castle */
+.settings-lamp-bg:not(.lamp-on) .settings-building-door {
+  border-color: #6b4423;
+  box-shadow:
+    0 0 0 0.28vmin #fff8ee,
+    0 0 0 0.5vmin rgba(42, 74, 98, 0.85),
+    0 0.4vmin 1.4vmin rgba(0, 0, 0, 0.4);
 }
 
-.settings-lamp-window:nth-child(5) {
-  right: 22vw;
-  margin-top: -4vmin;
-  left: auto;
-  transform: scale(0.85) rotateY(180deg);
+.settings-lamp-bg:not(.lamp-on) .settings-building-door::before {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #f0c878 0 0.35vmin,
+      #fce8b0 0.35vmin 0.7vmin,
+      #e0a840 0.7vmin 1.05vmin,
+      #f5d890 1.05vmin 1.4vmin
+    ),
+    linear-gradient(180deg, #fff0c8 0%, #f0c060 50%, #d49228 100%);
+}
+
+/* Night: lit oak against near-black castle */
+.settings-lamp-bg.lamp-on .settings-building-door {
+  border-color: #8b6914;
+  background: linear-gradient(90deg, #d4b07a 0%, #f0e0c0 50%, #d4b07a 100%);
+  box-shadow:
+    0 0 0 0.28vmin #fff5e0,
+    0 0 0 0.48vmin rgba(0, 0, 0, 0.9),
+    0 0 16px rgba(255, 200, 100, 0.55),
+    0 0.4vmin 1.2vmin rgba(0, 0, 0, 0.5);
+}
+
+.settings-lamp-bg.lamp-on .settings-building-door::before {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #f5d080 0 0.35vmin,
+      #ffe8b8 0.35vmin 0.7vmin,
+      #e8b848 0.7vmin 1.05vmin,
+      #f8dc98 1.05vmin 1.4vmin
+    ),
+    linear-gradient(180deg, #fff4d0 0%, #f0c868 45%, #d49a28 100%);
+  box-shadow:
+    inset 0 0.15vmin 0.4vmin rgba(255, 255, 220, 0.35),
+    0 0 10px rgba(255, 200, 90, 0.4);
+}
+
+.settings-lamp-bg.lamp-on .settings-building-door::after {
+  background: radial-gradient(circle at 35% 35%, #fff8dc 0%, #ffd54f 50%, #f9a825 100%);
+  box-shadow:
+    0 0 0 0.12vmin #5c3d18,
+    0 0 6px rgba(255, 220, 120, 0.7);
+}
+
+.settings-building-windows {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.settings-win-block {
+  position: absolute;
+  display: grid;
+  gap: 0.32vmin;
+  pointer-events: none;
+}
+
+/* Aligned to building silhouettes (clip-path skyline) */
+/* Window grids sit on vertical façades (just above skyline base ~41%) */
+.settings-win-block--left {
+  left: 9.5%;
+  top: 37.5%;
+  grid-template-columns: repeat(3, var(--pane-w));
+  grid-template-rows: repeat(2, var(--pane-h));
+}
+
+.settings-win-block--center {
+  left: 46%;
+  top: 31%;
+  grid-template-columns: repeat(3, var(--pane-w));
+  grid-template-rows: repeat(3, var(--pane-h));
+}
+
+.settings-win-block--right {
+  left: 83.5%;
+  top: 37.5%;
+  grid-template-columns: repeat(2, var(--pane-w));
+  grid-template-rows: repeat(2, var(--pane-h));
+}
+
+.settings-window {
+  width: var(--pane-w);
+  height: var(--pane-h);
+  border-radius: 1px;
+  border: 0.2vmin solid #152a3d;
+  box-sizing: border-box;
+}
+
+/* Day: all windows sky-blue (lit = bright, dim = deeper blue) */
+.settings-lamp-bg:not(.lamp-on) .settings-window--lit {
+  background: linear-gradient(160deg, #d4ecfc 0%, #7eb8e8 100%);
+  border-color: #1e3a52;
+}
+
+.settings-lamp-bg:not(.lamp-on) .settings-window--dim {
+  background: linear-gradient(160deg, #5a8cad 0%, #3d6d8f 100%);
+  border-color: #152a3d;
+}
+
+/* Night: warm lit / dark unlit — no cross markers */
+.settings-lamp-bg.lamp-on .settings-window--lit {
+  background: linear-gradient(145deg, #fff9e6 0%, #ffd54f 50%, #f9a825 100%);
+  border-color: #3d2e10;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 220, 0.35),
+    0 0 10px rgba(255, 193, 70, 0.5);
+}
+
+.settings-lamp-bg.lamp-on .settings-window--dim {
+  background: linear-gradient(145deg, #121c2c 0%, #0a1018 100%);
+  border-color: #060a10;
 }
 
 .settings-lamp-ground {
   background: radial-gradient(circle at 50% 350vh, var(--ground-light) 0 343vh, #333 calc(343vh + 2px) 346vh, var(--ground-dark) calc(346vh + 2px) 100%);
   position: absolute;
   width: 150vw;
-  height: 26vh;
+  height: 28vh;
   bottom: 0;
   border-radius: 100% 100% 0 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.5;
+  opacity: 1;
+  z-index: 2;
+}
+
+.settings-lamp-bg.lamp-on .settings-lamp-ground {
+  --ground-light: #5a5040;
+  --ground-dark: #3d3628;
 }
 
 .settings-lamp-sewer {
-  position: absolute;
-  width: 130px;
-  height: 50px;
-  margin-left: -500px;
-  margin-top: -50px;
-  clip-path: polygon(0% 33%, 65% 10%, 100% 35%, 40% 80%);
-  background:
-    linear-gradient(-188deg, var(--sewer-dark) 0 19px, #fff0 20px 100%),
-    linear-gradient(-16deg, var(--sewer-dark) 0 34px, #fff0 35px 100%),
-    linear-gradient(-163deg, var(--sewer-dark) 0 19px, #fff0 20px 100%),
-    linear-gradient(25deg, var(--sewer-dark) 0 33px, var(--sewer-light) 34px 39px, var(--sewer-dark) 40px 46px, var(--sewer-light) 47px 52px, var(--sewer-dark) 53px 59px, var(--sewer-light) 60px 67px, var(--sewer-dark) 68px 73px, var(--sewer-light) 74px 90px, #fff0 0 100%);
+  display: none;
 }
 
 .settings-lamp-streetlamp {
@@ -184,6 +528,7 @@
   left: auto;
   max-width: 80px;
   min-width: 80px;
+  z-index: 4;
 }
 
 .settings-lamp-base {
@@ -282,28 +627,35 @@
 }
 
 .settings-lamp-light {
-  background: linear-gradient(180deg, #dac47080, #dac47020 90%, #fff0 100%);
-  width: 650px;
-  height: 64vh;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 220, 160, 0.22) 0%,
+    rgba(255, 200, 130, 0.08) 75%,
+    transparent 100%
+  );
+  width: 520px;
+  height: 52vh;
   position: absolute;
-  left: -274px;
+  left: -200px;
   bottom: 1.5%;
   clip-path: polygon(43% 1%, 53% 0.35%, 100% 100%, 0 100%);
   opacity: 0;
   transition: opacity 0.5s ease;
+  mix-blend-mode: soft-light;
 }
 
 .settings-lamp-ground-light {
-  background: #dac47080;
-  width: 650px;
-  left: -275px;
+  background: rgba(255, 200, 120, 0.2);
+  width: 420px;
+  left: -210px;
   position: absolute;
   bottom: -28px;
-  height: 80px;
+  height: 64px;
   border-radius: 100%;
   z-index: 0;
   opacity: 0;
   transition: opacity 0.5s ease;
+  mix-blend-mode: soft-light;
 }
 
 .settings-lamp-top::before {
@@ -342,14 +694,31 @@
 }
 
 /* Lamp ON = night (dark mode), lamp lit */
-.settings-lamp-bg.lamp-on .settings-lamp-light,
-.settings-lamp-bg.lamp-on .settings-lamp-ground-light,
+.settings-lamp-bg.lamp-on .settings-lamp-light {
+  opacity: 0.5;
+}
+
+.settings-lamp-bg.lamp-on .settings-lamp-ground-light {
+  opacity: 0.45;
+}
+
 .settings-lamp-bg.lamp-on .settings-lamp-glass {
   opacity: 1;
 }
 
 .settings-lamp-bg.lamp-on .settings-lamp-glass {
   opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-cloud {
+    animation: none !important;
+  }
+
+  .settings-stars::before,
+  .settings-stars::after {
+    animation: none !important;
+  }
 }
 
 @media screen and (orientation: landscape) and (max-width: 767px) {
@@ -359,4 +728,70 @@
   .settings-lamp-ground-light {
     bottom: -9px;
   }
+}
+
+.settings-page {
+  background: transparent;
+}
+
+/* Footer floats over ground — no white panel */
+.settings-footer {
+  width: 100%;
+  background: transparent !important;
+  border: none;
+  backdrop-filter: none;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.settings-footer-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  text-align: center;
+  max-width: 20rem;
+}
+
+.settings-footer--day .settings-footer-hint {
+  color: #1e2a38 !important;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.65);
+}
+
+.settings-footer--night .settings-footer-hint {
+  color: rgba(255, 255, 255, 0.92) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.settings-footer-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.settings-footer--day .settings-footer-logout {
+  color: #fecaca !important;
+  background: rgba(25, 35, 48, 0.72);
+  border: 1px solid rgba(0, 0, 0, 0.28);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.settings-footer--day .settings-footer-logout:hover {
+  background: rgba(35, 48, 62, 0.88);
+  color: #fff !important;
+}
+
+.settings-footer--night .settings-footer-logout {
+  color: #fecaca !important;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.settings-footer--night .settings-footer-logout:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fff !important;
 }

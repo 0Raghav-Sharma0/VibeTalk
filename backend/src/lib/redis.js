@@ -11,8 +11,8 @@ const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 export async function connectRedis() {
   try {
     redis = new Redis(REDIS_URL, {
-      maxRetriesPerRequest: 2,
-      retryStrategy: (times) => (times > 2 ? null : 1000),
+      maxRetriesPerRequest: 3,
+      retryStrategy: (times) => (times > 10 ? null : Math.min(times * 200, 3000)),
     });
 
     redis.on("error", (err) => {

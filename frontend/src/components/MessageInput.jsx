@@ -1,11 +1,12 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { Image, Send, X, Plus, Smile, Paperclip } from "lucide-react";
 import EmojiPicker from "emoji-picker-react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useThemeStore } from "../store/useThemeStore";
 
-const DARK_THEMES = ["dark", "coffee", "vibetalk"];
+const DARK_THEMES = ["dark", "coffee", "nexaura"];
+const TYPING_DEBOUNCE_MS = 1200;
 
 const MessageInput = () => {
   const [text, setText] = useState("");
@@ -15,25 +16,31 @@ const MessageInput = () => {
 
   const imageInputRef = useRef(null);
   const inputRef = useRef(null);
+  const typingStopTimer = useRef(null);
 
-  const { sendMessage, selectedUser } = useChatStore();
+  const { sendMessage, selectedUser, emitTyping } = useChatStore();
   const { authUser, socket } = useAuthStore();
   const { theme } = useThemeStore();
 
-  const handleSendMessage = async () => {
+  const stopTyping = useCallback(() => {
+    if (typingStopTimer.current) clearTimeout(typingStopTimer.current);
+    emitTyping(false);
+  }, [emitTyping]);
+
+  const startTyping = useCallback(() => {
+    emitTyping(true);
+    if (typingStopTimer.current) clearTimeout(typingStopTimer.current);
+    typingStopTimer.current = setTimeout(stopTyping, TYPING_DEBOUNCE_MS);
+  }, [emitTyping, stopTyping]);
+
+  useEffect(() => () => stopTyping(), [stopTyping]);
+
+  const handleSendMessage = () => {
     if (!selectedUser) return;
     if (!text.trim() && !imagePreview) return;
 
-    await sendMessage({
-      text: text.trim(),
-      image: imagePreview,
-    });
-
-    socket.emit("typing", {
-      senderId: authUser._id,
-      receiverId: selectedUser._id,
-      isTyping: false,
-    });
+    stopTyping();
+    sendMessage({ text: text.trim(), image: imagePreview });
 
     setText("");
     setImagePreview(null);
@@ -43,13 +50,9 @@ const MessageInput = () => {
 
   const handleTyping = (v) => {
     setText(v);
-    if (selectedUser) {
-      socket.emit("typing", {
-        senderId: authUser._id,
-        receiverId: selectedUser._id,
-        isTyping: v.length > 0,
-      });
-    }
+    if (!selectedUser || !socket || !authUser) return;
+    if (v.length > 0) startTyping();
+    else stopTyping();
   };
 
   const handleKeyPress = (e) => {
@@ -62,12 +65,10 @@ const MessageInput = () => {
   const previewImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 10 * 1024 * 1024) {
       alert("Image must be under 10MB");
       return;
     }
-
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
@@ -76,141 +77,77 @@ const MessageInput = () => {
 
   return (
     <div className="relative w-full bg-white dark-mode-bg border-t border-transparent dark:border-white/8 pb-[env(safe-area-inset-bottom)]">
-
-      {/* IMAGE PREVIEW */}
       {imagePreview && (
-        <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 border border-transparent rounded-xl p-3">
+        <div className="mx-3 my-3 bg-gray-100 dark:bg-base-200 rounded-xl p-3">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-800 dark:text-base-content flex items-center gap-2">
+            <span className="text-sm font-medium flex items-center gap-2">
               <Paperclip size={14} /> Image attached
             </span>
-            <button
-              onClick={() => setImagePreview(null)}
-              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300"
-            >
+            <button type="button" onClick={() => setImagePreview(null)}>
               <X size={16} />
             </button>
           </div>
-
-          <img
-            src={imagePreview}
-            alt="preview"
-            className="w-24 h-24 rounded-lg object-cover border border-transparent"
-          />
+          <img src={imagePreview} alt="preview" className="w-24 h-24 rounded-lg object-cover" />
         </div>
       )}
 
-      {/* IMAGE PICKER */}
       {isExpanded && (
-        <div className="mx-3 mb-3 bg-gray-100 dark:bg-base-200 border border-transparent rounded-xl p-3">
+        <div className="mx-3 mb-3 bg-gray-100 dark:bg-base-200 rounded-xl p-3">
           <button
-            onClick={() => imageInputRef.current.click()}
-            className="w-full flex flex-col items-center gap-2 p-3 rounded-lg hover:bg-gray-200 dark:hover:bg-base-300 transition"
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            className="w-full flex flex-col items-center gap-2 p-3"
           >
-            <div className="p-2 rounded-lg bg-white dark:bg-base-100 border border-transparent">
-              <Image size={20} />
-            </div>
-            <span className="text-xs text-gray-600 dark:text-base-content/60">
-              Photo
-            </span>
+            <Image size={20} />
+            <span className="text-xs">Photo</span>
           </button>
         </div>
       )}
 
-      {/* EMOJI PICKER */}
       {showEmojiPicker && (
-        <div className="absolute bottom-20 left-2 right-2 sm:left-auto sm:right-4 sm:w-[340px] max-w-[calc(100vw-1rem)] z-50">
-          <div className="bg-white dark:bg-base-100 border border-transparent rounded-xl shadow-xl">
-            <div className="p-2 border-b border-transparent flex justify-between items-center">
-              <span className="text-sm font-medium text-gray-800 dark:text-base-content">
-                Emoji
-              </span>
-              <button
-                onClick={() => setShowEmojiPicker(false)}
-                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-base-300"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
+        <div className="absolute bottom-20 left-2 right-2 sm:right-4 sm:w-[340px] z-50">
+          <div className="bg-white dark:bg-base-100 rounded-xl shadow-xl p-2">
+            <button type="button" onClick={() => setShowEmojiPicker(false)}>
+              <X size={16} />
+            </button>
             <EmojiPicker
-              onEmojiClick={(e) => {
-                setText((p) => p + e.emoji);
-                inputRef.current?.focus();
-              }}
+              onEmojiClick={(e) => setText((p) => p + e.emoji)}
               theme={DARK_THEMES.includes(theme) ? "dark" : "light"}
               width="100%"
               height={280}
-              previewConfig={{ showPreview: false }}
             />
           </div>
         </div>
       )}
 
-      {/* INPUT BAR - px-4 to align with messages area (ChatContainer px-4) */}
-      <div className="px-4 py-2" data-message-input>
-        <div className="
-          flex items-center gap-2
-          bg-gray-100 msg-input-glass
-          border border-transparent
-          rounded-xl dark:rounded-2xl px-3 py-2.5
-          focus-within:border-transparent
-        ">
-          <button
-            onClick={() => {
-              setIsExpanded(!isExpanded);
-              setShowEmojiPicker(false);
-            }}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/20"
-          >
+      <div className="px-4 py-2">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2.5">
+          <button type="button" onClick={() => setIsExpanded(!isExpanded)}>
             <Plus size={18} />
           </button>
-
-          <button
-            onClick={() => {
-              setShowEmojiPicker(!showEmojiPicker);
-              setIsExpanded(false);
-            }}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-white/20"
-          >
+          <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
             <Smile size={18} />
           </button>
-
           <input
             ref={inputRef}
             value={text}
             onChange={(e) => handleTyping(e.target.value)}
             onKeyDown={handleKeyPress}
             placeholder="Type your message..."
-            className="
-              flex-1 bg-transparent outline-none focus:outline-none focus-visible:outline-none
-              text-gray-900 dark:text-white
-              placeholder:text-gray-400 dark:placeholder:text-white/50
-              text-sm md:text-base
-            "
+            className="flex-1 bg-transparent outline-none text-sm md:text-base"
           />
-
           <button
+            type="button"
             onClick={handleSendMessage}
             disabled={!text.trim() && !imagePreview}
-            className={`p-2.5 rounded-lg transition ${
-              text.trim() || imagePreview
-                ? "bg-violet-600 text-white hover:opacity-90 dark:bg-violet-500"
-                : "text-gray-400 dark:text-white/40 cursor-not-allowed"
-            }`}
+            className="p-2.5 rounded-lg bg-violet-600 text-white disabled:opacity-40"
           >
             <Send size={18} />
           </button>
         </div>
       </div>
 
-      <input
-        type="file"
-        accept="image/*"
-        ref={imageInputRef}
-        className="hidden"
-        onChange={previewImage}
-      />
+      <input type="file" accept="image/*" ref={imageInputRef} className="hidden" onChange={previewImage} />
     </div>
   );
 };

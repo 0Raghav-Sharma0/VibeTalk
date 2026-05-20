@@ -1,0 +1,91 @@
+# 10k concurrent-user stack (local / staging simulation)
+#
+# Requires Docker Compose v2 with `deploy` (Swarm-style) OR run:
+#   docker compose -f docker-compose.scale.yml up --scale api=4 --scale worker=6
+#
+# Production: use Kubernetes / ECS with the same env from backend/.env.example
+
+services:
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_scale_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  api:
+    build:
+      context: ./backend
+      target: api
+    ports:
+      - "5001:5001"
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      RUN_WORKERS_IN_API: "false"
+      SOCKET_WEBSOCKET_ONLY: "true"
+      SOCKET_PER_MESSAGE_DEFLATE: "false"
+      SCALE_TARGET_CONCURRENT: "10000"
+      SCALE_API_REPLICAS: "4"
+      SCALE_WORKER_REPLICAS: "6"
+      MONGODB_MAX_POOL_SIZE: "80"
+      SOCKET_METRICS_LOG: "true"
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:5001/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    deploy:
+      replicas: 4
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+  worker:
+    build:
+      context: ./backend
+      target: worker
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      REDIS_URL: redis://redis:6379
+      WORKER_ONLY: "true"
+      MESSAGE_WORKER_CONCURRENCY: "100"
+      GROUP_WORKER_CONCURRENCY: "40"
+      RECEIPT_WORKER_CONCURRENCY: "50"
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      replicas: 6
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+
+volumes:
+  redis_scale_data:

@@ -39,7 +39,7 @@ export default function GroupMembersPanel({ group, onClose }) {
         <div className="flex items-center justify-between px-4 py-4 border-b border-transparent">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-[#7D3DCF] dark:text-[#b29bff]" />
-            <h2 className="font-bold text-gray-900 dark:text-white">Group Members</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-white">Group Members</h2>
           </div>
           <button
             type="button"

@@ -599,6 +599,14 @@ export default function Whiteboard({ roomId, onClose }) {
 
       {/* Canvas */}
       <div className="wb-canvas-wrap">
+        <div className="wb-sky" aria-hidden="true">
+          <div className="wb-clouds">
+            <span className="wb-cloud wb-cloud--1" />
+            <span className="wb-cloud wb-cloud--2" />
+            <span className="wb-cloud wb-cloud--3" />
+          </div>
+          <div className="wb-stars" />
+        </div>
         <canvas
           ref={canvasRef}
           className="wb-canvas"

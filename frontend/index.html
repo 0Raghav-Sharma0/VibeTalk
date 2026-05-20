@@ -9,7 +9,8 @@
       (function() {
         try {
           var theme = localStorage.getItem('chat-theme') || 'light';
-          var isDark = ['dark', 'coffee', 'vibetalk'].indexOf(theme) >= 0;
+          if (theme === 'vibetalk') theme = 'nexaura';
+          var isDark = ['dark', 'coffee', 'nexaura'].indexOf(theme) >= 0;
           document.documentElement.setAttribute('data-theme', theme);
           document.documentElement.classList.toggle('dark', isDark);
         } catch (e) {}
@@ -20,10 +21,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
 
     <!-- ✅ Title & Branding -->
-    <title>VibeTalk – Connect. Chat. Vibe.</title>
+    <title>NexAura – Connect. Chat. Aura.</title>
     <meta
       name="description"
-      content="VibeTalk – Real vibes, real conversations. Chat, call, and share with your friends instantly."
+      content="NexAura – Real connections, real conversations. Chat, call, and share with your friends instantly."
     />
 
     <!-- ✅ Favicon -->
@@ -40,14 +41,14 @@
     />
 
     <!-- ✅ Open Graph -->
-    <meta property="og:title" content="VibeTalk – Connect. Chat. Vibe." />
+    <meta property="og:title" content="NexAura – Connect. Chat. Aura." />
     <meta
       property="og:description"
-      content="Join VibeTalk, a new way to chat and vibe with your friends in real time."
+      content="Join NexAura, a new way to chat and connect with your friends in real time."
     />
     <meta property="og:image" content="/logo.png" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://vibetalk.app" />
+    <meta property="og:url" content="https://nexaura.app" />
 
     <!-- ✅ Twitter -->
     <meta name="twitter:card" content="summary_large_image" />

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
-import { axiosInstance } from "../lib/axios";
-import { useChatStore } from "./useChatStore";
-import { useAuthStore } from "./useAuthStore";
+import { friendApi } from "../services/friendApi.js";
+import { getApiErrorMessage } from "../utils/apiError.js";
+import { useChatStore } from "./useChatStore.js";
 
 export const useFriendStore = create((set, get) => ({
   pendingIncoming: [],
@@ -11,13 +11,10 @@ export const useFriendStore = create((set, get) => ({
   isSearching: false,
   searchResult: null,
 
-  /* ============================================================
-     FETCH PENDING REQUESTS
-  ============================================================ */
   fetchPendingRequests: async () => {
     set({ isPendingLoading: true });
     try {
-      const res = await axiosInstance.get("/friends/pending");
+      const res = await friendApi.getPending();
       set({
         pendingIncoming: res.data.incoming || [],
         pendingOutgoing: res.data.outgoing || [],
@@ -29,30 +26,23 @@ export const useFriendStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-     SEARCH USER BY USERNAME
-  ============================================================ */
   searchByUsername: async (username) => {
     if (!username?.trim()) return;
     set({ isSearching: true, searchResult: null });
     try {
-      const res = await axiosInstance.get(`/friends/search?username=${encodeURIComponent(username.trim())}`);
+      const res = await friendApi.search(username);
       set({ searchResult: res.data, isSearching: false });
     } catch (err) {
-      const msg = err.response?.data?.error || "User not found";
-      toast.error(msg);
+      toast.error(getApiErrorMessage(err, "User not found"));
       set({ searchResult: null, isSearching: false });
     }
   },
 
   clearSearch: () => set({ searchResult: null }),
 
-  /* ============================================================
-     SEND FRIEND REQUEST
-  ============================================================ */
   sendRequest: async (username) => {
     try {
-      const res = await axiosInstance.post("/friends/request", { username: username.trim() });
+      const res = await friendApi.sendRequest(username);
       set((s) => ({
         pendingOutgoing: [res.data, ...s.pendingOutgoing],
         searchResult: null,
@@ -60,21 +50,18 @@ export const useFriendStore = create((set, get) => ({
       toast.success("Friend request sent!");
       return true;
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to send request");
+      toast.error(getApiErrorMessage(err, "Failed to send request"));
       return false;
     }
   },
 
-  /* ============================================================
-     ACCEPT REQUEST
-  ============================================================ */
   acceptRequest: async (requestId) => {
     try {
-      await axiosInstance.put(`/friends/accept/${requestId}`);
+      await friendApi.accept(requestId);
       set((s) => ({
         pendingIncoming: s.pendingIncoming.filter((r) => r._id !== requestId),
       }));
-      useChatStore.getState().getUsers();
+      useChatStore.getState().getUsers({ force: true });
       toast.success("Friend added!");
       return true;
     } catch {
@@ -83,12 +70,9 @@ export const useFriendStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-     REJECT REQUEST
-  ============================================================ */
   rejectRequest: async (requestId) => {
     try {
-      await axiosInstance.put(`/friends/reject/${requestId}`);
+      await friendApi.reject(requestId);
       set((s) => ({
         pendingIncoming: s.pendingIncoming.filter((r) => r._id !== requestId),
       }));
@@ -99,13 +83,10 @@ export const useFriendStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-     REMOVE FRIEND
-  ============================================================ */
   removeFriend: async (friendId) => {
     try {
-      await axiosInstance.delete(`/friends/remove/${friendId}`);
-      useChatStore.getState().getUsers();
+      await friendApi.remove(friendId);
+      useChatStore.getState().getUsers({ force: true });
       const { selectedUser } = useChatStore.getState();
       if (selectedUser?._id === friendId) {
         useChatStore.getState().setSelectedUser(null);
@@ -118,19 +99,10 @@ export const useFriendStore = create((set, get) => ({
     }
   },
 
-  /* ============================================================
-     SOCKET HANDLERS (called from App / auth store)
-  ============================================================ */
-  onFriendRequestReceived: (data) => {
-    get().fetchPendingRequests();
-  },
-
+  onFriendRequestReceived: () => get().fetchPendingRequests(),
   onFriendRequestAccepted: () => {
     get().fetchPendingRequests();
-    useChatStore.getState().getUsers();
+    useChatStore.getState().getUsers({ force: true });
   },
-
-  onFriendRemoved: () => {
-    useChatStore.getState().getUsers();
-  },
+  onFriendRemoved: () => useChatStore.getState().getUsers({ force: true }),
 }));

@@ -14,7 +14,7 @@
 .dark .watchparty,
 [data-theme="dark"] .watchparty,
 [data-theme="coffee"] .watchparty,
-[data-theme="vibetalk"] .watchparty {
+[data-theme="nexaura"] .watchparty {
   --wp-surface: rgba(255, 255, 255, 0.05);
   --wp-border: rgba(255, 255, 255, 0.08);
   --wp-text: rgba(255, 255, 255, 0.95);
@@ -39,7 +39,7 @@
 .dark .watchparty-header,
 [data-theme="dark"] .watchparty-header,
 [data-theme="coffee"] .watchparty-header,
-[data-theme="vibetalk"] .watchparty-header {
+[data-theme="nexaura"] .watchparty-header {
   background: rgba(0, 0, 0, 0.95);
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
@@ -77,7 +77,7 @@
 .dark .header-logo svg,
 [data-theme="dark"] .header-logo svg,
 [data-theme="coffee"] .header-logo svg,
-[data-theme="vibetalk"] .header-logo svg {
+[data-theme="nexaura"] .header-logo svg {
   color: #b29bff;
 }
 
@@ -142,7 +142,7 @@
 .dark .host-badge.is-host,
 [data-theme="dark"] .host-badge.is-host,
 [data-theme="coffee"] .host-badge.is-host,
-[data-theme="vibetalk"] .host-badge.is-host {
+[data-theme="nexaura"] .host-badge.is-host {
   background: rgba(178, 155, 255, 0.2);
   border-color: rgba(178, 155, 255, 0.4);
   color: #b29bff;
@@ -181,7 +181,7 @@
 .dark .leave-btn,
 [data-theme="dark"] .leave-btn,
 [data-theme="coffee"] .leave-btn,
-[data-theme="vibetalk"] .leave-btn {
+[data-theme="nexaura"] .leave-btn {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.4);
   color: #f87171;
@@ -195,7 +195,7 @@
 .dark .leave-btn:hover,
 [data-theme="dark"] .leave-btn:hover,
 [data-theme="coffee"] .leave-btn:hover,
-[data-theme="vibetalk"] .leave-btn:hover {
+[data-theme="nexaura"] .leave-btn:hover {
   background: rgba(239, 68, 68, 0.25);
   border-color: rgba(239, 68, 68, 0.6);
 }
@@ -237,7 +237,7 @@
 .dark .video-container,
 [data-theme="dark"] .video-container,
 [data-theme="coffee"] .video-container,
-[data-theme="vibetalk"] .video-container {
+[data-theme="nexaura"] .video-container {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 

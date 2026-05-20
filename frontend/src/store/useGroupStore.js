@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import toast from "react-hot-toast";
-import { axiosInstance } from "../lib/axios";
+import { groupApi } from "../services/groupApi.js";
+import { getApiErrorMessage } from "../utils/apiError.js";
 import { useAuthStore } from "./useAuthStore";
 import { showSystemNotification } from "../utils/notifications";
 
@@ -15,7 +16,7 @@ export const useGroupStore = create((set, get) => ({
   getGroups: async () => {
     set({ isGroupsLoading: true });
     try {
-      const res = await axiosInstance.get("/groups");
+      const res = await groupApi.list();
       set({ groups: res.data || [], isGroupsLoading: false });
     } catch {
       toast.error("Failed to load groups");
@@ -26,7 +27,7 @@ export const useGroupStore = create((set, get) => ({
   getGroupMessages: async (groupId) => {
     set({ isGroupMessagesLoading: true });
     try {
-      const res = await axiosInstance.get(`/groups/${groupId}/messages`);
+      const res = await groupApi.getMessages(groupId);
       set({ groupMessages: res.data || [], isGroupMessagesLoading: false });
     } catch {
       toast.error("Failed to load messages");
@@ -36,7 +37,7 @@ export const useGroupStore = create((set, get) => ({
 
   createGroup: async (name, memberIds) => {
     try {
-      const res = await axiosInstance.post("/groups", { name, memberIds });
+      const res = await groupApi.create({ name, memberIds });
       set((s) => ({ groups: [res.data, ...s.groups] }));
       toast.success("Group created!");
       return res.data;
@@ -160,7 +161,7 @@ export const useGroupStore = create((set, get) => ({
 
   leaveGroup: async (groupId) => {
     try {
-      await axiosInstance.post(`/groups/${groupId}/leave`);
+      await groupApi.leave(groupId);
       const { selectedGroup, groups } = get();
       const toStr = (id) => (id?.toString?.() || String(id || ""));
       const isViewingThisGroup = selectedGroup && toStr(selectedGroup._id) === toStr(groupId);
@@ -179,7 +180,7 @@ export const useGroupStore = create((set, get) => ({
 
   addMember: async (groupId, userId) => {
     try {
-      const res = await axiosInstance.post(`/groups/${groupId}/members`, { userId });
+      const res = await groupApi.addMember(groupId, userId);
       set((s) => ({
         groups: s.groups.map((g) => (g._id === groupId ? res.data : g)),
         selectedGroup: s.selectedGroup?._id === groupId ? res.data : s.selectedGroup,
@@ -187,14 +188,14 @@ export const useGroupStore = create((set, get) => ({
       toast.success("Member added");
       return true;
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to add member");
+      toast.error(getApiErrorMessage(err, "Failed to add member"));
       return false;
     }
   },
 
   removeMember: async (groupId, userId) => {
     try {
-      const res = await axiosInstance.delete(`/groups/${groupId}/members/${userId}`);
+      const res = await groupApi.removeMember(groupId, userId);
       const data = res.data;
 
       if (data?.deleted) {
@@ -212,7 +213,7 @@ export const useGroupStore = create((set, get) => ({
       toast.success("Member removed");
       return true;
     } catch (err) {
-      toast.error(err.response?.data?.error || "Failed to remove member");
+      toast.error(getApiErrorMessage(err, "Failed to remove member"));
       return false;
     }
   },

@@ -27,7 +27,7 @@
 .dark .wp-chat-messages,
 [data-theme="dark"] .wp-chat-messages,
 [data-theme="coffee"] .wp-chat-messages,
-[data-theme="vibetalk"] .wp-chat-messages {
+[data-theme="nexaura"] .wp-chat-messages {
   background: transparent;
 }
 
@@ -47,7 +47,7 @@
 .dark .wp-chat-messages::-webkit-scrollbar-thumb,
 [data-theme="dark"] .wp-chat-messages::-webkit-scrollbar-thumb,
 [data-theme="coffee"] .wp-chat-messages::-webkit-scrollbar-thumb,
-[data-theme="vibetalk"] .wp-chat-messages::-webkit-scrollbar-thumb {
+[data-theme="nexaura"] .wp-chat-messages::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -67,7 +67,7 @@
 .dark .wp-chat-empty,
 [data-theme="dark"] .wp-chat-empty,
 [data-theme="coffee"] .wp-chat-empty,
-[data-theme="vibetalk"] .wp-chat-empty {
+[data-theme="nexaura"] .wp-chat-empty {
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -87,7 +87,7 @@
 .dark .wp-chat-empty p,
 [data-theme="dark"] .wp-chat-empty p,
 [data-theme="coffee"] .wp-chat-empty p,
-[data-theme="vibetalk"] .wp-chat-empty p {
+[data-theme="nexaura"] .wp-chat-empty p {
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -127,7 +127,7 @@
 .dark .wp-chat-msg-avatar,
 [data-theme="dark"] .wp-chat-msg-avatar,
 [data-theme="coffee"] .wp-chat-msg-avatar,
-[data-theme="vibetalk"] .wp-chat-msg-avatar {
+[data-theme="nexaura"] .wp-chat-msg-avatar {
   background: linear-gradient(135deg, #7D3DCF, #b29bff);
 }
 
@@ -158,7 +158,7 @@
 .dark .wp-chat-msg-user,
 [data-theme="dark"] .wp-chat-msg-user,
 [data-theme="coffee"] .wp-chat-msg-user,
-[data-theme="vibetalk"] .wp-chat-msg-user {
+[data-theme="nexaura"] .wp-chat-msg-user {
   color: rgba(255, 255, 255, 0.95);
 }
 
@@ -170,7 +170,7 @@
 .dark .wp-chat-msg-time,
 [data-theme="dark"] .wp-chat-msg-time,
 [data-theme="coffee"] .wp-chat-msg-time,
-[data-theme="vibetalk"] .wp-chat-msg-time {
+[data-theme="nexaura"] .wp-chat-msg-time {
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -189,7 +189,7 @@
 .dark .wp-chat-msg-bubble,
 [data-theme="dark"] .wp-chat-msg-bubble,
 [data-theme="coffee"] .wp-chat-msg-bubble,
-[data-theme="vibetalk"] .wp-chat-msg-bubble {
+[data-theme="nexaura"] .wp-chat-msg-bubble {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.95);
@@ -206,7 +206,7 @@
 .dark .wp-emoji-picker-wrap,
 [data-theme="dark"] .wp-emoji-picker-wrap,
 [data-theme="coffee"] .wp-emoji-picker-wrap,
-[data-theme="vibetalk"] .wp-emoji-picker-wrap {
+[data-theme="nexaura"] .wp-emoji-picker-wrap {
   border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -229,7 +229,7 @@
 .dark .wp-chat-input-wrap,
 [data-theme="dark"] .wp-chat-input-wrap,
 [data-theme="coffee"] .wp-chat-input-wrap,
-[data-theme="vibetalk"] .wp-chat-input-wrap {
+[data-theme="nexaura"] .wp-chat-input-wrap {
   background: rgba(0, 0, 0, 0.2);
   border-top-color: rgba(255, 255, 255, 0.08);
 }
@@ -248,7 +248,7 @@
 .dark .wp-chat-emoji-btn,
 [data-theme="dark"] .wp-chat-emoji-btn,
 [data-theme="coffee"] .wp-chat-emoji-btn,
-[data-theme="vibetalk"] .wp-chat-emoji-btn {
+[data-theme="nexaura"] .wp-chat-emoji-btn {
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -260,7 +260,7 @@
 .dark .wp-chat-emoji-btn:hover,
 [data-theme="dark"] .wp-chat-emoji-btn:hover,
 [data-theme="coffee"] .wp-chat-emoji-btn:hover,
-[data-theme="vibetalk"] .wp-chat-emoji-btn:hover {
+[data-theme="nexaura"] .wp-chat-emoji-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.9);
 }
@@ -281,7 +281,7 @@
 .dark .wp-chat-input,
 [data-theme="dark"] .wp-chat-input,
 [data-theme="coffee"] .wp-chat-input,
-[data-theme="vibetalk"] .wp-chat-input {
+[data-theme="nexaura"] .wp-chat-input {
   border-color: rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.95);
@@ -295,7 +295,7 @@
 .dark .wp-chat-input::placeholder,
 [data-theme="dark"] .wp-chat-input::placeholder,
 [data-theme="coffee"] .wp-chat-input::placeholder,
-[data-theme="vibetalk"] .wp-chat-input::placeholder {
+[data-theme="nexaura"] .wp-chat-input::placeholder {
   color: rgba(255, 255, 255, 0.4);
 }
 
@@ -307,7 +307,7 @@
 .dark .wp-chat-input:focus,
 [data-theme="dark"] .wp-chat-input:focus,
 [data-theme="coffee"] .wp-chat-input:focus,
-[data-theme="vibetalk"] .wp-chat-input:focus {
+[data-theme="nexaura"] .wp-chat-input:focus {
   border-color: #b29bff;
   box-shadow: 0 0 0 2px rgba(178, 155, 255, 0.2);
 }
@@ -348,7 +348,7 @@
 .dark .wp-chat-send-btn:disabled,
 [data-theme="dark"] .wp-chat-send-btn:disabled,
 [data-theme="coffee"] .wp-chat-send-btn:disabled,
-[data-theme="vibetalk"] .wp-chat-send-btn:disabled {
+[data-theme="nexaura"] .wp-chat-send-btn:disabled {
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.3);
 }

@@ -41,7 +41,7 @@ const CreateGroupModal = ({ onClose }) => {
             <div className="p-2 rounded-xl bg-violet-100 dark:bg-white/10">
               <Users className="w-5 h-5 text-[#7D3DCF] dark:text-[#b29bff]" />
             </div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">Create Group</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Create Group</h2>
           </div>
           <button
             type="button"

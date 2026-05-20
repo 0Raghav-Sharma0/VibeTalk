@@ -26,7 +26,23 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Outfit", "Plus Jakarta Sans", "system-ui", ...defaultTheme.fontFamily.sans],
+        sans: ["Outfit", "system-ui", ...defaultTheme.fontFamily.sans],
+      },
+      fontSize: {
+        "2xs": ["0.75rem", { lineHeight: "1.35", letterSpacing: "0.01em" }],
+        xs: ["0.8125rem", { lineHeight: "1.4", letterSpacing: "0.01em" }],
+        sm: ["0.875rem", { lineHeight: "1.45", letterSpacing: "0.005em" }],
+        base: ["1rem", { lineHeight: "1.55", letterSpacing: "0" }],
+        lg: ["1.0625rem", { lineHeight: "1.5", letterSpacing: "-0.01em" }],
+        xl: ["1.125rem", { lineHeight: "1.4", letterSpacing: "-0.015em" }],
+        "2xl": ["1.375rem", { lineHeight: "1.3", letterSpacing: "-0.02em" }],
+        "3xl": ["1.625rem", { lineHeight: "1.25", letterSpacing: "-0.025em" }],
+      },
+      fontWeight: {
+        normal: "400",
+        medium: "500",
+        semibold: "600",
+        bold: "600",
       },
       colors: {
         bg: "var(--bg)",

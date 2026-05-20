@@ -689,7 +689,7 @@ const VideoCall = () => {
           {callType !== "video" && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-[#b29bff]">
               <Phone size={80} className="mb-6 text-violet-400/80" />
-              <p className="text-3xl font-bold text-white">
+              <p className="text-3xl font-semibold text-white">
                 {isIncomingCall ? "Incoming Call" : selectedUser?.fullName || "Audio Call"}
               </p>
               <p className="text-lg text-[#b29bff]/90 mt-2">{callStatus}</p>

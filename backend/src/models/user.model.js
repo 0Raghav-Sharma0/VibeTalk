@@ -1,31 +1,37 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-    email:{
-        type: String,
-        required : true,
-        unique : true,
+const userSchema = new mongoose.Schema(
+  {
+    clerkId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
-    fullName:{
-        type: String,
-        required : true,
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    fullName: {
+      type: String,
+      required: true,
     },
     password: {
-        type: String,
-        required: true,
-        minlength: 6,
+      type: String,
+      required: false,
+      select: false,
     },
-    profilePic:{
-        type: String,
-        default: "",
+    profilePic: {
+      type: String,
+      default: "",
     },
     about: {
-        type: String,
-        default: "",
+      type: String,
+      default: "",
     },
-},
-{timestamps: true}
-)
+  },
+  { timestamps: true }
+);
 
 userSchema.index({ fullName: 1 });
 

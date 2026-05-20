@@ -1,127 +1,84 @@
-// src/index.js
-import express from "express";
-import dotenv from "dotenv";
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import path from "path";
 import http from "http";
-
+import cloudinary from "./lib/cloudinary.js";
+import { isCloudinaryConfigured } from "./config/env.js";
+import { assertRequiredEnv, env } from "./config/env.js";
 import { connectDB } from "./lib/db.js";
 import { connectRedis, disconnectRedis } from "./lib/redis.js";
-import authRoutes from "./routes/auth.route.js";
-import messageRoutes from "./routes/message.route.js";
-import friendRoutes from "./routes/friend.route.js";
-import groupRoutes from "./routes/group.route.js";
-import cloudinary from "./lib/cloudinary.js";
+import { createApp } from "./app.js";
+import { createSocketServer, getIO } from "./lib/socket.js";
+import { getSocketClientCount } from "./lib/ioHolder.js";
+import { scaleConfig, getScaleSummary } from "./config/scale.config.js";
+import {
+  attachSocketRedisAdapter,
+  closeSocketRedisAdapter,
+} from "./lib/socketAdapter.js";
+import { startAllWorkers, stopAllWorkers, shouldRunWorkers } from "./workers/index.js";
+import { initRealtimeBus, closeRealtimeBus } from "./infrastructure/realtime/realtimeBus.js";
+import { closeAllQueues } from "./infrastructure/queue/queueRegistry.js";
+import { closeBullConnection } from "./infrastructure/redis/bullConnection.js";
 
-import { createSocketServer } from "./lib/socket.js";
+assertRequiredEnv();
 
-dotenv.config();
-
-const app = express();
+const app = createApp();
 const server = http.createServer(app);
-
-const PORT = process.env.PORT || 5001;
-const __dirname = path.resolve();
-
-/* =====================================================
-   CORS for Express (NOT socket.io)
-===================================================== */
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      callback(null, true);
-    },
-    credentials: true,
-  })
-);
-
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(cookieParser());
-
-/* =====================================================
-   API ROUTES
-===================================================== */
-app.use("/api/auth", authRoutes);
-app.use("/api/messages", messageRoutes);
-app.use("/api/friends", friendRoutes);
-app.use("/api/groups", groupRoutes);
-
-/* =====================================================
-   SONGS
-===================================================== */
-app.use(
-  "/songs",
-  express.static(path.join(__dirname, "songs"))
-);
-
-/* =====================================================
-   SOCKET.IO INIT
-===================================================== */
 const io = createSocketServer(server);
 
-// Optional: Log socket stats periodically (useful for monitoring)
-if (process.env.NODE_ENV === 'production') {
+if (env.isProduction || process.env.SOCKET_METRICS_LOG === "true") {
+  const interval = scaleConfig.metrics.logSocketCountIntervalMs;
   setInterval(() => {
-    const connectedClients = io.engine.clientsCount;
-    console.log(`📊 Connected clients: ${connectedClients}`);
-  }, 300000); // Every 5 minutes
+    const n = getSocketClientCount();
+    const plan = getScaleSummary();
+    console.log(
+      `📊 Sockets on this pod: ${n} (target ${plan.connectionsPerApiInstance}/pod, cluster plan ${plan.plannedCapacity})`
+    );
+  }, interval);
 }
 
-/* =====================================================
-   START SERVER
-===================================================== */
-server.listen(PORT, async () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 Socket.IO initialized`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+server.listen(env.port, async () => {
+  console.log(`🚀 Server running on port ${env.port}`);
+  console.log(`🌍 Environment: ${env.nodeEnv}`);
+  console.log(`📐 Scale plan:`, getScaleSummary());
   await connectDB();
   await connectRedis();
-});
-
-/* =====================================================
-   CLOUDINARY CHECK
-===================================================== */
-(async () => {
-  try {
-    const result = await cloudinary.api.ping();
-    console.log("☁️ Cloudinary Connected", result);
-  } catch (err) {
-    console.error("❌ Cloudinary Error:", err);
+  await initRealtimeBus();
+  await attachSocketRedisAdapter(getIO());
+  const workers = await startAllWorkers();
+  console.log(`📡 Socket.IO + message pipeline ready`);
+  if (!workers.enabled) {
+    console.warn("⚠️ Message queues disabled");
+  } else if (!shouldRunWorkers()) {
+    console.log(
+      "ℹ️  API-only mode: run `npm run dev:worker` for delivery workers (production pattern)"
+    );
   }
-})();
+});
 
-/* =====================================================
-   GRACEFUL SHUTDOWN
-===================================================== */
-process.on('SIGTERM', async () => {
-  console.log('⚠️  SIGTERM signal received: closing HTTP server');
+if (isCloudinaryConfigured) {
+  cloudinary.api
+    .ping()
+    .then((r) => console.log("☁️ Cloudinary Connected", r.status))
+    .catch((err) => console.error("❌ Cloudinary Error:", err.message));
+}
+
+async function shutdown(signal) {
+  console.log(`⚠️  ${signal} received`);
+  await stopAllWorkers();
+  await closeAllQueues();
+  await closeBullConnection();
+  await closeSocketRedisAdapter();
+  await closeRealtimeBus();
   await disconnectRedis();
-  server.close(() => {
-    console.log('✅ HTTP server closed');
-    process.exit(0);
-  });
+  server.close(() => process.exit(0));
+}
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
+process.on("unhandledRejection", (reason) => {
+  console.error("❌ Unhandled Rejection:", reason);
 });
 
-process.on('SIGINT', async () => {
-  console.log('⚠️  SIGINT signal received: closing HTTP server');
-  await disconnectRedis();
-  server.close(() => {
-    console.log('✅ HTTP server closed');
-    process.exit(0);
-  });
-});
-
-/* =====================================================
-   ERROR HANDLING
-===================================================== */
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-});
-
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
+process.on("uncaughtException", (error) => {
+  console.error("❌ Uncaught Exception:", error);
   process.exit(1);
 });
