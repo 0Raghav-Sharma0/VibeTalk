@@ -42,10 +42,7 @@ export default function HomePage() {
 
       <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
 
-      <div
-        className="flex flex-1 min-h-0"
-        style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}
-      >
+      <div className="flex flex-1 min-h-0 pt-app-header">
         <div className="hidden md:flex md:w-[320px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden sidebar-separator">
           <Sidebar />
         </div>

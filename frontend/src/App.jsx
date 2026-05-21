@@ -19,18 +19,26 @@ import { useThemeStore } from "./store/useThemeStore";
 import { useChatStore } from "./store/useChatStore";
 
 import { SocketProvider } from "./contexts/SocketContext";
-import { WatchPartyProvider } from "./contexts/WatchPartyContext";
+import { WatchPartyProvider, useWatchParty } from "./contexts/WatchPartyContext";
 
 import { Toaster } from "react-hot-toast";
-import { isAuthRoute } from "./constants/routes";
+import { isAuthRoute, ROUTES } from "./constants/routes";
+import { useMobileViewportInsets } from "./hooks/useMobileViewportInsets";
 import "ldrs/grid";
 
-const App = () => {
+function AppShell() {
   const location = useLocation();
   const { pathname } = location;
   const { authUser, isCheckingAuth, socket } = useAuthStore();
   const { theme, setTheme } = useThemeStore();
+  const { roomId } = useWatchParty();
   const isHome = pathname === "/" || pathname === "/home";
+  const showNavbar =
+    authUser &&
+    !isHome &&
+    !(pathname === ROUTES.watchParty && roomId);
+
+  useMobileViewportInsets();
 
   useEffect(() => {
     setTheme(theme);
@@ -74,142 +82,150 @@ const App = () => {
   }
 
   return (
-    <SocketProvider>
-      <WatchPartyProvider>
-        <div className="w-full min-h-screen dark-mode-root text-gray-900 dark:text-white">
-          {authUser && !isHome && <Navbar />}
+    <div className="w-full min-w-0 max-w-[100vw] min-h-screen dark-mode-root text-gray-900 dark:text-white overflow-x-hidden">
+      {showNavbar && <Navbar />}
 
-          <CallListener />
+      <CallListener />
 
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center min-h-[60vh]">
-                <l-grid size="80" speed="1.5" color="currentColor"></l-grid>
-              </div>
-            }
-          >
-            <AnimatePresence mode="wait" initial={false}>
-              <Routes location={location} key={location.pathname}>
-                <Route
-                  path="/"
-                  element={
-                    authUser ? (
-                      <PageTransition className="h-screen">
-                        <HomePage />
-                      </PageTransition>
-                    ) : (
-                      <Navigate to="/login" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/home"
-                  element={
-                    authUser ? (
-                      <PageTransition className="h-screen">
-                        <HomePage />
-                      </PageTransition>
-                    ) : (
-                      <Navigate to="/login" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/watch-party"
-                  element={
-                    authUser ? (
-                      <PageTransition className="min-h-screen">
-                        <WatchPartyPage />
-                      </PageTransition>
-                    ) : (
-                      <Navigate to="/login" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/login/*"
-                  element={
-                    !authUser ? (
-                      <PageTransition className="min-h-screen overflow-x-hidden">
-                        <LoginPage />
-                      </PageTransition>
-                    ) : (
-                      <Navigate to="/" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/signup/*"
-                  element={
-                    !authUser ? (
-                      <PageTransition className="min-h-screen overflow-x-hidden">
-                        <SignupPage />
-                      </PageTransition>
-                    ) : (
-                      <Navigate to="/" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    authUser ? (
-                      <PageTransition className="h-[100dvh] min-h-0 max-h-[100dvh] overflow-hidden max-md:h-[var(--chat-viewport-height,100dvh)] max-md:max-h-[var(--chat-viewport-height,100dvh)]">
-                        <SettingsPage />
-                      </PageTransition>
-                    ) : (
-                      <Navigate to="/login" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    authUser ? (
-                      <PageTransition className="min-h-screen">
-                        <ProfilePage />
-                      </PageTransition>
-                    ) : (
-                      <Navigate to="/login" replace />
-                    )
-                  }
-                />
-                <Route
-                  path="*"
-                  element={<Navigate to={authUser ? "/" : "/login"} replace />}
-                />
-              </Routes>
-            </AnimatePresence>
-          </Suspense>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <l-grid size="80" speed="1.5" color="currentColor"></l-grid>
+          </div>
+        }
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <Routes location={location} key={location.pathname}>
+            <Route
+              path="/"
+              element={
+                authUser ? (
+                  <PageTransition className="h-screen">
+                    <HomePage />
+                  </PageTransition>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/home"
+              element={
+                authUser ? (
+                  <PageTransition className="h-screen">
+                    <HomePage />
+                  </PageTransition>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/watch-party"
+              element={
+                authUser ? (
+                  <PageTransition className="min-h-screen">
+                    <WatchPartyPage />
+                  </PageTransition>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/login/*"
+              element={
+                !authUser ? (
+                  <PageTransition className="min-h-screen overflow-x-hidden">
+                    <LoginPage />
+                  </PageTransition>
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
+            <Route
+              path="/signup/*"
+              element={
+                !authUser ? (
+                  <PageTransition className="min-h-screen overflow-x-hidden">
+                    <SignupPage />
+                  </PageTransition>
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                authUser ? (
+                  <PageTransition className="h-[100dvh] min-h-0 max-h-[100dvh] overflow-hidden max-md:h-[var(--chat-viewport-height,100dvh)] max-md:max-h-[var(--chat-viewport-height,100dvh)]">
+                    <SettingsPage />
+                  </PageTransition>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                authUser ? (
+                  <PageTransition className="min-h-screen">
+                    <ProfilePage />
+                  </PageTransition>
+                ) : (
+                  <Navigate to="/login" replace />
+                )
+              }
+            />
+            <Route
+              path="*"
+              element={<Navigate to={authUser ? "/" : "/login"} replace />}
+            />
+          </Routes>
+        </AnimatePresence>
+      </Suspense>
 
-          <VideoCall />
+      <VideoCall />
 
-          <Toaster
-            position="top-center"
-            reverseOrder={false}
-            gutter={12}
-            containerStyle={{ top: 72, left: 16, right: 16 }}
-            toastOptions={{
-              duration: 4000,
-              className: "toast-notification",
-              style: {
-                background: "var(--b2)",
-                color: "var(--bc)",
-                border: "1px solid var(--b3)",
-                borderRadius: "14px",
-                boxShadow:
-                  "0 10px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
-                padding: "14px 18px",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                maxWidth: "min(400px, calc(100vw - 32px))",
-              },
-            }}
-          />
-        </div>
-      </WatchPartyProvider>
-    </SocketProvider>
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+        gutter={12}
+        containerStyle={{
+          top: "calc(var(--app-header-height) + 8px)",
+          left: 16,
+          right: 16,
+        }}
+        toastOptions={{
+          duration: 4000,
+          className: "toast-notification",
+          style: {
+            background: "var(--b2)",
+            color: "var(--bc)",
+            border: "1px solid var(--b3)",
+            borderRadius: "14px",
+            boxShadow:
+              "0 10px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
+            padding: "14px 18px",
+            fontSize: "0.875rem",
+            fontWeight: 500,
+            maxWidth: "min(400px, calc(100vw - 32px))",
+          },
+        }}
+      />
+    </div>
   );
-};
+}
+
+const App = () => (
+  <SocketProvider>
+    <WatchPartyProvider>
+      <AppShell />
+    </WatchPartyProvider>
+  </SocketProvider>
+);
 
 export default App;

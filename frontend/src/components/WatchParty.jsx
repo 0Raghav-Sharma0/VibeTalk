@@ -26,7 +26,7 @@ const WatchParty = () => {
   };
 
   return (
-    <div className="watchparty w-full min-w-0 h-full min-h-0 flex-1 overflow-hidden dark-mode-root text-gray-900 dark:text-white pt-14 flex flex-col">
+    <div className="watchparty w-full min-w-0 h-full min-h-0 flex-1 overflow-hidden dark-mode-root text-gray-900 dark:text-white flex flex-col">
       {/* Top Controls - single row */}
       <header className="watchparty-header shrink-0">
         <div className="header-controls">

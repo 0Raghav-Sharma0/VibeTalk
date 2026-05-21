@@ -80,7 +80,7 @@ const WatchPartyPage = () => {
   };
 
   return (
-    <motion.div className="min-h-screen dark-mode-root text-gray-900 dark:text-white flex items-center justify-center px-4 pt-16 sm:pt-20">
+    <motion.div className="min-h-screen dark-mode-root text-gray-900 dark:text-white flex items-center justify-center px-4 pt-app-header pb-6">
 
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8">
 
