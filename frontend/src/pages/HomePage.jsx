@@ -44,8 +44,11 @@ export default function HomePage() {
       <Navbar onOpenSidebar={() => setSidebarOpen(true)} />
 
       <div className="flex flex-1 min-h-0 pt-app-header">
-        <div className="hidden md:flex md:w-[320px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden sidebar-separator">
-          <Sidebar />
+        <div className="hidden md:flex md:w-[320px] md:flex-shrink-0 md:h-full md:min-h-0 md:overflow-hidden sidebar-separator flex flex-col">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Sidebar showProfileFooter={false} />
+          </div>
+          {authUser && <SidebarUserFooter authUser={authUser} />}
         </div>
 
         <div className="flex-1 min-h-0 h-full flex flex-col bg-white overflow-hidden dark-mode-bg relative">

@@ -131,7 +131,11 @@ const Sidebar = ({ onClose, showProfileFooter = true }) => {
   if (isUsersLoading && users.length === 0) return <SidebarSkeleton />;
 
   return (
-    <aside className="sidebar-panel flex h-full w-full min-h-0 flex-col sidebar-theme text-gray-900 dark:text-white">
+    <aside
+      className={`sidebar-panel h-full w-full min-h-0 grid ${
+        showProfileFooter ? "grid-rows-[auto_1fr_auto]" : "grid-rows-[auto_1fr]"
+      } sidebar-theme text-gray-900 dark:text-white`}
+    >
       <header className={`sidebar-header shrink-0 ${isDrawer ? "sidebar-header--drawer" : ""}`}>
         {!isDrawer && (
           <div className="px-3 pt-3 pb-2.5">

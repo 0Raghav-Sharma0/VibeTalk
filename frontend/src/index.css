@@ -770,6 +770,12 @@ a:focus-visible {
   max-height: 100%;
 }
 
+@media (min-width: 769px) {
+  .sidebar-separator.flex.flex-col > .sidebar-footer {
+    flex-shrink: 0;
+  }
+}
+
 .sidebar-footer {
   flex-shrink: 0;
   background: inherit;
