@@ -3,8 +3,6 @@ import { useClerk } from "@clerk/clerk-react";
 import { useThemeStore } from "../store/useThemeStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { usePinnedStore } from "../store/usePinnedStore";
-import BackButton from "../components/BackButton";
-import { ROUTES } from "../constants/routes";
 import { useMobileViewportInsets } from "../hooks/useMobileViewportInsets";
 import "./SettingsPage.css";
 
@@ -60,7 +58,7 @@ export default function SettingsPage() {
   if (!authUser) return null;
 
   return (
-    <div className="settings-page h-[100dvh] min-h-[100dvh] w-full overflow-hidden flex flex-col relative pt-14 max-md:pt-[calc(3.5rem+env(safe-area-inset-top,0px))]">
+    <div className="settings-page h-[100dvh] min-h-[100dvh] w-full overflow-hidden flex flex-col relative pt-app-header">
       {/* Street lamp background */}
       <div className={`settings-lamp-bg ${lampOn ? "lamp-on" : ""}`}>
         <div className="settings-sky" aria-hidden="true">
@@ -105,15 +103,6 @@ export default function SettingsPage() {
 
       {/* Settings content overlay - pointer-events-none so lamp receives clicks */}
       <div className="flex flex-1 flex-col relative z-10 min-h-0 overflow-hidden pointer-events-none justify-end">
-        <div className="absolute top-2 left-2 sm:top-3 sm:left-4 pointer-events-auto md:hidden z-20">
-          <BackButton
-            to={ROUTES.home}
-            label="Chats"
-            variant="settings"
-            preferHistory
-          />
-        </div>
-
         <div
           className={`settings-footer shrink-0 p-4 flex flex-col items-center gap-2 pointer-events-auto ${
             isDark ? "settings-footer--night" : "settings-footer--day"

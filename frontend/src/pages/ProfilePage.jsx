@@ -13,11 +13,8 @@ export default function ProfilePage() {
   if (!authUser) return null;
 
   return (
-    <div className="min-h-screen dark-mode-root bg-gray-50 dark-mode-bg text-gray-900 dark:text-white">
-      <div
-        className="max-w-lg mx-auto px-4 pb-8"
-        style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px) + 1rem)" }}
-      >
+    <div className="min-h-screen dark-mode-root bg-gray-50 dark-mode-bg text-gray-900 dark:text-white pt-app-header">
+      <div className="max-w-lg mx-auto px-4 pb-8 pt-4">
         <p className="text-sm text-gray-600 dark:text-white/70 mb-5 font-medium">
           Update how others see you in chats and calls.
         </p>
