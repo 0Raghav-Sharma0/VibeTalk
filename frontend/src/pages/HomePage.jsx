@@ -80,7 +80,11 @@ export default function HomePage() {
             />
 
             <motion.div
-              className="relative w-[320px] sm:w-[340px] max-w-[90vw] h-full shadow-xl z-50 flex flex-col overflow-hidden sidebar-theme"
+              className="mobile-sidebar-drawer relative w-[min(100vw,340px)] max-w-[90vw] h-full max-h-[100dvh] shadow-xl z-50 flex flex-col overflow-hidden sidebar-theme"
+              style={{
+                height: "var(--chat-viewport-height, 100dvh)",
+                maxHeight: "var(--chat-viewport-height, 100dvh)",
+              }}
               initial={drawerVariants.initial}
               animate={drawerVariants.animate}
               exit={drawerVariants.exit}
