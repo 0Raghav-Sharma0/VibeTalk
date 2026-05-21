@@ -15,6 +15,7 @@ import { useReducedMotion } from "../hooks/useReducedMotion";
 import { useMobileViewportInsets } from "../hooks/useMobileViewportInsets";
 import { DURATION, drawerTransition } from "../lib/motionPresets";
 import { Users, X } from "lucide-react";
+import SidebarUserFooter from "../components/SidebarUserFooter";
 
 export default function HomePage() {
   const { selectedUser } = useChatStore();
@@ -82,8 +83,10 @@ export default function HomePage() {
             <motion.div
               className="mobile-sidebar-drawer relative w-[min(100vw,340px)] max-w-[90vw] h-full max-h-[100dvh] shadow-xl z-50 flex flex-col overflow-hidden sidebar-theme"
               style={{
-                height: "var(--chat-viewport-height, 100dvh)",
-                maxHeight: "var(--chat-viewport-height, 100dvh)",
+                height:
+                  "calc(var(--chat-viewport-height, 100dvh) - var(--vv-bottom-inset, 0px))",
+                maxHeight:
+                  "calc(var(--chat-viewport-height, 100dvh) - var(--vv-bottom-inset, 0px))",
               }}
               initial={drawerVariants.initial}
               animate={drawerVariants.animate}
@@ -107,9 +110,19 @@ export default function HomePage() {
                 </button>
               </div>
 
-              <div className="flex-1 min-h-0 overflow-hidden">
-                <Sidebar onClose={() => setSidebarOpen(false)} />
+              <div className="flex-1 min-h-0 overflow-hidden mobile-sidebar-drawer-body">
+                <Sidebar
+                  onClose={() => setSidebarOpen(false)}
+                  showProfileFooter={false}
+                />
               </div>
+
+              {authUser && (
+                <SidebarUserFooter
+                  authUser={authUser}
+                  className="mobile-sidebar-drawer-profile"
+                />
+              )}
             </motion.div>
           </motion.div>
         )}

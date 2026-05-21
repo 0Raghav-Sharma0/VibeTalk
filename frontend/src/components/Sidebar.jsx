@@ -11,6 +11,7 @@ import { useMusicStore } from "../store/musicStore";
 import { onlineFriendsForAvatars } from "../utils/sidebarFriends";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import CreateGroupModal from "./CreateGroupModal";
+import SidebarUserFooter from "./SidebarUserFooter";
 
 const SIDEBAR_TABS = [
   { id: "friends", label: "Friends", Icon: Users },
@@ -18,7 +19,8 @@ const SIDEBAR_TABS = [
   { id: "add", label: "Add", Icon: UserPlus },
 ];
 
-const Sidebar = ({ onClose }) => {
+const Sidebar = ({ onClose, showProfileFooter = true }) => {
+  const isDrawer = Boolean(onClose);
   const {
     getUsers,
     users,
@@ -129,36 +131,46 @@ const Sidebar = ({ onClose }) => {
   if (isUsersLoading && users.length === 0) return <SidebarSkeleton />;
 
   return (
-    <aside className="sidebar-panel h-full w-full min-h-0 grid grid-rows-[auto_1fr_auto] sidebar-theme text-gray-900 dark:text-white">
-      <header className="sidebar-header shrink-0">
-        <div className="px-3 pt-3 pb-2.5">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="sidebar-header-icon shrink-0">
-              <Users className="w-5 h-5" strokeWidth={2.25} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">
-                Friends
-              </h2>
-            <p className="text-sm text-gray-600 dark:text-white/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
-              <span>{friendCountLabel}</span>
-              <span className="text-gray-400 dark:text-white/60">·</span>
-              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                <span
-                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                    onlineCount > 0
-                      ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse"
-                      : "bg-gray-400 dark:bg-white/40"
-                  }`}
-                />
-                {onlineCount} online
-              </span>
-            </p>
+    <aside className="sidebar-panel flex h-full w-full min-h-0 flex-col sidebar-theme text-gray-900 dark:text-white">
+      <header className={`sidebar-header shrink-0 ${isDrawer ? "sidebar-header--drawer" : ""}`}>
+        {!isDrawer && (
+          <div className="px-3 pt-3 pb-2.5">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="sidebar-header-icon shrink-0">
+                <Users className="w-5 h-5" strokeWidth={2.25} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                  Friends
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-white/70 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  <span>{friendCountLabel}</span>
+                  <span className="text-gray-400 dark:text-white/60">·</span>
+                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        onlineCount > 0
+                          ? "bg-emerald-500 dark:bg-emerald-400 animate-pulse"
+                          : "bg-gray-400 dark:bg-white/40"
+                      }`}
+                    />
+                    {onlineCount} online
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        <div className="px-3 pb-3">
+        {isDrawer && (
+          <p className="px-3 pt-2 pb-1 text-xs font-medium text-gray-600 dark:text-white/70">
+            {friendCountLabel}
+            <span className="text-gray-400 dark:text-white/50"> · </span>
+            <span className="text-emerald-600 dark:text-emerald-400">{onlineCount} online</span>
+          </p>
+        )}
+
+        <div className={`px-3 ${isDrawer ? "pb-2" : "pb-3"}`}>
           <nav className="sidebar-tabs" aria-label="Sidebar sections">
             {SIDEBAR_TABS.map(({ id, label, Icon }) => (
               <button
@@ -451,31 +463,7 @@ const Sidebar = ({ onClose }) => {
         <CreateGroupModal onClose={() => setShowCreateGroup(false)} />
       )}
 
-      {/* CURRENT USER — always visible at bottom (mobile + desktop) */}
-      {authUser && (
-        <footer className="sidebar-footer shrink-0 border-t border-gray-200 dark:border-white/20 bg-inherit">
-          <div className="flex items-center gap-2.5 px-3 py-2.5 mx-2 my-2 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/20 min-w-0">
-            <div className="relative shrink-0">
-              <img
-                src={authUser.profilePic || "/boy.png"}
-                alt="You"
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover ring-2 ring-primary/30"
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-white dark:ring-[#14141c]" />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold truncate text-gray-900 dark:text-white">
-                {authUser.fullName || "You"}
-              </p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-semibold truncate">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0" />
-                Online
-              </p>
-            </div>
-          </div>
-        </footer>
-      )}
+      {showProfileFooter && authUser && <SidebarUserFooter authUser={authUser} />}
     </aside>
   );
 };
