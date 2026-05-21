@@ -1,13 +1,13 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Users, UserPlus, Search, Check, X, Loader2, UsersRound, Music2 } from "lucide-react";
+import { Users, UserPlus, Search, Check, X, Loader2, UsersRound } from "lucide-react";
 import SidebarOnlineAvatars, { MAX_VISIBLE } from "./SidebarOnlineAvatars";
 import SidebarFriendsList from "./SidebarFriendsList";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useFriendStore } from "../store/useFriendStore";
 import { useGroupStore } from "../store/useGroupStore";
-import { useMusicStore } from "../store/musicStore";
 import { usePinnedStore } from "../store/usePinnedStore";
+import { useMusicStore } from "../store/musicStore";
 import { onlineFriendsForAvatars } from "../utils/sidebarFriends";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import CreateGroupModal from "./CreateGroupModal";
@@ -46,7 +46,6 @@ const Sidebar = ({ onClose }) => {
   } = useFriendStore();
 
   const { authUser, onlineUsers } = useAuthStore();
-  const { isMusicPlayerOpen, toggleMusicPlayer } = useMusicStore();
   const { groups, getGroups, selectedGroup, setSelectedGroup, unreadGroupMessages } = useGroupStore();
 
   const [activeTab, setActiveTab] = useState("friends");
@@ -82,14 +81,18 @@ const Sidebar = ({ onClose }) => {
   const handleUserSelect = (user) => {
     setSelectedGroup(null);
     setSelectedUser(user);
-    if (isMusicPlayerOpen) toggleMusicPlayer();
+    if (useMusicStore.getState().isMusicPlayerOpen) {
+      useMusicStore.getState().toggleMusicPlayer(false);
+    }
     onClose?.();
   };
 
   const handleGroupSelect = (group) => {
     setSelectedGroup(group);
     setSelectedUser(null);
-    if (isMusicPlayerOpen) toggleMusicPlayer();
+    if (useMusicStore.getState().isMusicPlayerOpen) {
+      useMusicStore.getState().toggleMusicPlayer(false);
+    }
     onClose?.();
   };
 
@@ -126,8 +129,8 @@ const Sidebar = ({ onClose }) => {
   if (isUsersLoading && users.length === 0) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-full flex flex-col min-h-0 sidebar-theme text-gray-900 dark:text-white">
-      <header className="sidebar-header">
+    <aside className="sidebar-panel h-full w-full min-h-0 grid grid-rows-[auto_1fr_auto] sidebar-theme text-gray-900 dark:text-white">
+      <header className="sidebar-header shrink-0">
         <div className="px-3 pt-3 pb-2.5">
           <div className="flex items-center gap-3 min-w-0">
             <div className="sidebar-header-icon shrink-0">
@@ -191,8 +194,8 @@ const Sidebar = ({ onClose }) => {
         </div>
       </header>
 
-      {/* CONTENT */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-2.5 py-3 space-y-2 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-transparent">
+      {/* CONTENT — scrollable middle; footer stays pinned below */}
+      <div className="sidebar-scroll min-h-0 overflow-y-auto overscroll-contain px-2.5 py-3 space-y-2 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-transparent">
         {activeTab === "groups" ? (
           <>
             {groups.map((group) => {
@@ -448,49 +451,30 @@ const Sidebar = ({ onClose }) => {
         <CreateGroupModal onClose={() => setShowCreateGroup(false)} />
       )}
 
-      {/* MUSIC — open from sidebar (mobile + desktop) */}
-      <div className="px-3 pb-2 shrink-0 border-t border-gray-200 dark:border-white/20">
-        <button
-          type="button"
-          onClick={() => {
-            toggleMusicPlayer(true);
-            onClose?.();
-          }}
-          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-            isMusicPlayerOpen
-              ? "bg-violet-600 text-white dark:bg-violet-600/90"
-              : "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-violet-100 dark:hover:bg-white/15"
-          }`}
-        >
-          <Music2 className="w-5 h-5 shrink-0" />
-          <span>Music player</span>
-        </button>
-      </div>
-
-      {/* CURRENT USER */}
+      {/* CURRENT USER — always visible at bottom (mobile + desktop) */}
       {authUser && (
-        <div className="p-3 border-t border-gray-200 dark:border-white/20 shrink-0">
-          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/20">
+        <footer className="sidebar-footer shrink-0 border-t border-gray-200 dark:border-white/20 bg-inherit">
+          <div className="flex items-center gap-2.5 px-3 py-2.5 mx-2 my-2 rounded-xl bg-gray-100 dark:bg-white/10 border border-gray-200 dark:border-white/20 min-w-0">
             <div className="relative shrink-0">
               <img
                 src={authUser.profilePic || "/boy.png"}
                 alt="You"
-                className="w-9 h-9 rounded-xl object-cover ring-2 ring-primary/30"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-cover ring-2 ring-primary/30"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-base-100 dark:ring-base-200" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-success rounded-full ring-2 ring-white dark:ring-[#14141c]" />
             </div>
 
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold truncate text-gray-900 dark:text-white">
                 {authUser.fullName || "You"}
               </p>
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-semibold">
+              <p className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-semibold truncate">
                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0" />
                 Online
               </p>
             </div>
           </div>
-        </div>
+        </footer>
       )}
     </aside>
   );

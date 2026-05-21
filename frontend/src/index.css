@@ -761,6 +761,26 @@ a:focus-visible {
   background: radial-gradient(circle at 20% 20%, rgba(124,58,237,0.04), transparent 25%), radial-gradient(circle at 80% 80%, rgba(59,130,246,0.03), transparent 25%), #0b0b0f;
 }
 
+/* Sidebar — pinned profile footer on mobile */
+.sidebar-panel {
+  max-height: 100%;
+}
+
+.sidebar-footer {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+}
+
+@media (max-width: 768px) {
+  .mobile-sidebar-drawer .sidebar-panel {
+    height: 100%;
+    min-height: 0;
+  }
+
+  .mobile-sidebar-drawer .sidebar-footer {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* Sidebar header */
 .sidebar-header {
   flex-shrink: 0;
