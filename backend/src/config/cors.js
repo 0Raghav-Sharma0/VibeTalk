@@ -10,12 +10,10 @@ const DEFAULT_ORIGINS = [
   "https://blah-blah-hky1.vercel.app",
   "https://blah-blah-2.onrender.com",
   "https://blah-blah-3.onrender.com",
-  "https://visionary-hotteok-e390a5.netlify.app",
 ];
 
 const ORIGIN_PATTERNS = [
   /^https:\/\/.*\.vercel\.app$/,
-  /^https:\/\/.*\.netlify\.app$/,
   /^https:\/\/.*\.onrender\.com$/,
 ];
 
