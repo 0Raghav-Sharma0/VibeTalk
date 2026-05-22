@@ -1,5 +1,5 @@
 import express from "express";
-import { protectRoute } from "../middleware/auth.middleware.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 import { requireBody, requireQuery } from "../middleware/validate.middleware.js";
 import {
   sendFriendRequest,
@@ -12,11 +12,11 @@ import {
 
 const router = express.Router();
 
-router.post("/request", protectRoute, requireBody("username"), sendFriendRequest);
-router.get("/pending", protectRoute, getPendingRequests);
-router.get("/search", protectRoute, requireQuery("username"), searchUserByUsername);
-router.put("/accept/:requestId", protectRoute, acceptFriendRequest);
-router.put("/reject/:requestId", protectRoute, rejectFriendRequest);
-router.delete("/remove/:friendId", protectRoute, removeFriend);
+router.post("/request", requireAuth, requireBody("username"), sendFriendRequest);
+router.get("/pending", requireAuth, getPendingRequests);
+router.get("/search", requireAuth, requireQuery("username"), searchUserByUsername);
+router.put("/accept/:requestId", requireAuth, acceptFriendRequest);
+router.put("/reject/:requestId", requireAuth, rejectFriendRequest);
+router.delete("/remove/:friendId", requireAuth, removeFriend);
 
 export default router;

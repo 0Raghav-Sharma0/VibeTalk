@@ -1,10 +1,7 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { syncUser, updateProfile, checkAuth } from "../controllers/auth.controller.js";
-import {
-  verifyClerkSession,
-  requireAppUser,
-} from "../middleware/auth.middleware.js";
+import { verifyJwt, requireAuth } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -18,8 +15,8 @@ const authLimiter = rateLimit({
 
 router.use(authLimiter);
 
-router.post("/sync", verifyClerkSession, syncUser);
-router.get("/check-auth", verifyClerkSession, requireAppUser, checkAuth);
-router.put("/update-profile", verifyClerkSession, requireAppUser, updateProfile);
+router.post("/sync", verifyJwt, syncUser);
+router.get("/check-auth", requireAuth, checkAuth);
+router.put("/update-profile", requireAuth, updateProfile);
 
 export default router;

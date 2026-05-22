@@ -1,22 +1,25 @@
-import { authService } from "../services/auth.service.js";
+/**
+ * Auth = Clerk session JWT in Authorization: Bearer <token>
+ *
+ * verifyJwt  — JWT valid only (used on POST /auth/sync)
+ * requireAuth — JWT valid + MongoDB user exists (all other protected routes)
+ */
+import { getBearerToken, verifyBearerToken } from "../lib/clerk.js";
 import { userService } from "../services/user.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-export const verifyClerkSession = asyncHandler(async (req, res, next) => {
-  const token = authService.extractToken(req);
-  req.clerkPayload = await authService.verifySession(token);
+export const verifyJwt = asyncHandler(async (req, res, next) => {
+  const token = getBearerToken(req);
+  const session = await verifyBearerToken(token);
+  req.clerkId = session.clerkId;
+  req.jwtClaims = session.claims;
   next();
 });
 
-export const requireAppUser = asyncHandler(async (req, res, next) => {
-  req.user = await userService.getByClerkIdCached(req.clerkPayload.sub);
-  next();
-});
-
-/** Clerk JWT + MongoDB user — used on messages, friends, groups */
-export const protectRoute = asyncHandler(async (req, res, next) => {
-  const token = authService.extractToken(req);
-  req.clerkPayload = await authService.verifySession(token);
-  req.user = await userService.getByClerkIdCached(req.clerkPayload.sub);
+export const requireAuth = asyncHandler(async (req, res, next) => {
+  const token = getBearerToken(req);
+  const session = await verifyBearerToken(token);
+  req.clerkId = session.clerkId;
+  req.user = await userService.getByClerkIdCached(session.clerkId);
   next();
 });

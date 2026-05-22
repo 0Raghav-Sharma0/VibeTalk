@@ -2,7 +2,11 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { container } from "../container.js";
 
 export const syncUser = asyncHandler(async (req, res) => {
-  const user = await container.authService.syncUser(req.clerkPayload, req.body);
+  const user = await container.authService.syncUser(
+    req.clerkId,
+    req.jwtClaims,
+    req.body
+  );
   res.status(200).json(user);
 });
 

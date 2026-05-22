@@ -1,22 +1,18 @@
-import { authService } from "../services/auth.service.js";
+import { verifyBearerToken } from "../lib/clerk.js";
 import { userRepository } from "../repositories/user.repository.js";
 
 export async function authenticateSocket(socket, next) {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) {
-      return next(new Error("Unauthorized: missing token"));
-    }
-
-    const payload = await authService.verifySession(token);
-    const user = await userRepository.findByClerkIdLean(payload.sub);
+    const { clerkId } = await verifyBearerToken(token);
+    const user = await userRepository.findByClerkIdLean(clerkId);
 
     if (!user) {
       return next(new Error("Unauthorized: user not synced"));
     }
 
     socket.userId = user._id.toString();
-    socket.clerkId = payload.sub;
+    socket.clerkId = clerkId;
     socket.username = user.fullName || "User";
     next();
   } catch (error) {

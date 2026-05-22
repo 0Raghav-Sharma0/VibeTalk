@@ -1,28 +1,13 @@
-import { verifyClerkToken, extractBearerToken } from "../lib/clerk.js";
 import { profileFromClerkPayload } from "../domain/user.dto.js";
 import { userService } from "./user.service.js";
 import { mediaService } from "./media.service.js";
 import { AppError } from "../errors/AppError.js";
 
 export const authService = {
-  extractToken(req) {
-    const token = extractBearerToken(req);
-    if (!token) throw AppError.unauthorized("No token provided");
-    return token;
-  },
-
-  async verifySession(token) {
-    try {
-      return await verifyClerkToken(token);
-    } catch {
-      throw AppError.unauthorized("Invalid token");
-    }
-  },
-
-  async syncUser(clerkPayload, body) {
-    const profile = profileFromClerkPayload(clerkPayload, body);
+  async syncUser(clerkId, jwtClaims, body) {
+    const profile = profileFromClerkPayload(jwtClaims, body);
     const user = await userService.findOrCreateFromClerk({
-      clerkId: clerkPayload.sub,
+      clerkId,
       ...profile,
     });
     return userService.toDTO(user);
